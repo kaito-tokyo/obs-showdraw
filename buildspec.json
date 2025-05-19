@@ -33,13 +33,13 @@
     },
     "platformConfig": {
         "macos": {
-            "bundleId": "com.example.plugintemplate-for-obs"
+            "bundleId": "tokyo.kaito.showdraw"
         }
     },
-    "name": "plugintemplate-for-obs",
-    "displayName": "Plugin Template for OBS",
+    "name": "obs-showdraw",
+    "displayName": "Emphasize drawing on OBS",
     "version": "1.0.0",
-    "author": "Your Name Here",
-    "website": "https://example.com",
-    "email": "me@example.com"
+    "author": "Kaito Udagawa",
+    "website": "https://github.com/kaito-tokyo/obs-showdraw",
+    "email": "umireon@kaito.tokyo"
 }
