@@ -112,8 +112,6 @@ jobs:
           print "pluginName=${product_name}" >> $GITHUB_OUTPUT
           print "pluginVersion=${product_version}" >> $GITHUB_OUTPUT
 
-          print "DEVELOPER_DIR=/Applications/Xcode_16.1.0.app/Contents/Developer" >> $GITHUB_ENV
-
       - uses: actions/cache/restore@v4
         id: ccache-cache
         with:
