@@ -35,7 +35,7 @@ struct showdraw_filter_context {
 	const char *effect_path;
 	const char *effect_tech;
 
-	double sensitivity_factor;
+	float sensitivity_factor;
 
 	gs_effect_t *effect;
 	gs_eparam_t *effect_texel_width;
@@ -55,7 +55,7 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 	context->effect_path = obs_module_file("effects/drawing-emphasizer.effect");
 	context->effect_tech = "Draw";
 
-	context->sensitivity_factor = 20.0;
+	context->sensitivity_factor = 0.0f;
 
 	context->effect = NULL;
 
@@ -97,7 +97,7 @@ void showdraw_update(void *data, obs_data_t *settings)
 {
 	struct showdraw_filter_context *context = (struct showdraw_filter_context *)data;
 
-	context->sensitivity_factor = pow(10.0, obs_data_get_double(settings, "sensitivityFactorDb") / 10.0);
+	context->sensitivity_factor = (float)pow(10.0, obs_data_get_double(settings, "sensitivityFactorDb") / 10.0);
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
@@ -138,8 +138,8 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	gs_effect_set_float(context->effect_texel_width, 1.0 / (double)obs_source_get_base_width(target));
-	gs_effect_set_float(context->effect_texel_height, 1.0 / (double)obs_source_get_base_width(target));
+	gs_effect_set_float(context->effect_texel_width, 1.0f / (float)obs_source_get_base_width(target));
+	gs_effect_set_float(context->effect_texel_height, 1.0f / (float)obs_source_get_base_width(target));
 	gs_effect_set_float(context->effect_sensitivity_factor, context->sensitivity_factor);
 
 	obs_source_process_filter_tech_end(context->filter, context->effect, 0, 0, context->effect_tech);
