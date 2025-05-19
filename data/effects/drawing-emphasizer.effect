@@ -1,0 +1,69 @@
+uniform float4x4 ViewProj;
+
+uniform texture2d image;
+uniform float texelWidth;
+uniform float texelHeight;
+uniform float sensitivityFactor;
+
+sampler_state textureSampler {
+	Filter = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertDataIn {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+struct VertDataOut {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
+};
+
+VertDataOut VSDefault(VertDataIn v_in)
+{
+	VertDataOut v_out;
+	v_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+	v_out.uv  = v_in.uv;
+	return v_out;
+}
+
+float calculateLuminance(float3 color)
+{
+	return dot(color, float3(0.299, 0.587, 0.114));
+}
+
+float4 PSEmphasizeDrawing(VertDataOut v_in) : TARGET
+{
+	float horizontalSobelSum
+	  = -calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(-texelWidth, -texelHeight)).rgb)
+	  + calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(texelWidth, -texelHeight)).rgb)
+	  - 2.0 * calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(-texelWidth, 0.0)).rgb)
+	  + 2.0 * calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(texelWidth, 0.0)).rgb)
+	  - calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(-texelWidth, texelHeight)).rgb)
+	  + calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(texelWidth, texelHeight)).rgb);
+
+    float verticalSobelSum
+	  = -calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(-texelWidth, -texelHeight)).rgb)
+	  - 2.0 * calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(0.0, -texelHeight)).rgb)
+	  - calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(texelWidth, -texelHeight)).rgb)
+	  + calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(-texelWidth, texelHeight)).rgb)
+	  + 2.0 * calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(0.0, texelHeight)).rgb)
+	  + calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(texelWidth, texelHeight)).rgb);
+
+	
+	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
+	edgeStrength = saturate(edgeStrength * sensitivityFactor);
+
+	return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(v_in);
+		pixel_shader  = PSEmphasizeDrawing(v_in);
+	}
+}
