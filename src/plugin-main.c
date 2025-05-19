@@ -87,7 +87,8 @@ obs_properties_t *showdraw_get_properties(void *data)
 
 	obs_properties_t *props = obs_properties_create();
 
-	obs_properties_add_float_slider(props, "sensitivityFactorDb", obs_module_text("sensitivityFactorDb"), -20.0, 20.0, 0.1);
+	obs_properties_add_float_slider(props, "sensitivityFactorDb", obs_module_text("sensitivityFactorDb"), -20.0,
+					20.0, 0.1);
 
 	return props;
 }
