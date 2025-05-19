@@ -43,6 +43,8 @@ struct showdraw_filter_context {
 	gs_eparam_t *effect_sensitivity_factor;
 };
 
+void showdraw_update(void *data, obs_data_t *settings);
+
 void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 {
 	UNUSED_PARAMETER(settings);
@@ -58,6 +60,8 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 	context->sensitivity_factor = 0.0f;
 
 	context->effect = NULL;
+
+	showdraw_update(context, settings);
 
 	return context;
 }
