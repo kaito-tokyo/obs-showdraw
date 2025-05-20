@@ -101,7 +101,7 @@ void showdraw_destroy(void *data)
 
 void showdraw_get_defaults(obs_data_t *data)
 {
-	obs_data_set_default_double(data, "sensitivityFactorDb", 1.0);
+	obs_data_set_default_double(data, "sensitivityFactorDb", 0.0);
 }
 
 obs_properties_t *showdraw_get_properties(void *data)
@@ -111,7 +111,7 @@ obs_properties_t *showdraw_get_properties(void *data)
 	obs_properties_t *props = obs_properties_create();
 
 	obs_properties_add_float_slider(props, "sensitivityFactorDb", obs_module_text("sensitivityFactorDb"), -20.0,
-					20.0, 0.1);
+					20.0, 0.01);
 
 	return props;
 }
