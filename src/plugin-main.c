@@ -30,7 +30,7 @@ const char *showdraw_get_name(void *type_data)
 	return obs_module_text("showdrawName");
 }
 
-#define MAX_PREVIOUS_TEXTURES 2
+#define MAX_PREVIOUS_TEXTURES 8
 
 struct showdraw_filter_context {
 	obs_source_t *filter;
@@ -41,10 +41,12 @@ struct showdraw_filter_context {
 	float sensitivity_factor;
 
 	gs_effect_t *effect;
-	gs_effect_t *effect_image1;
+	gs_eparam_t *effect_image[MAX_PREVIOUS_TEXTURES];
 	gs_eparam_t *effect_sensitivity_factor;
 	gs_eparam_t *effect_texel_height;
 	gs_eparam_t *effect_texel_width;
+
+	gs_texrender_t *texrender;
 
 	uint32_t height;
 	gs_texture_t *previous_textures[MAX_PREVIOUS_TEXTURES];
@@ -69,7 +71,9 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 	context->sensitivity_factor = 0.0f;
 
 	context->effect = NULL;
-	context->effect_image1 = NULL;
+	for (int i = 0; i < MAX_PREVIOUS_TEXTURES; i++) {
+		context->effect_image[i] = NULL;
+	}
 	context->effect_sensitivity_factor = NULL;
 	context->effect_texel_height = NULL;
 	context->effect_texel_width = NULL;
@@ -140,23 +144,44 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	uint32_t width = obs_source_get_base_width(target);
 	uint32_t height = obs_source_get_base_height(target);
 
-	if (context->previous_textures[0] == NULL || context->width != width || context->height != height) {
-		context->width = width;
-		context->height = height;
+	if (context->texrender == NULL || context->width != width || context->height != height) {
+		if (context->texrender) {
+			gs_texrender_destroy(context->texrender);
+		}
+		context->texrender = gs_texrender_create(width, height);
 
 		for (int i = 0; i < MAX_PREVIOUS_TEXTURES; i++) {
 			context->previous_textures[i] = gs_texture_create(width, height, GS_RGBA, 1, NULL, GS_DYNAMIC);
 		}
+
+		context->width = width;
+		context->height = height;
 	}
 
-	gs_texture_t *target_texture = obs_source_get_texture(target);
+	gs_texrender_reset(context->texrender);
+	if (!gs_texrender_begin(context->texrender, width, height)) {
+		obs_log(LOG_ERROR, "Failed to begin texrender");
+		obs_source_skip_video_filter(context->filter);
+		return;
+	}
+	struct vec4 background;
+	vec4_zero(&background);
+	gs_clear(GS_CLEAR_COLOR, &background, 0.0f, 0);
+	gs_ortho(0.0f, (float)width, 0.0f, (float)height, -1.0f, 1.0f);
+	gs_blend_state_push();
+	gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+	obs_source_video_render(target);
+	gs_blend_state_pop();
+	gs_texrender_end(context->texrender);
+
+	gs_texture_t *target_texture = gs_texrender_get_texture(context->texrender);
 	if (!target_texture) {
 		obs_log(LOG_ERROR, "Target texture not found");
 		obs_source_skip_video_filter(context->filter);
 		return;
 	}
 
-	gs_texture_t *latest_texture = context->previous_textures[MAX_PREVIOUS_TEXTURES];
+	gs_texture_t *latest_texture = context->previous_textures[MAX_PREVIOUS_TEXTURES - 1];
 	for (int i = 0; i < MAX_PREVIOUS_TEXTURES - 1; i++) {
 		context->previous_textures[i] = context->previous_textures[i + 1];
 	}
@@ -174,7 +199,13 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		}
 
 		context->effect = effect;
-		context->effect_image1 = gs_effect_get_param_by_name(context->effect, "image1");
+		context->effect_image[1] = gs_effect_get_param_by_name(context->effect, "image1");
+		context->effect_image[2] = gs_effect_get_param_by_name(context->effect, "image2");
+		context->effect_image[3] = gs_effect_get_param_by_name(context->effect, "image3");
+		context->effect_image[4] = gs_effect_get_param_by_name(context->effect, "image4");
+		context->effect_image[5] = gs_effect_get_param_by_name(context->effect, "image5");
+		context->effect_image[6] = gs_effect_get_param_by_name(context->effect, "image6");
+		context->effect_image[7] = gs_effect_get_param_by_name(context->effect, "image7");
 		context->effect_texel_width = gs_effect_get_param_by_name(context->effect, "texelWidth");
 		context->effect_texel_height = gs_effect_get_param_by_name(context->effect, "texelHeight");
 		context->effect_sensitivity_factor = gs_effect_get_param_by_name(context->effect, "sensitivityFactor");
@@ -191,7 +222,9 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	gs_effect_set_float(context->effect_texel_width, 1.0f / (float)obs_source_get_base_width(target));
 	gs_effect_set_float(context->effect_texel_height, 1.0f / (float)obs_source_get_base_width(target));
 	gs_effect_set_float(context->effect_sensitivity_factor, context->sensitivity_factor);
-	gs_effect_set_texture(context->effect_image1, context->previous_textures[1]);
+	for (int i = 1; i < MAX_PREVIOUS_TEXTURES; i++) {
+		gs_effect_set_texture(context->effect_image[i], context->previous_textures[i]);
+	}
 
 	obs_source_process_filter_tech_end(context->filter, context->effect, 0, 0, context->effect_tech);
 }
@@ -199,7 +232,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 struct obs_source_info showdraw_filter = {
 	.id = "showdraw",
 	.type = OBS_SOURCE_TYPE_FILTER,
-	.output_flags = OBS_SOURCE_VIDEO,
+	.output_flags = OBS_SOURCE_ASYNC_VIDEO,
 	.get_name = showdraw_get_name,
 	.create = showdraw_create,
 	.destroy = showdraw_destroy,

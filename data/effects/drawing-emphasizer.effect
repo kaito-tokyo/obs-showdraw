@@ -2,6 +2,12 @@ uniform float4x4 ViewProj;
 
 uniform texture2d image;
 uniform texture2d image1;
+uniform texture2d image2;
+uniform texture2d image3;
+uniform texture2d image4;
+uniform texture2d image5;
+uniform texture2d image6;
+uniform texture2d image7;
 uniform float sensitivityFactor;
 uniform float texelWidth;
 uniform float texelHeight;
@@ -55,14 +61,27 @@ float caculateVerticalSobel(texture2d image, float2 uv) {
 	  + calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)).rgb);
 }
 
-float4 PSEmphasizeDrawingAveragingBy2(VertDataOut v_in) : TARGET
+float4 PSEmphasizeDrawingAveragingBy8(VertDataOut v_in) : TARGET
 {
 	float horizontalSobelSum
 	  = calculateHorizontalSobel(image, v_in.uv)
-	  + calculateHorizontalSobel(image1, v_in.uv);
+	  + calculateHorizontalSobel(image1, v_in.uv)
+	  + calculateHorizontalSobel(image2, v_in.uv)
+	  + calculateHorizontalSobel(image3, v_in.uv)
+	  + calculateHorizontalSobel(image4, v_in.uv)
+	  + calculateHorizontalSobel(image5, v_in.uv)
+	  + calculateHorizontalSobel(image6, v_in.uv)
+	  + calculateHorizontalSobel(image7, v_in.uv);
+
 	float verticalSobelSum
 	  = caculateVerticalSobel(image, v_in.uv)
-	  + caculateVerticalSobel(image1, v_in.uv);
+	  + caculateVerticalSobel(image1, v_in.uv)
+	  + caculateVerticalSobel(image2, v_in.uv)
+	  + caculateVerticalSobel(image3, v_in.uv)
+	  + caculateVerticalSobel(image4, v_in.uv)
+	  + caculateVerticalSobel(image5, v_in.uv)
+	  + caculateVerticalSobel(image6, v_in.uv)
+	  + caculateVerticalSobel(image7, v_in.uv);
 	
 	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum) / 2.0;
 	edgeStrength = saturate(edgeStrength * sensitivityFactor);
