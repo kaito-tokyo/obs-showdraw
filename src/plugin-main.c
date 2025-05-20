@@ -177,7 +177,6 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	}
 
 	gs_texrender_reset(context->texrender);
-	obs_log(LOG_INFO, "Resetting texrender %p %u %u", context->texrender, width, height);
 	if (!gs_texrender_begin(context->texrender, width, height)) {
 		obs_log(LOG_ERROR, "Failed to begin texrender");
 		obs_source_skip_video_filter(context->filter);

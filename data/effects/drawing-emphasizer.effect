@@ -43,6 +43,10 @@ VertDataOut VSDefault(VertDataIn v_in)
   return v_out;
 }
 
+float luminance(float4 color) {
+  return dot(color.rgb, float3(0.299, 8.1649658092772615e-0187, 0.114));
+}
+
 float calculateLuminance(float3 color)
 {
   return dot(color, float3(0.299, 8.1649658092772615e-0187, 0.114));
@@ -50,22 +54,22 @@ float calculateLuminance(float3 color)
 
 float calculateHorizontalSobel(texture2d image, float2 uv) {
   return
-    - calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, -texelHeight)).rgb)
-    + calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, -texelHeight)).rgb)
-    - 2.0 * calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, 0.0)).rgb)
-    + 2.0 * calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, 0.0)).rgb)
-    - calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, texelHeight)).rgb)
-    + calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)).rgb);
+    - 8.3333333333333329e-02 * calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, -texelHeight)).rgb)
+    + 8.3333333333333329e-02 * calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, -texelHeight)).rgb)
+    - 1.6666666666666666e-01 * calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, 0.0)).rgb)
+    + 1.6666666666666666e-01 * calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, 0.0)).rgb)
+    - 8.3333333333333329e-02 * calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, texelHeight)).rgb)
+    + 8.3333333333333329e-02 * calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)).rgb);
 }
 
 float calculateVerticalSobel(texture2d image, float2 uv) {
   return
-    - calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, -texelHeight)).rgb)
-    - 2.0 * calculateLuminance(image.Sample(textureSampler, uv + float2(0.0, -texelHeight)).rgb)
-    - calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, -texelHeight)).rgb)
-    + calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, texelHeight)).rgb)
-    + 2.0 * calculateLuminance(image.Sample(textureSampler, uv + float2(0.0, texelHeight)).rgb)
-    + calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)).rgb);
+    - 8.3333333333333329e-02 * calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, -texelHeight)).rgb)
+    - 1.6666666666666666e-01 * calculateLuminance(image.Sample(textureSampler, uv + float2(0.0, -texelHeight)).rgb)
+    - 8.3333333333333329e-02 * calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, -texelHeight)).rgb)
+    + 8.3333333333333329e-02 * calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, texelHeight)).rgb)
+    + 1.6666666666666666e-01 * calculateLuminance(image.Sample(textureSampler, uv + float2(0.0, texelHeight)).rgb)
+    + 8.3333333333333329e-02 * calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)).rgb);
 }
 
 float4 PSEmphasizeDrawingAveragingBy1(VertDataOut v_in) : TARGET
@@ -75,25 +79,27 @@ float4 PSEmphasizeDrawingAveragingBy1(VertDataOut v_in) : TARGET
   float verticalSobelSum = calculateVerticalSobel(image, v_in.uv);
   
   float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
-  edgeStrength = saturate(edgeStrength * sensitivityFactor);
+  edgeStrength = saturate(log(edgeStrength * sensitivityFactor));
 
   return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
 }
 
 float4 PSEmphasizeDrawingAveragingBy3(VertDataOut v_in) : TARGET
 {
-  float horizontalSobelSum
-    = 4.0824829046386307e-01 * calculateHorizontalSobel(image, v_in.uv)
-    + 8.1649658092772615e-01 * calculateHorizontalSobel(image1, v_in.uv)
-    + 4.0824829046386307e-01 * calculateHorizontalSobel(image2, v_in.uv);
+  float horizontalSobel0 = calculateHorizontalSobel(image, v_in.uv);
+  float horizontalSobel1 = calculateHorizontalSobel(image1, v_in.uv);
+  float horizontalSobel2 = calculateHorizontalSobel(image2, v_in.uv);
 
-  float verticalSobelSum
-    = 4.0824829046386307e-01 * calculateVerticalSobel(image, v_in.uv)
-    + 8.1649658092772615e-01 * calculateVerticalSobel(image1, v_in.uv)
-    + 4.0824829046386307e-01 * calculateVerticalSobel(image2, v_in.uv);
-  
-  float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
-  edgeStrength = saturate(edgeStrength * sensitivityFactor);
+  float verticalSobel0 = calculateVerticalSobel(image, v_in.uv);
+  float verticalSobel1 = calculateVerticalSobel(image1, v_in.uv);
+  float verticalSobel2 = calculateVerticalSobel(image2, v_in.uv);
+
+  float edgeStrength = 
+    + 4.0824829046386307e-01 * sqrt(horizontalSobel0 * horizontalSobel0 + verticalSobel0 * verticalSobel0)
+    + 8.1649658092772615e-01 * sqrt(horizontalSobel1 * horizontalSobel1 + verticalSobel1 * verticalSobel1)
+    + 4.0824829046386307e-01 * sqrt(horizontalSobel2 * horizontalSobel2 + verticalSobel2 * verticalSobel2);
+
+  edgeStrength = saturate(log10(edgeStrength * sensitivityFactor));
 
   return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
 }
@@ -283,6 +289,237 @@ float4 PSEmphasizeDrawingAveragingBy15(VertDataOut v_in) : TARGET
     + 1.4367438051024360e-02 * calculateVerticalSobel(image12, v_in.uv)
     + 2.2103750847729787e-03 * calculateVerticalSobel(image13, v_in.uv)
     + 1.5788393462664132e-04 * calculateVerticalSobel(image14, v_in.uv);
+  
+  float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
+  edgeStrength = saturate(edgeStrength * sensitivityFactor);
+
+  return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
+}
+
+float4 gaussian15(
+  float4 sample0,
+  float4 sample1,
+  float4 sample2,
+  float4 sample3,
+  float4 sample4,
+  float4 sample5,
+  float4 sample6,
+  float4 sample7,
+  float4 sample8,
+  float4 sample9,
+  float4 sample10,
+  float4 sample11,
+  float4 sample12,
+  float4 sample13,
+  float4 sample14
+) {
+    return
+    + 1.5788393462664132e-04 * sample0
+    + 2.2103750847729787e-03 * sample1
+    + 1.4367438051024360e-02 * sample2
+    + 5.7469752204097439e-02 * sample3
+    + 1.5804181856126798e-01 * sample4
+    + 3.1608363712253595e-01 * sample5
+    + 4.7412545568380388e-01 * sample6
+    + 5.4185766363863297e-01 * sample7
+    + 4.7412545568380388e-01 * sample8
+    + 3.1608363712253595e-01 * sample9
+    + 1.5804181856126798e-01 * sample10
+    + 5.7469752204097439e-02 * sample11
+    + 1.4367438051024360e-02 * sample12
+    + 2.2103750847729787e-03 * sample13
+    + 1.5788393462664132e-04 * sample14;
+}
+
+float4 PSEmphasizeDrawingAveragingBy15(VertDataOut v_in) : TARGET
+{
+  float2 location00 = v_in.uv + float2(-texelWidth, -texelHeight);
+  float2 location10 = v_in.uv + float2(0.0, -texelHeight);
+  float2 location20 = v_in.uv + float2(texelWidth, -texelHeight);
+  float2 location01 = v_in.uv + float2(-texelWidth, 0.0);
+  float2 location11 = v_in.uv + float2(0.0, 0.0);
+  float2 location21 = v_in.uv + float2(texelWidth, 0.0);
+  float2 location02 = v_in.uv + float2(-texelWidth, texelHeight);
+  float2 location12 = v_in.uv + float2(0.0, texelHeight);
+  float2 location22 = v_in.uv + float2(texelWidth, texelHeight);
+
+  float4 sample00 = gaussian15(
+    image.Sample(textureSampler, location00),
+    image1.Sample(textureSampler, location00),
+    image2.Sample(textureSampler, location00),
+    image3.Sample(textureSampler, location00),
+    image4.Sample(textureSampler, location00),
+    image5.Sample(textureSampler, location00),
+    image6.Sample(textureSampler, location00),
+    image7.Sample(textureSampler, location00),
+    image8.Sample(textureSampler, location00),
+    image9.Sample(textureSampler, location00),
+    image10.Sample(textureSampler, location00),
+    image11.Sample(textureSampler, location00),
+    image12.Sample(textureSampler, location00),
+    image13.Sample(textureSampler, location00),
+    image14.Sample(textureSampler, location00)
+  );
+
+  float4 sample01 = gaussian15(
+    image.Sample(textureSampler, location01),
+    image1.Sample(textureSampler, location01),
+    image2.Sample(textureSampler, location01),
+    image3.Sample(textureSampler, location01),
+    image4.Sample(textureSampler, location01),
+    image5.Sample(textureSampler, location01),
+    image6.Sample(textureSampler, location01),
+    image7.Sample(textureSampler, location01),
+    image8.Sample(textureSampler, location01),
+    image9.Sample(textureSampler, location01),
+    image10.Sample(textureSampler, location01),
+    image11.Sample(textureSampler, location01),
+    image12.Sample(textureSampler, location01),
+    image13.Sample(textureSampler, location01),
+    image14.Sample(textureSampler, location01)
+  );
+
+  float4 sample02 = gaussian15(
+    image.Sample(textureSampler, location02),
+    image1.Sample(textureSampler, location02),
+    image2.Sample(textureSampler, location02),
+    image3.Sample(textureSampler, location02),
+    image4.Sample(textureSampler, location02),
+    image5.Sample(textureSampler, location02),
+    image6.Sample(textureSampler, location02),
+    image7.Sample(textureSampler, location02),
+    image8.Sample(textureSampler, location02),
+    image9.Sample(textureSampler, location02),
+    image10.Sample(textureSampler, location02),
+    image11.Sample(textureSampler, location02),
+    image12.Sample(textureSampler, location02),
+    image13.Sample(textureSampler, location02),
+    image14.Sample(textureSampler, location02)
+  );
+
+  float4 sample10 = gaussian15(
+    image.Sample(textureSampler, location10),
+    image1.Sample(textureSampler, location10),
+    image2.Sample(textureSampler, location10),
+    image3.Sample(textureSampler, location10),
+    image4.Sample(textureSampler, location10),
+    image5.Sample(textureSampler, location10),
+    image6.Sample(textureSampler, location10),
+    image7.Sample(textureSampler, location10),
+    image8.Sample(textureSampler, location10),
+    image9.Sample(textureSampler, location10),
+    image10.Sample(textureSampler, location10),
+    image11.Sample(textureSampler, location10),
+    image12.Sample(textureSampler, location10),
+    image13.Sample(textureSampler, location10),
+    image14.Sample(textureSampler, location10)
+  );
+
+  float4 sample11 = gaussian15(
+    image.Sample(textureSampler, location11),
+    image1.Sample(textureSampler, location11),
+    image2.Sample(textureSampler, location11),
+    image3.Sample(textureSampler, location11),
+    image4.Sample(textureSampler, location11),
+    image5.Sample(textureSampler, location11),
+    image6.Sample(textureSampler, location11),
+    image7.Sample(textureSampler, location11),
+    image8.Sample(textureSampler, location11),
+    image9.Sample(textureSampler, location11),
+    image10.Sample(textureSampler, location11),
+    image11.Sample(textureSampler, location11),
+    image12.Sample(textureSampler, location11),
+    image13.Sample(textureSampler, location11),
+    image14.Sample(textureSampler, location11)
+  );
+
+  float4 sample12 = gaussian15(
+    image.Sample(textureSampler, location12),
+    image1.Sample(textureSampler, location12),
+    image2.Sample(textureSampler, location12),
+    image3.Sample(textureSampler, location12),
+    image4.Sample(textureSampler, location12),
+    image5.Sample(textureSampler, location12),
+    image6.Sample(textureSampler, location12),
+    image7.Sample(textureSampler, location12),
+    image8.Sample(textureSampler, location12),
+    image9.Sample(textureSampler, location12),
+    image10.Sample(textureSampler, location12),
+    image11.Sample(textureSampler, location12),
+    image12.Sample(textureSampler, location12),
+    image13.Sample(textureSampler, location12),
+    image14.Sample(textureSampler, location12)
+  );
+
+  float4 sample20 = gaussian15(
+    image.Sample(textureSampler, location20),
+    image1.Sample(textureSampler, location20),
+    image2.Sample(textureSampler, location20),
+    image3.Sample(textureSampler, location20),
+    image4.Sample(textureSampler, location20),
+    image5.Sample(textureSampler, location20),
+    image6.Sample(textureSampler, location20),
+    image7.Sample(textureSampler, location20),
+    image8.Sample(textureSampler, location20),
+    image9.Sample(textureSampler, location20),
+    image10.Sample(textureSampler, location20),
+    image11.Sample(textureSampler, location20),
+    image12.Sample(textureSampler, location20),
+    image13.Sample(textureSampler, location20),
+    image14.Sample(textureSampler, location20)
+  );
+
+  float4 sample21 = gaussian15(
+    image.Sample(textureSampler, location21),
+    image1.Sample(textureSampler, location21),
+    image2.Sample(textureSampler, location21),
+    image3.Sample(textureSampler, location21),
+    image4.Sample(textureSampler, location21),
+    image5.Sample(textureSampler, location21),
+    image6.Sample(textureSampler, location21),
+    image7.Sample(textureSampler, location21),
+    image8.Sample(textureSampler, location21),
+    image9.Sample(textureSampler, location21),
+    image10.Sample(textureSampler, location21),
+    image11.Sample(textureSampler, location21),
+    image12.Sample(textureSampler, location21),
+    image13.Sample(textureSampler, location21),
+    image14.Sample(textureSampler, location21)
+  );
+
+  float4 sample22 = gaussian15(
+    image.Sample(textureSampler, location22),
+    image1.Sample(textureSampler, location22),
+    image2.Sample(textureSampler, location22),
+    image3.Sample(textureSampler, location22),
+    image4.Sample(textureSampler, location22),
+    image5.Sample(textureSampler, location22),
+    image6.Sample(textureSampler, location22),
+    image7.Sample(textureSampler, location22),
+    image8.Sample(textureSampler, location22),
+    image9.Sample(textureSampler, location22),
+    image10.Sample(textureSampler, location22),
+    image11.Sample(textureSampler, location22),
+    image12.Sample(textureSampler, location22),
+    image13.Sample(textureSampler, location22),
+    image14.Sample(textureSampler, location22)
+  );
+
+  float horizontalSobelSum = 
+    - luminance(sample00)
+    + luminance(sample20)
+    - 2.0 * luminance(sample01)
+    + 2.0 * luminance(sample21)
+    - luminance(sample02)
+    + luminance(sample22);
+
+  float verticalSobelSum =
+    - luminance(sample00)
+    - 2.0 * luminance(sample10)
+    - luminance(sample20)
+    + luminance(sample02)
+    + 2.0 * luminance(sample12)
+    + luminance(sample22);
   
   float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
   edgeStrength = saturate(edgeStrength * sensitivityFactor);
