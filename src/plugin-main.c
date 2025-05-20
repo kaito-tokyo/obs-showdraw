@@ -78,6 +78,8 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 	context->effect_texel_height = NULL;
 	context->effect_texel_width = NULL;
 
+	context->texrender = NULL;
+
 	context->height = 0;
 	for (int i = 0; i < MAX_PREVIOUS_TEXTURES; i++) {
 		context->previous_textures[i] = NULL;
