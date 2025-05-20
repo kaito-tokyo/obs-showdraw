@@ -40,16 +40,9 @@ struct showdraw_filter_context {
 	float sensitivity_factor;
 
 	gs_effect_t *effect;
-	gs_eparam_t *effect_image[MAX_PREVIOUS_TEXTURES];
 	gs_eparam_t *effect_sensitivity_factor;
 	gs_eparam_t *effect_texel_height;
 	gs_eparam_t *effect_texel_width;
-
-	gs_texrender_t *texrender;
-
-	uint32_t height;
-	gs_texture_t *previous_textures[MAX_PREVIOUS_TEXTURES];
-	uint32_t width;
 };
 
 void showdraw_update(void *data, obs_data_t *settings);
@@ -69,20 +62,9 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 	context->sensitivity_factor = 0.0f;
 
 	context->effect = NULL;
-	for (int i = 0; i < MAX_PREVIOUS_TEXTURES; i++) {
-		context->effect_image[i] = NULL;
-	}
 	context->effect_sensitivity_factor = NULL;
 	context->effect_texel_height = NULL;
 	context->effect_texel_width = NULL;
-
-	context->texrender = NULL;
-
-	context->height = 0;
-	for (int i = 0; i < MAX_PREVIOUS_TEXTURES; i++) {
-		context->previous_textures[i] = NULL;
-	}
-	context->width = 0;
 
 	showdraw_update(context, settings);
 
@@ -106,7 +88,7 @@ void showdraw_destroy(void *data)
 void showdraw_get_defaults(obs_data_t *data)
 {
 	obs_data_set_default_double(data, "sensitivityFactorDb", 0.0);
-	obs_data_set_default_string(data, "effectTechnique", "Draw1");
+	obs_data_set_default_string(data, "effectTechnique", "Draw");
 }
 
 obs_properties_t *showdraw_get_properties(void *data)
@@ -121,14 +103,7 @@ obs_properties_t *showdraw_get_properties(void *data)
 	obs_property_t *propEffectTechnique = obs_properties_add_list(props, "effectTechnique",
 								      obs_module_text("effectTechnique"),
 								      OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	obs_property_list_add_string(propEffectTechnique, "1", "Draw1");
-	obs_property_list_add_string(propEffectTechnique, "3", "Draw3");
-	obs_property_list_add_string(propEffectTechnique, "5", "Draw5");
-	obs_property_list_add_string(propEffectTechnique, "7", "Draw7");
-	obs_property_list_add_string(propEffectTechnique, "9", "Draw9");
-	obs_property_list_add_string(propEffectTechnique, "11", "Draw11");
-	obs_property_list_add_string(propEffectTechnique, "13", "Draw13");
-	obs_property_list_add_string(propEffectTechnique, "15", "Draw15");
+	obs_property_list_add_string(propEffectTechnique, "Default", "Draw");
 
 	return props;
 }
@@ -155,57 +130,6 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	uint32_t width = obs_source_get_base_width(target);
-	uint32_t height = obs_source_get_base_height(target);
-
-	if (!context->texrender) {
-		context->texrender = gs_texrender_create(GS_RGBA, GS_ZS_NONE);
-		if (!context->texrender) {
-			obs_log(LOG_ERROR, "Failed to create texrender");
-			obs_source_skip_video_filter(context->filter);
-			return;
-		}
-	}
-
-	if (context->previous_textures[0] == NULL || context->width != width || context->height != height) {
-		for (int i = 0; i < MAX_PREVIOUS_TEXTURES; i++) {
-			context->previous_textures[i] = gs_texture_create(width, height, GS_RGBA, 1, NULL, GS_DYNAMIC);
-		}
-
-		context->width = width;
-		context->height = height;
-	}
-
-	gs_texrender_reset(context->texrender);
-	if (!gs_texrender_begin(context->texrender, width, height)) {
-		obs_log(LOG_ERROR, "Failed to begin texrender");
-		obs_source_skip_video_filter(context->filter);
-		return;
-	}
-	struct vec4 background;
-	vec4_zero(&background);
-	gs_clear(GS_CLEAR_COLOR, &background, 0.0f, 0);
-	gs_ortho(0.0f, (float)width, 0.0f, (float)height, -1.0f, 1.0f);
-	gs_blend_state_push();
-	gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
-	obs_source_video_render(target);
-	gs_blend_state_pop();
-	gs_texrender_end(context->texrender);
-
-	gs_texture_t *target_texture = gs_texrender_get_texture(context->texrender);
-	if (!target_texture) {
-		obs_log(LOG_ERROR, "Target texture not found");
-		obs_source_skip_video_filter(context->filter);
-		return;
-	}
-
-	gs_texture_t *latest_texture = context->previous_textures[MAX_PREVIOUS_TEXTURES - 1];
-	for (int i = 0; i < MAX_PREVIOUS_TEXTURES - 1; i++) {
-		context->previous_textures[i + 1] = context->previous_textures[i];
-	}
-	gs_copy_texture(latest_texture, target_texture);
-	context->previous_textures[0] = latest_texture;
-
 	if (!context->effect) {
 		char *error_string = NULL;
 
@@ -217,20 +141,6 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		}
 
 		context->effect = effect;
-		context->effect_image[1] = gs_effect_get_param_by_name(context->effect, "image1");
-		context->effect_image[2] = gs_effect_get_param_by_name(context->effect, "image2");
-		context->effect_image[3] = gs_effect_get_param_by_name(context->effect, "image3");
-		context->effect_image[4] = gs_effect_get_param_by_name(context->effect, "image4");
-		context->effect_image[5] = gs_effect_get_param_by_name(context->effect, "image5");
-		context->effect_image[6] = gs_effect_get_param_by_name(context->effect, "image6");
-		context->effect_image[7] = gs_effect_get_param_by_name(context->effect, "image7");
-		context->effect_image[8] = gs_effect_get_param_by_name(context->effect, "image8");
-		context->effect_image[9] = gs_effect_get_param_by_name(context->effect, "image9");
-		context->effect_image[10] = gs_effect_get_param_by_name(context->effect, "image10");
-		context->effect_image[11] = gs_effect_get_param_by_name(context->effect, "image11");
-		context->effect_image[12] = gs_effect_get_param_by_name(context->effect, "image12");
-		context->effect_image[13] = gs_effect_get_param_by_name(context->effect, "image13");
-		context->effect_image[14] = gs_effect_get_param_by_name(context->effect, "image14");
 		context->effect_texel_width = gs_effect_get_param_by_name(context->effect, "texelWidth");
 		context->effect_texel_height = gs_effect_get_param_by_name(context->effect, "texelHeight");
 		context->effect_sensitivity_factor = gs_effect_get_param_by_name(context->effect, "sensitivityFactor");
@@ -247,9 +157,6 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	gs_effect_set_float(context->effect_texel_width, 1.0f / (float)obs_source_get_base_width(target));
 	gs_effect_set_float(context->effect_texel_height, 1.0f / (float)obs_source_get_base_width(target));
 	gs_effect_set_float(context->effect_sensitivity_factor, context->sensitivity_factor);
-	for (int i = 1; i < MAX_PREVIOUS_TEXTURES; i++) {
-		gs_effect_set_texture(context->effect_image[i], context->previous_textures[i]);
-	}
 
 	obs_source_process_filter_tech_end(context->filter, context->effect, 0, 0, context->effect_tech);
 }
