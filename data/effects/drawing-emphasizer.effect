@@ -94,6 +94,6 @@ technique Draw
 	pass
 	{
 		vertex_shader = VSDefault(v_in);
-		pixel_shader  = PSEmphasizeDrawingAveragingBy2(v_in);
+		pixel_shader  = PSEmphasizeDrawingAveragingBy8(v_in);
 	}
 }
