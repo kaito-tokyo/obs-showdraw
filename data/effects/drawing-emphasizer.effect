@@ -1,9 +1,10 @@
 uniform float4x4 ViewProj;
 
 uniform texture2d image;
+uniform texture2d image1;
+uniform float sensitivityFactor;
 uniform float texelWidth;
 uniform float texelHeight;
-uniform float sensitivityFactor;
 
 sampler_state textureSampler {
 	Filter = Linear;
@@ -34,26 +35,36 @@ float calculateLuminance(float3 color)
 	return dot(color, float3(0.299, 0.587, 0.114));
 }
 
-float4 PSEmphasizeDrawing(VertDataOut v_in) : TARGET
+float calculateHorizontalSobel(texture2d image, float2 uv) {
+	return
+	  - calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, -texelHeight)).rgb)
+	  + calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, -texelHeight)).rgb)
+	  - 2.0 * calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, 0.0)).rgb)
+	  + 2.0 * calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, 0.0)).rgb)
+	  - calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, texelHeight)).rgb)
+	  + calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)).rgb);
+}
+
+float caculateVerticalSobel(texture2d image, float2 uv) {
+	return
+	  - calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, -texelHeight)).rgb)
+	  - 2.0 * calculateLuminance(image.Sample(textureSampler, uv + float2(0.0, -texelHeight)).rgb)
+	  - calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, -texelHeight)).rgb)
+	  + calculateLuminance(image.Sample(textureSampler, uv + float2(-texelWidth, texelHeight)).rgb)
+	  + 2.0 * calculateLuminance(image.Sample(textureSampler, uv + float2(0.0, texelHeight)).rgb)
+	  + calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)).rgb);
+}
+
+float4 PSEmphasizeDrawingAveragingBy2(VertDataOut v_in) : TARGET
 {
 	float horizontalSobelSum
-	  = -calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(-texelWidth, -texelHeight)).rgb)
-	  + calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(texelWidth, -texelHeight)).rgb)
-	  - 2.0 * calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(-texelWidth, 0.0)).rgb)
-	  + 2.0 * calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(texelWidth, 0.0)).rgb)
-	  - calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(-texelWidth, texelHeight)).rgb)
-	  + calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(texelWidth, texelHeight)).rgb);
-
-    float verticalSobelSum
-	  = -calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(-texelWidth, -texelHeight)).rgb)
-	  - 2.0 * calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(0.0, -texelHeight)).rgb)
-	  - calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(texelWidth, -texelHeight)).rgb)
-	  + calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(-texelWidth, texelHeight)).rgb)
-	  + 2.0 * calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(0.0, texelHeight)).rgb)
-	  + calculateLuminance(image.Sample(textureSampler, v_in.uv + float2(texelWidth, texelHeight)).rgb);
-
+	  = calculateHorizontalSobel(image, v_in.uv)
+	  + calculateHorizontalSobel(image1, v_in.uv);
+	float verticalSobelSum
+	  = caculateVerticalSobel(image, v_in.uv)
+	  + caculateVerticalSobel(image1, v_in.uv);
 	
-	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
+	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum) / 2.0;
 	edgeStrength = saturate(edgeStrength * sensitivityFactor);
 
 	return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
@@ -64,6 +75,6 @@ technique Draw
 	pass
 	{
 		vertex_shader = VSDefault(v_in);
-		pixel_shader  = PSEmphasizeDrawing(v_in);
+		pixel_shader  = PSEmphasizeDrawingAveragingBy2(v_in);
 	}
 }

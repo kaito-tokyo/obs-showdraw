@@ -30,17 +30,25 @@ const char *showdraw_get_name(void *type_data)
 	return obs_module_text("showdrawName");
 }
 
+#define MAX_PREVIOUS_TEXTURES 2
+
 struct showdraw_filter_context {
 	obs_source_t *filter;
+
+	int averaging_frames;
 	const char *effect_path;
 	const char *effect_tech;
-
 	float sensitivity_factor;
 
 	gs_effect_t *effect;
-	gs_eparam_t *effect_texel_width;
-	gs_eparam_t *effect_texel_height;
+	gs_effect_t *effect_image1;
 	gs_eparam_t *effect_sensitivity_factor;
+	gs_eparam_t *effect_texel_height;
+	gs_eparam_t *effect_texel_width;
+
+	uint32_t height;
+	gs_texture_t *previous_textures[MAX_PREVIOUS_TEXTURES];
+	uint32_t width;
 };
 
 void showdraw_update(void *data, obs_data_t *settings);
@@ -54,12 +62,23 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 	struct showdraw_filter_context *context = bzalloc(sizeof(struct showdraw_filter_context));
 
 	context->filter = source;
+
+	context->averaging_frames = 2;
 	context->effect_path = obs_module_file("effects/drawing-emphasizer.effect");
 	context->effect_tech = "Draw";
-
 	context->sensitivity_factor = 0.0f;
 
 	context->effect = NULL;
+	context->effect_image1 = NULL;
+	context->effect_sensitivity_factor = NULL;
+	context->effect_texel_height = NULL;
+	context->effect_texel_width = NULL;
+
+	context->height = 0;
+	for (int i = 0; i < MAX_PREVIOUS_TEXTURES; i++) {
+		context->previous_textures[i] = NULL;
+	}
+	context->width = 0;
 
 	showdraw_update(context, settings);
 
@@ -118,6 +137,32 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
+	uint32_t width = obs_source_get_base_width(target);
+	uint32_t height = obs_source_get_base_height(target);
+
+	if (context->previous_textures[0] == NULL || context->width != width || context->height != height) {
+		context->width = width;
+		context->height = height;
+
+		for (int i = 0; i < MAX_PREVIOUS_TEXTURES; i++) {
+			context->previous_textures[i] = gs_texture_create(width, height, GS_RGBA, 1, NULL, GS_DYNAMIC);
+		}
+	}
+
+	gs_texture_t *target_texture = obs_source_get_texture(target);
+	if (!target_texture) {
+		obs_log(LOG_ERROR, "Target texture not found");
+		obs_source_skip_video_filter(context->filter);
+		return;
+	}
+
+	gs_texture_t *latest_texture = context->previous_textures[MAX_PREVIOUS_TEXTURES];
+	for (int i = 0; i < MAX_PREVIOUS_TEXTURES - 1; i++) {
+		context->previous_textures[i] = context->previous_textures[i + 1];
+	}
+	context->previous_textures[0] = latest_texture;
+	gs_copy_texture(context->previous_textures[0], target_texture);
+
 	if (!context->effect) {
 		char *error_string = NULL;
 
@@ -129,6 +174,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		}
 
 		context->effect = effect;
+		context->effect_image1 = gs_effect_get_param_by_name(context->effect, "image1");
 		context->effect_texel_width = gs_effect_get_param_by_name(context->effect, "texelWidth");
 		context->effect_texel_height = gs_effect_get_param_by_name(context->effect, "texelHeight");
 		context->effect_sensitivity_factor = gs_effect_get_param_by_name(context->effect, "sensitivityFactor");
@@ -145,6 +191,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	gs_effect_set_float(context->effect_texel_width, 1.0f / (float)obs_source_get_base_width(target));
 	gs_effect_set_float(context->effect_texel_height, 1.0f / (float)obs_source_get_base_width(target));
 	gs_effect_set_float(context->effect_sensitivity_factor, context->sensitivity_factor);
+	gs_effect_set_texture(context->effect_image1, context->previous_textures[1]);
 
 	obs_source_process_filter_tech_end(context->filter, context->effect, 0, 0, context->effect_tech);
 }
