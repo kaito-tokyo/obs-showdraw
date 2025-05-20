@@ -200,10 +200,10 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 
 	gs_texture_t *latest_texture = context->previous_textures[MAX_PREVIOUS_TEXTURES - 1];
 	for (int i = 0; i < MAX_PREVIOUS_TEXTURES - 1; i++) {
-		context->previous_textures[i] = context->previous_textures[i + 1];
+		context->previous_textures[i + 1] = context->previous_textures[i];
 	}
+	gs_copy_texture(latest_texture, target_texture);
 	context->previous_textures[0] = latest_texture;
-	gs_copy_texture(context->previous_textures[0], target_texture);
 
 	if (!context->effect) {
 		char *error_string = NULL;
