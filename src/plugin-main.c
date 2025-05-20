@@ -118,7 +118,9 @@ obs_properties_t *showdraw_get_properties(void *data)
 	obs_properties_add_float_slider(props, "sensitivityFactorDb", obs_module_text("sensitivityFactorDb"), -50.0,
 					50.0, 0.01);
 
-	obs_property_t *propEffectTechnique = obs_properties_add_list(props, "effectTechnique", obs_module_text("effectTechnique"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_t *propEffectTechnique = obs_properties_add_list(props, "effectTechnique",
+								      obs_module_text("effectTechnique"),
+								      OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	obs_property_list_add_string(propEffectTechnique, "1", "Draw1");
 	obs_property_list_add_string(propEffectTechnique, "3", "Draw3");
 	obs_property_list_add_string(propEffectTechnique, "5", "Draw5");
