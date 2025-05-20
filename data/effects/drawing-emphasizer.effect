@@ -35,22 +35,22 @@ float luminance(float4 color) {
 
 float horizontalSobel(texture2d image, float2 uv) {
   return
-    - 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(-texelWidth, -texelHeight)).rgb)
-    + 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(texelWidth, -texelHeight)).rgb)
-    - 1.6666666666666666e-01 * luminance(image.Sample(textureSampler, uv + float2(-texelWidth, 0.0)).rgb)
-    + 1.6666666666666666e-01 * luminance(image.Sample(textureSampler, uv + float2(texelWidth, 0.0)).rgb)
-    - 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(-texelWidth, texelHeight)).rgb)
-    + 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)).rgb);
+    - 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(-texelWidth, -texelHeight)))
+    + 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(texelWidth, -texelHeight)))
+    - 1.6666666666666666e-01 * luminance(image.Sample(textureSampler, uv + float2(-texelWidth, 0.0)))
+    + 1.6666666666666666e-01 * luminance(image.Sample(textureSampler, uv + float2(texelWidth, 0.0)))
+    - 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(-texelWidth, texelHeight)))
+    + 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)));
 }
 
 float verticalSobel(texture2d image, float2 uv) {
   return
-    - 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(-texelWidth, -texelHeight)).rgb)
-    - 1.6666666666666666e-01 * luminance(image.Sample(textureSampler, uv + float2(0.0, -texelHeight)).rgb)
-    - 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(texelWidth, -texelHeight)).rgb)
-    + 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(-texelWidth, texelHeight)).rgb)
-    + 1.6666666666666666e-01 * luminance(image.Sample(textureSampler, uv + float2(0.0, texelHeight)).rgb)
-    + 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)).rgb);
+    - 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(-texelWidth, -texelHeight)))
+    - 1.6666666666666666e-01 * luminance(image.Sample(textureSampler, uv + float2(0.0, -texelHeight)))
+    - 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(texelWidth, -texelHeight)))
+    + 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(-texelWidth, texelHeight)))
+    + 1.6666666666666666e-01 * luminance(image.Sample(textureSampler, uv + float2(0.0, texelHeight)))
+    + 8.3333333333333329e-02 * luminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)));
 }
 
 float4 PSEmphasizeDrawing(VertDataOut v_in) : TARGET
