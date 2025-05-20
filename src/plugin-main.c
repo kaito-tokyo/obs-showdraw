@@ -146,12 +146,16 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	uint32_t width = obs_source_get_base_width(target);
 	uint32_t height = obs_source_get_base_height(target);
 
-	if (context->texrender == NULL || context->width != width || context->height != height) {
-		if (context->texrender) {
-			gs_texrender_destroy(context->texrender);
+	if (!context->texrender) {
+		context->texrender = gs_texrender_create(GS_RGBA, GS_ZS_NONE);
+		if (!context->texrender) {
+			obs_log(LOG_ERROR, "Failed to create texrender");
+			obs_source_skip_video_filter(context->filter);
+			return;
 		}
-		context->texrender = gs_texrender_create(width, height);
+	}
 
+	if (context->previous_textures[0] == NULL || context->width != width || context->height != height) {
 		for (int i = 0; i < MAX_PREVIOUS_TEXTURES; i++) {
 			context->previous_textures[i] = gs_texture_create(width, height, GS_RGBA, 1, NULL, GS_DYNAMIC);
 		}
@@ -161,6 +165,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	}
 
 	gs_texrender_reset(context->texrender);
+	obs_log(LOG_INFO, "Resetting texrender %p %u %u", context->texrender, width, height);
 	if (!gs_texrender_begin(context->texrender, width, height)) {
 		obs_log(LOG_ERROR, "Failed to begin texrender");
 		obs_source_skip_video_filter(context->filter);
@@ -234,7 +239,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 struct obs_source_info showdraw_filter = {
 	.id = "showdraw",
 	.type = OBS_SOURCE_TYPE_FILTER,
-	.output_flags = OBS_SOURCE_ASYNC_VIDEO,
+	.output_flags = OBS_SOURCE_VIDEO,
 	.get_name = showdraw_get_name,
 	.create = showdraw_create,
 	.destroy = showdraw_destroy,
