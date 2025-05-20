@@ -8,6 +8,13 @@ uniform texture2d image4;
 uniform texture2d image5;
 uniform texture2d image6;
 uniform texture2d image7;
+uniform texture2d image8;
+uniform texture2d image9;
+uniform texture2d image10;
+uniform texture2d image11;
+uniform texture2d image12;
+uniform texture2d image13;
+uniform texture2d image14;
 uniform float sensitivityFactor;
 uniform float texelWidth;
 uniform float texelHeight;
@@ -61,39 +68,296 @@ float caculateVerticalSobel(texture2d image, float2 uv) {
 	  + calculateLuminance(image.Sample(textureSampler, uv + float2(texelWidth, texelHeight)).rgb);
 }
 
-float4 PSEmphasizeDrawingAveragingBy8(VertDataOut v_in) : TARGET
+float4 PSEmphasizeDrawingAveragingBy1(VertDataOut v_in) : TARGET
 {
-	float horizontalSobelSum
-	  = calculateHorizontalSobel(image, v_in.uv)
-	  + calculateHorizontalSobel(image1, v_in.uv)
-	  + calculateHorizontalSobel(image2, v_in.uv)
-	  + calculateHorizontalSobel(image3, v_in.uv)
-	  + calculateHorizontalSobel(image4, v_in.uv)
-	  + calculateHorizontalSobel(image5, v_in.uv)
-	  + calculateHorizontalSobel(image6, v_in.uv)
-	  + calculateHorizontalSobel(image7, v_in.uv);
+	float horizontalSobelSum = calculateHorizontalSobel(image, v_in.uv);
 
-	float verticalSobelSum
-	  = caculateVerticalSobel(image, v_in.uv)
-	  + caculateVerticalSobel(image1, v_in.uv)
-	  + caculateVerticalSobel(image2, v_in.uv)
-	  + caculateVerticalSobel(image3, v_in.uv)
-	  + caculateVerticalSobel(image4, v_in.uv)
-	  + caculateVerticalSobel(image5, v_in.uv)
-	  + caculateVerticalSobel(image6, v_in.uv)
-	  + caculateVerticalSobel(image7, v_in.uv);
+	float verticalSobelSum = caculateVerticalSobel(image, v_in.uv);
 	
-	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum) / 2.0;
+	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
 	edgeStrength = saturate(edgeStrength * sensitivityFactor);
 
 	return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
 }
 
-technique Draw
+float4 PSEmphasizeDrawingAveragingBy3(VertDataOut v_in) : TARGET
+{
+	float horizontalSobelSum
+	  = 0.25 * calculateHorizontalSobel(image, v_in.uv)
+	  + 0.5 * calculateHorizontalSobel(image1, v_in.uv)
+	  + 0.25 * calculateHorizontalSobel(image2, v_in.uv);
+
+	float verticalSobelSum
+	  = 0.25 * caculateVerticalSobel(image, v_in.uv)
+	  + 0.5 * caculateVerticalSobel(image1, v_in.uv)
+	  + 0.25 * caculateVerticalSobel(image2, v_in.uv);
+	
+	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
+	edgeStrength = saturate(edgeStrength * sensitivityFactor);
+
+	return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
+}
+
+float4 PSEmphasizeDrawingAveragingBy5(VertDataOut v_in) : TARGET
+{
+	float horizontalSobelSum
+	  = 0.00390625 * calculateHorizontalSobel(image, v_in.uv)
+	  + 0.015625 * calculateHorizontalSobel(image1, v_in.uv)
+	  + 0.0234375 * calculateHorizontalSobel(image2, v_in.uv)
+	  + 0.015625 * calculateHorizontalSobel(image3, v_in.uv)
+	  + 0.00390625 * calculateHorizontalSobel(image4, v_in.uv);
+
+	float verticalSobelSum
+	  = 0.00390625 * caculateVerticalSobel(image, v_in.uv)
+	  + 0.015625 * caculateVerticalSobel(image1, v_in.uv)
+	  + 0.0234375 * caculateVerticalSobel(image2, v_in.uv)
+	  + 0.015625 * caculateVerticalSobel(image3, v_in.uv)
+	  + 0.00390625 * caculateVerticalSobel(image4, v_in.uv);
+	
+	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
+	edgeStrength = saturate(edgeStrength * sensitivityFactor);
+
+	return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
+}
+
+float4 PSEmphasizeDrawingAveragingBy7(VertDataOut v_in) : TARGET
+{
+	float horizontalSobelSum
+	  = 0.000244140625 * calculateHorizontalSobel(image, v_in.uv)
+	  + 0.00146484375 * calculateHorizontalSobel(image1, v_in.uv)
+	  + 0.003662109375 * calculateHorizontalSobel(image2, v_in.uv)
+	  + 0.0048828125 * calculateHorizontalSobel(image3, v_in.uv)
+	  + 0.003662109375 * calculateHorizontalSobel(image4, v_in.uv)
+	  + 0.00146484375 * calculateHorizontalSobel(image5, v_in.uv)
+	  + 0.000244140625 * calculateHorizontalSobel(image6, v_in.uv);
+
+	float verticalSobelSum
+	  = 0.000244140625 * caculateVerticalSobel(image, v_in.uv)
+	  + 0.00146484375 * caculateVerticalSobel(image1, v_in.uv)
+	  + 0.003662109375 * caculateVerticalSobel(image2, v_in.uv)
+	  + 0.0048828125 * caculateVerticalSobel(image3, v_in.uv)
+	  + 0.003662109375 * caculateVerticalSobel(image4, v_in.uv)
+	  + 0.00146484375 * caculateVerticalSobel(image5, v_in.uv)
+	  + 0.000244140625 * caculateVerticalSobel(image6, v_in.uv);
+	
+	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
+	edgeStrength = saturate(edgeStrength * sensitivityFactor);
+
+	return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
+}
+
+float4 PSEmphasizeDrawingAveragingBy9(VertDataOut v_in) : TARGET
+{
+	float horizontalSobelSum
+	  = 0.0000152587890625 * calculateHorizontalSobel(image, v_in.uv)
+	  + 0.0001220703125 * calculateHorizontalSobel(image1, v_in.uv)
+	  + 0.00042724609375 * calculateHorizontalSobel(image2, v_in.uv)
+	  + 0.0008544921875 * calculateHorizontalSobel(image3, v_in.uv)
+	  + 0.001068115234375 * calculateHorizontalSobel(image4, v_in.uv)
+	  + 0.0008544921875 * calculateHorizontalSobel(image5, v_in.uv)
+	  + 0.00042724609375 * calculateHorizontalSobel(image6, v_in.uv)
+	  + 0.0001220703125 * calculateHorizontalSobel(image7, v_in.uv)
+	  + 0.0000152587890625 * calculateHorizontalSobel(image8, v_in.uv);
+
+	float verticalSobelSum
+	  = 0.0000152587890625 * caculateVerticalSobel(image, v_in.uv)
+	  + 0.0001220703125 * caculateVerticalSobel(image1, v_in.uv)
+	  + 0.00042724609375 * caculateVerticalSobel(image2, v_in.uv)
+	  + 0.0008544921875 * caculateVerticalSobel(image3, v_in.uv)
+	  + 0.001068115234375 * caculateVerticalSobel(image4, v_in.uv)
+	  + 0.0008544921875 * caculateVerticalSobel(image5, v_in.uv)
+	  + 0.00042724609375 * caculateVerticalSobel(image6, v_in.uv)
+	  + 0.0001220703125 * caculateVerticalSobel(image7, v_in.uv)
+	  + 0.0000152587890625 * caculateVerticalSobel(image8, v_in.uv);
+	
+	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
+	edgeStrength = saturate(edgeStrength * sensitivityFactor);
+
+	return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
+}
+
+float4 PSEmphasizeDrawingAveragingBy11(VertDataOut v_in) : TARGET
+{
+	float horizontalSobelSum
+	  = 0.0009765625 * calculateHorizontalSobel(image, v_in.uv)
+	  + 0.009765625 * calculateHorizontalSobel(image1, v_in.uv)
+	  + 0.0439453125 * calculateHorizontalSobel(image2, v_in.uv)
+	  + 0.1171875 * calculateHorizontalSobel(image3, v_in.uv)
+	  + 0.205078125 * calculateHorizontalSobel(image4, v_in.uv)
+	  + 0.24609375 * calculateHorizontalSobel(image5, v_in.uv)
+	  + 0.205078125 * calculateHorizontalSobel(image6, v_in.uv)
+	  + 0.1171875 * calculateHorizontalSobel(image7, v_in.uv)
+	  + 0.0439453125 * calculateHorizontalSobel(image8, v_in.uv)
+	  + 0.009765625 * calculateHorizontalSobel(image9, v_in.uv)
+	  + 0.0009765625 * calculateHorizontalSobel(image10, v_in.uv);
+
+	float verticalSobelSum
+	  = 0.0009765625 * caculateVerticalSobel(image, v_in.uv)
+	  + 0.009765625 * caculateVerticalSobel(image1, v_in.uv)
+	  + 0.0439453125 * caculateVerticalSobel(image2, v_in.uv)
+	  + 0.1171875 * caculateVerticalSobel(image3, v_in.uv)
+	  + 0.205078125 * caculateVerticalSobel(image4, v_in.uv)
+	  + 0.24609375 * caculateVerticalSobel(image5, v_in.uv)
+	  + 0.205078125 * caculateVerticalSobel(image6, v_in.uv)
+	  + 0.1171875 * caculateVerticalSobel(image7, v_in.uv)
+	  + 0.0439453125 * caculateVerticalSobel(image8, v_in.uv)
+	  + 0.009765625 * caculateVerticalSobel(image9, v_in.uv)
+	  + 0.0009765625 * caculateVerticalSobel(image10, v_in.uv);
+	
+	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
+	edgeStrength = saturate(edgeStrength * sensitivityFactor);
+
+	return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
+}
+
+float4 PSEmphasizeDrawingAveragingBy13(VertDataOut v_in) : TARGET
+{
+	float horizontalSobelSum
+	  = 0.0000244140625 * calculateHorizontalSobel(image, v_in.uv)
+	  + 0.00029296875 * calculateHorizontalSobel(image1, v_in.uv)
+	  + 0.001611328125 * calculateHorizontalSobel(image2, v_in.uv)
+	  + 0.005869140625 * calculateHorizontalSobel(image3, v_in.uv)
+	  + 0.0152587890625 * calculateHorizontalSobel(image4, v_in.uv)
+	  + 0.030517578125 * calculateHorizontalSobel(image5, v_in.uv)
+	  + 0.0439453125 * calculateHorizontalSobel(image6, v_in.uv)
+	  + 0.030517578125 * calculateHorizontalSobel(image7, v_in.uv)
+	  + 0.0152587890625 * calculateHorizontalSobel(image8, v_in.uv)
+	  + 0.005869140625 * calculateHorizontalSobel(image9, v_in.uv)
+	  + 0.001611328125 * calculateHorizontalSobel(image10, v_in.uv)
+	  + 0.00029296875 * calculateHorizontalSobel(image11, v_in.uv)
+	  + 0.0000244140625 * calculateHorizontalSobel(image12, v_in.uv);
+
+	float verticalSobelSum
+	  = 0.0000244140625 * caculateVerticalSobel(image, v_in.uv)
+	  + 0.00029296875 * caculateVerticalSobel(image1, v_in.uv)
+	  + 0.001611328125 * caculateVerticalSobel(image2, v_in.uv)
+	  + 0.005869140625 * caculateVerticalSobel(image3, v_in.uv)
+	  + 0.0152587890625 * caculateVerticalSobel(image4, v_in.uv)
+	  + 0.030517578125 * caculateVerticalSobel(image5, v_in.uv)
+	  + 0.0439453125 * caculateVerticalSobel(image6, v_in.uv)
+	  + 0.030517578125 * caculateVerticalSobel(image7, v_in.uv)
+	  + 0.0152587890625 * caculateVerticalSobel(image8, v_in.uv)
+	  + 0.005869140625 * caculateVerticalSobel(image9, v_in.uv)
+	  + 0.001611328125 * caculateVerticalSobel(image10, v_in.uv)
+	  + 0.00029296875 * caculateVerticalSobel(image11, v_in.uv)
+	  + 0.0000244140625 * caculateVerticalSobel(image12, v_in.uv);
+	
+	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
+	edgeStrength = saturate(edgeStrength * sensitivityFactor);
+
+	return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
+}
+
+float4 PSEmphasizeDrawingAveragingBy15(VertDataOut v_in) : TARGET
+{
+	float horizontalSobelSum
+	  = 1.52587890625e-05 * calculateHorizontalSobel(image, v_in.uv)
+	  + 0.0002288818359375 * calculateHorizontalSobel(image1, v_in.uv)
+	  + 0.0011444091796875 * calculateHorizontalSobel(image2, v_in.uv)
+	  + 0.003662109375 * calculateHorizontalSobel(image3, v_in.uv)
+	  + 0.008056640625 * calculateHorizontalSobel(image4, v_in.uv)
+	  + 0.01409912109375 * calculateHorizontalSobel(image5, v_in.uv)
+	  + 0.0201416015625 * calculateHorizontalSobel(image6, v_in.uv)
+	  + 0.02435302734375 * calculateHorizontalSobel(image7, v_in.uv)
+	  + 0.0201416015625 * calculateHorizontalSobel(image8, v_in.uv)
+	  + 0.01409912109375 * calculateHorizontalSobel(image9, v_in.uv)
+	  + 0.008056640625 * calculateHorizontalSobel(image10, v_in.uv)
+	  + 0.003662109375 * calculateHorizontalSobel(image11, v_in.uv)
+	  + 0.0011444091796875 * calculateHorizontalSobel(image12, v_in.uv)
+	  + 0.0002288818359375 * calculateHorizontalSobel(image13, v_in.uv)
+	  + 1.52587890625e-05 * calculateHorizontalSobel(image14, v_in.uv);
+
+	float verticalSobelSum
+	  = 1.52587890625e-05 * caculateVerticalSobel(image, v_in.uv)
+	  + 0.0002288818359375 * caculateVerticalSobel(image1, v_in.uv)
+	  + 0.0011444091796875 * caculateVerticalSobel(image2, v_in.uv)
+	  + 0.003662109375 * caculateVerticalSobel(image3, v_in.uv)
+	  + 0.008056640625 * caculateVerticalSobel(image4, v_in.uv)
+	  + 0.01409912109375 * caculateVerticalSobel(image5, v_in.uv)
+	  + 0.0201416015625 * caculateVerticalSobel(image6, v_in.uv)
+	  + 0.02435302734375 * caculateVerticalSobel(image7, v_in.uv)
+	  + 0.0201416015625 * caculateVerticalSobel(image8, v_in.uv)
+	  + 0.01409912109375 * caculateVerticalSobel(image9, v_in.uv)
+	  + 0.008056640625 * caculateVerticalSobel(image10, v_in.uv)
+	  + 0.003662109375 * caculateVerticalSobel(image11, v_in.uv)
+	  + 0.0011444091796875 * caculateVerticalSobel(image12, v_in.uv)
+	  + 0.0002288818359375 * caculateVerticalSobel(image13, v_in.uv)
+	  + 1.52587890625e-05 * caculateVerticalSobel(image14, v_in.uv);
+	
+	float edgeStrength = sqrt(horizontalSobelSum * horizontalSobelSum + verticalSobelSum * verticalSobelSum);
+	edgeStrength = saturate(edgeStrength * sensitivityFactor);
+
+	return float4(edgeStrength, edgeStrength, edgeStrength, 1.0);
+}
+
+technique Draw1
 {
 	pass
 	{
 		vertex_shader = VSDefault(v_in);
-		pixel_shader  = PSEmphasizeDrawingAveragingBy8(v_in);
+		pixel_shader  = PSEmphasizeDrawingAveragingBy1(v_in);
+	}
+}
+
+technique Draw3
+{
+	pass
+	{
+		vertex_shader = VSDefault(v_in);
+		pixel_shader  = PSEmphasizeDrawingAveragingBy3(v_in);
+	}
+}
+
+technique Draw5
+{
+	pass
+	{
+		vertex_shader = VSDefault(v_in);
+		pixel_shader  = PSEmphasizeDrawingAveragingBy5(v_in);
+	}
+}
+
+technique Draw7
+{
+	pass
+	{
+		vertex_shader = VSDefault(v_in);
+		pixel_shader  = PSEmphasizeDrawingAveragingBy7(v_in);
+	}
+}
+
+technique Draw9
+{
+	pass
+	{
+		vertex_shader = VSDefault(v_in);
+		pixel_shader  = PSEmphasizeDrawingAveragingBy9(v_in);
+	}
+}
+
+technique Draw11
+{
+	pass
+	{
+		vertex_shader = VSDefault(v_in);
+		pixel_shader  = PSEmphasizeDrawingAveragingBy11(v_in);
+	}
+}
+
+technique Draw13
+{
+	pass
+	{
+		vertex_shader = VSDefault(v_in);
+		pixel_shader  = PSEmphasizeDrawingAveragingBy13(v_in);
+	}
+}
+
+technique Draw15
+{
+	pass
+	{
+		vertex_shader = VSDefault(v_in);
+		pixel_shader  = PSEmphasizeDrawingAveragingBy15(v_in);
 	}
 }

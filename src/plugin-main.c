@@ -30,12 +30,11 @@ const char *showdraw_get_name(void *type_data)
 	return obs_module_text("showdrawName");
 }
 
-#define MAX_PREVIOUS_TEXTURES 8
+#define MAX_PREVIOUS_TEXTURES 15
 
 struct showdraw_filter_context {
 	obs_source_t *filter;
 
-	int averaging_frames;
 	const char *effect_path;
 	const char *effect_tech;
 	float sensitivity_factor;
@@ -65,7 +64,6 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 
 	context->filter = source;
 
-	context->averaging_frames = 2;
 	context->effect_path = obs_module_file("effects/drawing-emphasizer.effect");
 	context->effect_tech = "Draw";
 	context->sensitivity_factor = 0.0f;
@@ -108,6 +106,7 @@ void showdraw_destroy(void *data)
 void showdraw_get_defaults(obs_data_t *data)
 {
 	obs_data_set_default_double(data, "sensitivityFactorDb", 0.0);
+	obs_data_set_default_string(data, "effectTechnique", "Draw1");
 }
 
 obs_properties_t *showdraw_get_properties(void *data)
@@ -116,8 +115,18 @@ obs_properties_t *showdraw_get_properties(void *data)
 
 	obs_properties_t *props = obs_properties_create();
 
-	obs_properties_add_float_slider(props, "sensitivityFactorDb", obs_module_text("sensitivityFactorDb"), -20.0,
-					20.0, 0.01);
+	obs_properties_add_float_slider(props, "sensitivityFactorDb", obs_module_text("sensitivityFactorDb"), -50.0,
+					50.0, 0.01);
+
+	obs_property_t *propEffectTechnique = obs_properties_add_list(props, "effectTechnique", obs_module_text("effectTechnique"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_list_add_string(propEffectTechnique, "1", "Draw1");
+	obs_property_list_add_string(propEffectTechnique, "3", "Draw3");
+	obs_property_list_add_string(propEffectTechnique, "5", "Draw5");
+	obs_property_list_add_string(propEffectTechnique, "7", "Draw7");
+	obs_property_list_add_string(propEffectTechnique, "9", "Draw9");
+	obs_property_list_add_string(propEffectTechnique, "11", "Draw11");
+	obs_property_list_add_string(propEffectTechnique, "13", "Draw13");
+	obs_property_list_add_string(propEffectTechnique, "15", "Draw15");
 
 	return props;
 }
@@ -127,6 +136,7 @@ void showdraw_update(void *data, obs_data_t *settings)
 	struct showdraw_filter_context *context = (struct showdraw_filter_context *)data;
 
 	context->sensitivity_factor = (float)pow(10.0, obs_data_get_double(settings, "sensitivityFactorDb") / 10.0);
+	context->effect_tech = obs_data_get_string(settings, "effectTechnique");
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
@@ -213,6 +223,13 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		context->effect_image[5] = gs_effect_get_param_by_name(context->effect, "image5");
 		context->effect_image[6] = gs_effect_get_param_by_name(context->effect, "image6");
 		context->effect_image[7] = gs_effect_get_param_by_name(context->effect, "image7");
+		context->effect_image[8] = gs_effect_get_param_by_name(context->effect, "image8");
+		context->effect_image[9] = gs_effect_get_param_by_name(context->effect, "image9");
+		context->effect_image[10] = gs_effect_get_param_by_name(context->effect, "image10");
+		context->effect_image[11] = gs_effect_get_param_by_name(context->effect, "image11");
+		context->effect_image[12] = gs_effect_get_param_by_name(context->effect, "image12");
+		context->effect_image[13] = gs_effect_get_param_by_name(context->effect, "image13");
+		context->effect_image[14] = gs_effect_get_param_by_name(context->effect, "image14");
 		context->effect_texel_width = gs_effect_get_param_by_name(context->effect, "texelWidth");
 		context->effect_texel_height = gs_effect_get_param_by_name(context->effect, "texelHeight");
 		context->effect_sensitivity_factor = gs_effect_get_param_by_name(context->effect, "sensitivityFactor");
