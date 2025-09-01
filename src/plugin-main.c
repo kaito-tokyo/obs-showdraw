@@ -43,7 +43,7 @@ struct showdraw_filter_context {
 
 	const char *effect_path;
 
-	gs_texrender_t *texrender;
+	gs_texture_t *source_texture;
 
 	gs_effect_t *effect;
 
@@ -52,6 +52,7 @@ struct showdraw_filter_context {
 	gs_eparam_t *effect_texel_width;
 
 	gs_technique_t *extract_luminance_tech;
+	gs_technique_t *draw_tech;
 };
 
 void showdraw_update(void *data, obs_data_t *settings);
@@ -68,11 +69,13 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 
 	context->effect_path = obs_module_file("effects/drawing-emphasizer.effect");
 
-	context->texrender = NULL;
+	context->source_texture = NULL;
 
 	context->effect = NULL;
 	context->effect_texel_height = NULL;
 	context->effect_texel_width = NULL;
+
+	context->extract_luminance_tech = NULL;
 
 	showdraw_update(context, settings);
 
@@ -85,9 +88,9 @@ void showdraw_destroy(void *data)
 
 	struct showdraw_filter_context *context = (struct showdraw_filter_context *)data;
 
-	if (context->texrender) {
-		gs_texrender_destroy(context->texrender);
-		context->texrender = NULL;
+	if (context->source_texture) {
+		gs_texture_destroy(context->source_texture);
+		context->source_texture = NULL;
 	}
 
 	if (context->effect) {
@@ -146,17 +149,6 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	if (!context->texrender) {
-		gs_texrender_t *texrender = gs_texrender_create(GS_BGRA, GS_ZS_NONE);
-		if (!texrender) {
-			obs_log(LOG_ERROR, "Could not create texture renderer");
-			obs_source_skip_video_filter(context->filter);
-			return;
-		}
-
-		context->texrender = texrender;
-	}
-
 	if (!context->effect) {
 		char *error_string = NULL;
 
@@ -173,9 +165,31 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		context->effect_texel_width = gs_effect_get_param_by_name(context->effect, "texelWidth");
 		context->effect_texel_height = gs_effect_get_param_by_name(context->effect, "texelHeight");
 
-		context->extract_luminance_tech = gs_effect_get_technique(context->effect, "Draw");
+		context->extract_luminance_tech = gs_effect_get_technique(context->effect, "ExtractLuminance");
 
 		obs_log(LOG_INFO, "Effect loaded successfully");
+	}
+
+	const uint32_t width = obs_source_get_width(target);
+	const uint32_t height = obs_source_get_height(target);
+
+	if (width == 0 || height == 0) {
+		obs_log(LOG_DEBUG, "Target source has zero width or height");
+		obs_source_skip_video_filter(context->filter);
+		return;
+	}
+
+	if (!context->source_texture || gs_texture_get_width(context->source_texture) != width ||
+	    gs_texture_get_height(context->source_texture) != height) {
+		if (context->source_texture) {
+			gs_texture_destroy(context->source_texture);
+		}
+		context->source_texture = gs_texture_create(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
+		if (!context->source_texture) {
+			obs_log(LOG_ERROR, "Could not create source texture");
+			obs_source_skip_video_filter(context->filter);
+			return;
+		}
 	}
 
 	long long extractionMode = context->extraction_mode == EXTRACTION_MODE_DEFAULT ? EXTRACTION_MODE_PASSTHROUGH
@@ -186,42 +200,24 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	const uint32_t base_width = obs_source_get_base_width(target);
-	const uint32_t base_height = obs_source_get_base_height(target);
+	gs_texture_t *default_render_target = gs_get_render_target();
 
-	gs_texrender_reset(context->texrender);
-
-	if (!gs_texrender_begin(context->texrender, base_width, base_height)) {
-		obs_log(LOG_ERROR, "Could not begin texture rendering");
+	if (!obs_source_process_filter_begin(context->filter, GS_BGRA, OBS_ALLOW_DIRECT_RENDERING)) {
+		obs_log(LOG_ERROR, "Could not begin processing filter");
 		obs_source_skip_video_filter(context->filter);
+		gs_set_render_target(default_render_target, NULL);
 		return;
 	}
 
-	const gs_texture_t *texture = gs_texrender_get_texture(context->texrender);
+	gs_set_render_target(context->source_texture, NULL);
 
-	struct vec4 background;
-	vec4_zero(&background);
+	obs_source_process_filter_end(context->filter, context->effect, width, height);
 
-	gs_clear(GS_CLEAR_COLOR, &background, 0.0f, 0);
-	gs_ortho(0.0f, (float)base_width, (float)base_height, 0.0f, -100.0f, 100.0f);
+	gs_effect_set_texture(context->effect_image, context->source_texture);
 
-	gs_blend_state_push();
-	gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+	gs_set_render_target(default_render_target, NULL);
 
-	obs_source_video_render(target);
-
-	gs_blend_state_pop();
-
-	gs_effect_set_texture(context->effect_image, texture);
-
-	const size_t extract_luminance_passes = gs_technique_begin(context->extract_luminance_tech);
-	for (size_t i = 0; i < extract_luminance_passes; i++) {
-		if (gs_technique_begin_pass(context->extract_luminance_tech, i)) {
-			gs_draw_sprite(texture, 0, base_width, base_height);
-			gs_technique_end_pass(context->extract_luminance_tech);
-		}
-	}
-	gs_technique_end(context->extract_luminance_tech);
+	obs_source_process_filter_tech_end(context->filter, context->effect, width, height, "ExtractLuminance");
 }
 
 struct obs_source_info showdraw_filter = {
