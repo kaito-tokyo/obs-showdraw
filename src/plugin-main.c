@@ -41,20 +41,17 @@ struct showdraw_filter_context {
 
 	long long extraction_mode;
 
-	const char *luminance_extraction_effect_path;
-	const char *luminance_extraction_effect_tech;
-	gs_effect_t *luminance_extraction_effect;
-	gs_eparam_t *luminance_extraction_effect_texel_height;
-	gs_eparam_t *luminance_extraction_effect_texel_width;
-
 	const char *effect_path;
-	const char *effect_tech;
-	float sensitivity_factor;
+
+	gs_texrender_t *texrender;
 
 	gs_effect_t *effect;
-	gs_eparam_t *effect_sensitivity_factor;
+
+	gs_eparam_t *effect_image;
 	gs_eparam_t *effect_texel_height;
 	gs_eparam_t *effect_texel_width;
+
+	gs_technique_t *extract_luminance_tech;
 };
 
 void showdraw_update(void *data, obs_data_t *settings);
@@ -69,19 +66,11 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 
 	context->filter = source;
 
-	context->luminance_extraction_effect_path = obs_module_file("effects/luminance-extraction.effect");
-	context->luminance_extraction_effect_tech = "Draw";
-
-	context->luminance_extraction_effect = NULL;
-	context->luminance_extraction_effect_texel_height = NULL;
-	context->luminance_extraction_effect_texel_width = NULL;
-
 	context->effect_path = obs_module_file("effects/drawing-emphasizer.effect");
-	context->effect_tech = "Draw";
-	context->sensitivity_factor = 0.0f;
+
+	context->texrender = NULL;
 
 	context->effect = NULL;
-	context->effect_sensitivity_factor = NULL;
 	context->effect_texel_height = NULL;
 	context->effect_texel_width = NULL;
 
@@ -96,9 +85,9 @@ void showdraw_destroy(void *data)
 
 	struct showdraw_filter_context *context = (struct showdraw_filter_context *)data;
 
-	if (context->luminance_extraction_effect) {
-		gs_effect_destroy(context->luminance_extraction_effect);
-		context->luminance_extraction_effect = NULL;
+	if (context->texrender) {
+		gs_texrender_destroy(context->texrender);
+		context->texrender = NULL;
 	}
 
 	if (context->effect) {
@@ -112,7 +101,6 @@ void showdraw_destroy(void *data)
 void showdraw_get_defaults(obs_data_t *data)
 {
 	obs_data_set_default_double(data, "sensitivityFactorDb", 0.0);
-	obs_data_set_default_string(data, "effectTechnique", "Draw");
 	obs_data_set_default_int(data, "extractionMode", EXTRACTION_MODE_DEFAULT);
 }
 
@@ -124,11 +112,6 @@ obs_properties_t *showdraw_get_properties(void *data)
 
 	obs_properties_add_float_slider(props, "sensitivityFactorDb", obs_module_text("sensitivityFactorDb"), -10.0,
 					100.0, 0.001);
-
-	obs_property_t *propEffectTechnique = obs_properties_add_list(props, "effectTechnique",
-								      obs_module_text("effectTechnique"),
-								      OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-	obs_property_list_add_string(propEffectTechnique, "Default", "Draw");
 
 	obs_property_t *propExtractionMode = obs_properties_add_list(
 		props, "extractionMode", obs_module_text("extractionMode"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
@@ -146,8 +129,6 @@ void showdraw_update(void *data, obs_data_t *settings)
 {
 	struct showdraw_filter_context *context = (struct showdraw_filter_context *)data;
 
-	context->sensitivity_factor = (float)pow(10.0, obs_data_get_double(settings, "sensitivityFactorDb") / 10.0);
-	context->effect_tech = obs_data_get_string(settings, "effectTechnique");
 	context->extraction_mode = obs_data_get_int(settings, "extractionMode");
 }
 
@@ -165,24 +146,15 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	if (!context->luminance_extraction_effect) {
-		char *error_string = NULL;
-
-		gs_effect_t *luminance_extraction_effect =
-			gs_effect_create_from_file(context->luminance_extraction_effect_path, &error_string);
-		if (!luminance_extraction_effect) {
-			obs_log(LOG_ERROR, "Error loading luminance extraction effect: %s", error_string);
-			bfree(error_string);
+	if (!context->texrender) {
+		gs_texrender_t *texrender = gs_texrender_create(GS_BGRA, GS_ZS_NONE);
+		if (!texrender) {
+			obs_log(LOG_ERROR, "Could not create texture renderer");
+			obs_source_skip_video_filter(context->filter);
 			return;
 		}
 
-		context->luminance_extraction_effect = luminance_extraction_effect;
-		context->luminance_extraction_effect_texel_width =
-			gs_effect_get_param_by_name(context->luminance_extraction_effect, "texelWidth");
-		context->luminance_extraction_effect_texel_height =
-			gs_effect_get_param_by_name(context->luminance_extraction_effect, "texelHeight");
-
-		obs_log(LOG_INFO, "Luminance extraction effect loaded successfully");
+		context->texrender = texrender;
 	}
 
 	if (!context->effect) {
@@ -196,9 +168,12 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		}
 
 		context->effect = effect;
+
+		context->effect_image = gs_effect_get_param_by_name(context->effect, "image");
 		context->effect_texel_width = gs_effect_get_param_by_name(context->effect, "texelWidth");
 		context->effect_texel_height = gs_effect_get_param_by_name(context->effect, "texelHeight");
-		context->effect_sensitivity_factor = gs_effect_get_param_by_name(context->effect, "sensitivityFactor");
+
+		context->extract_luminance_tech = gs_effect_get_technique(context->effect, "Draw");
 
 		obs_log(LOG_INFO, "Effect loaded successfully");
 	}
@@ -211,19 +186,42 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	if (!obs_source_process_filter_begin(context->filter, GS_RGBA, OBS_ALLOW_DIRECT_RENDERING)) {
-		obs_log(LOG_ERROR, "Could not begin filter processing");
+	const uint32_t base_width = obs_source_get_base_width(target);
+	const uint32_t base_height = obs_source_get_base_height(target);
+
+	gs_texrender_reset(context->texrender);
+
+	if (!gs_texrender_begin(context->texrender, base_width, base_height)) {
+		obs_log(LOG_ERROR, "Could not begin texture rendering");
 		obs_source_skip_video_filter(context->filter);
 		return;
 	}
 
-	gs_effect_set_float(context->luminance_extraction_effect_texel_width,
-			    1.0f / (float)obs_source_get_base_width(target));
-	gs_effect_set_float(context->luminance_extraction_effect_texel_height,
-			    1.0f / (float)obs_source_get_base_height(target));
+	const gs_texture_t *texture = gs_texrender_get_texture(context->texrender);
 
-	obs_source_process_filter_tech_end(context->filter, context->luminance_extraction_effect, 0, 0,
-					   context->effect_tech);
+	struct vec4 background;
+	vec4_zero(&background);
+
+	gs_clear(GS_CLEAR_COLOR, &background, 0.0f, 0);
+	gs_ortho(0.0f, (float)base_width, (float)base_height, 0.0f, -100.0f, 100.0f);
+
+	gs_blend_state_push();
+	gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+
+	obs_source_video_render(target);
+
+	gs_blend_state_pop();
+
+	gs_effect_set_texture(context->effect_image, texture);
+
+	const size_t extract_luminance_passes = gs_technique_begin(context->extract_luminance_tech);
+	for (size_t i = 0; i < extract_luminance_passes; i++) {
+		if (gs_technique_begin_pass(context->extract_luminance_tech, i)) {
+			gs_draw_sprite(texture, 0, base_width, base_height);
+			gs_technique_end_pass(context->extract_luminance_tech);
+		}
+	}
+	gs_technique_end(context->extract_luminance_tech);
 }
 
 struct obs_source_info showdraw_filter = {
