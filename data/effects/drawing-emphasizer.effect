@@ -1,9 +1,11 @@
 uniform float4x4 ViewProj;
 
 uniform texture2d image;
-uniform float sensitivityFactor;
+
 uniform float texelWidth;
 uniform float texelHeight;
+
+uniform float sensitivityFactor;
 
 sampler_state textureSampler {
   Filter = Linear;

@@ -1,0 +1,46 @@
+uniform float4x4 ViewProj;
+
+uniform texture2d image;
+
+uniform float texelWidth;
+uniform float texelHeight;
+
+sampler_state textureSampler {
+  Filter = Linear;
+  AddressU = Clamp;
+  AddressV = Clamp;
+};
+
+struct VertDataIn {
+  float4 pos : POSITION;
+  float2 uv : TEXCOORD0;
+};
+
+struct VertDataOut {
+  float4 pos : POSITION;
+  float2 uv : TEXCOORD0;
+};
+
+VertDataOut VSDefault(VertDataIn v_in)
+{
+  VertDataOut v_out;
+  v_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+  v_out.uv  = v_in.uv;
+  return v_out;
+}
+
+float4 PSLuminanceExtraction(VertDataOut v_in) : TARGET
+{
+  float4 color = image.Sample(textureSampler, v_in.uv);
+  float luminance = dot(color.rgb, float3(0.299, 0.587, 0.114));
+  return float4(luminance, luminance, luminance, 1.0);
+}
+
+technique Draw
+{
+  pass
+  {
+    vertex_shader = VSDefault(v_in);
+    pixel_shader  = PSLuminanceExtraction(v_in);
+  }
+}
