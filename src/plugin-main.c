@@ -48,6 +48,7 @@ struct showdraw_filter_context {
 	gs_effect_t *effect;
 
 	gs_eparam_t *effect_image;
+	gs_eparam_t *effect_input_image;
 	gs_eparam_t *effect_texel_height;
 	gs_eparam_t *effect_texel_width;
 
@@ -145,7 +146,6 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 
 	if (!target) {
 		obs_log(LOG_ERROR, "Target source not found");
-		obs_source_skip_video_filter(context->filter);
 		return;
 	}
 
@@ -162,6 +162,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		context->effect = effect;
 
 		context->effect_image = gs_effect_get_param_by_name(context->effect, "image");
+		context->effect_input_image = gs_effect_get_param_by_name(context->effect, "inputImage");
 		context->effect_texel_width = gs_effect_get_param_by_name(context->effect, "texelWidth");
 		context->effect_texel_height = gs_effect_get_param_by_name(context->effect, "texelHeight");
 
@@ -211,13 +212,21 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 
 	gs_set_render_target(context->source_texture, NULL);
 
-	obs_source_process_filter_end(context->filter, context->effect, width, height);
+	obs_source_process_filter_end(context->filter, context->effect, 0, 0);
 
-	gs_effect_set_texture(context->effect_image, context->source_texture);
+	gs_effect_set_texture(context->effect_input_image, context->source_texture);
 
 	gs_set_render_target(default_render_target, NULL);
+	gs_ortho(0.0f, (float)width, 0.0f, (float)height, -100.0f, 100.0f);
 
-	obs_source_process_filter_tech_end(context->filter, context->effect, width, height, "ExtractLuminance");
+	const size_t extract_luminance_passes = gs_technique_begin(context->extract_luminance_tech);
+	for (size_t i = 0; i < extract_luminance_passes; i++) {
+		if (gs_technique_begin_pass(context->extract_luminance_tech, i)) {
+			gs_draw_sprite(context->source_texture, 0, width, height);
+			gs_technique_end_pass(context->extract_luminance_tech);
+		}
+	}
+	gs_technique_end(context->extract_luminance_tech);
 }
 
 struct obs_source_info showdraw_filter = {

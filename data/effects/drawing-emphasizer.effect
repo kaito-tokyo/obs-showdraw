@@ -1,5 +1,6 @@
 uniform float4x4 ViewProj;
 uniform texture2d image;
+uniform texture2d inputImage;
 
 sampler_state def_sampler {
 	Filter   = Linear;
@@ -22,7 +23,7 @@ VertInOut VSDefault(VertInOut vert_in)
 
 float4 PSExtractLuminance(VertInOut vert_in) : TARGET
 {
-	float4 color = image.Sample(def_sampler, vert_in.uv);
+	float4 color = inputImage.Sample(def_sampler, vert_in.uv);
 	float luminance = dot(color.rgb, float3(0.299, 0.587, 0.114));
 	return float4(luminance, luminance, luminance, 1.0);
 }
