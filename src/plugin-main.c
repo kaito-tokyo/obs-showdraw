@@ -130,9 +130,8 @@ obs_properties_t *showdraw_get_properties(void *data)
 								      OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	obs_property_list_add_string(propEffectTechnique, "Default", "Draw");
 
-	obs_property_t *propExtractionMode = obs_properties_add_list(props, "extractionMode",
-								     obs_module_text("extractionMode"),
-								     OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_t *propExtractionMode = obs_properties_add_list(
+		props, "extractionMode", obs_module_text("extractionMode"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeDefault"),
 				  EXTRACTION_MODE_DEFAULT);
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModePassthrough"),
@@ -218,10 +217,13 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	gs_effect_set_float(context->luminance_extraction_effect_texel_width, 1.0f / (float)obs_source_get_base_width(target));
-	gs_effect_set_float(context->luminance_extraction_effect_texel_height, 1.0f / (float)obs_source_get_base_height(target));
+	gs_effect_set_float(context->luminance_extraction_effect_texel_width,
+			    1.0f / (float)obs_source_get_base_width(target));
+	gs_effect_set_float(context->luminance_extraction_effect_texel_height,
+			    1.0f / (float)obs_source_get_base_height(target));
 
-	obs_source_process_filter_tech_end(context->filter, context->luminance_extraction_effect, 0, 0, context->effect_tech);
+	obs_source_process_filter_tech_end(context->filter, context->luminance_extraction_effect, 0, 0,
+					   context->effect_tech);
 }
 
 struct obs_source_info showdraw_filter = {
