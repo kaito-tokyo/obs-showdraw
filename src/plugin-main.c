@@ -212,17 +212,27 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 
 	gs_set_render_target(context->source_texture, NULL);
 
+	gs_viewport_push();
+	gs_projection_push();
+	gs_matrix_push();
+
+	gs_set_viewport(0, 0, width, height);
+	gs_matrix_identity();
+
 	obs_source_process_filter_end(context->filter, context->effect, 0, 0);
 
 	gs_effect_set_texture(context->effect_input_image, context->source_texture);
 
 	gs_set_render_target(default_render_target, NULL);
-	gs_ortho(0.0f, (float)width, 0.0f, (float)height, -100.0f, 100.0f);
+
+	gs_viewport_pop();
+	gs_projection_pop();
+	gs_matrix_pop();
 
 	const size_t extract_luminance_passes = gs_technique_begin(context->extract_luminance_tech);
 	for (size_t i = 0; i < extract_luminance_passes; i++) {
 		if (gs_technique_begin_pass(context->extract_luminance_tech, i)) {
-			gs_draw_sprite(context->source_texture, 0, width, height);
+			gs_draw_sprite(context->source_texture, 0, 0, 0);
 			gs_technique_end_pass(context->extract_luminance_tech);
 		}
 	}
