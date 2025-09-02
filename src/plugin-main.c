@@ -474,7 +474,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 
 		gs_effect_set_float(context->effect_float_texel_width, texelWidth);
 		gs_effect_set_float(context->effect_float_texel_height, texelHeight);
-		gs_effect_set_int(context->effect_kernel_size, context->motion_map_kernel_size);
+		gs_effect_set_int(context->effect_kernel_size, (int)context->motion_map_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_calculate_motion_map);
 		for (size_t i = 0; i < passes; i++) {
