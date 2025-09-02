@@ -34,7 +34,26 @@ float4 PSExtractLuminance(VertInOut vert_in) : TARGET
 
 float4 PSDetectEdge(VertInOut vert_in) : TARGET
 {
-	return image.Sample(def_sampler, vert_in.uv);
+	float2 texel_size = float2(length(ddx(vert_in.uv)), length(ddy(vert_in.uv)));
+	float2 uv = vert_in.uv;
+
+	float lum[9];
+	lum[0] = image.Sample(def_sampler, uv + texel_size * float2(-1.0, -1.0)).r;
+	lum[1] = image.Sample(def_sampler, uv + texel_size * float2( 0.0, -1.0)).r;
+	lum[2] = image.Sample(def_sampler, uv + texel_size * float2( 1.0, -1.0)).r;
+	lum[3] = image.Sample(def_sampler, uv + texel_size * float2(-1.0,  0.0)).r;
+	lum[4] = image.Sample(def_sampler, uv).r;
+	lum[5] = image.Sample(def_sampler, uv + texel_size * float2( 1.0,  0.0)).r;
+	lum[6] = image.Sample(def_sampler, uv + texel_size * float2(-1.0,  1.0)).r;
+	lum[7] = image.Sample(def_sampler, uv + texel_size * float2( 0.0,  1.0)).r;
+	lum[8] = image.Sample(def_sampler, uv + texel_size * float2( 1.0,  1.0)).r;
+
+	float sobel_x = -lum[0] - 2.0 * lum[3] - lum[6] + lum[2] + 2.0 * lum[5] + lum[8];
+	float sobel_y = -lum[0] - 2.0 * lum[1] - lum[2] + lum[6] + 2.0 * lum[7] + lum[8];
+
+	float edge = sqrt(sobel_x * sobel_x + sobel_y * sobel_y);
+
+	return float4(edge, edge, edge, 1.0);
 }
 
 technique Draw
@@ -60,6 +79,6 @@ technique DetectEdge
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSExtractLuminance(vert_in);
+		pixel_shader  = PSDetectEdge(vert_in);
 	}
 }

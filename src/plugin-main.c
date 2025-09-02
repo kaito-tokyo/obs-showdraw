@@ -52,8 +52,7 @@ struct showdraw_filter_context {
 	gs_effect_t *effect;
 
 	gs_eparam_t *effect_image;
-	gs_eparam_t *effect_texel_height;
-	gs_eparam_t *effect_texel_width;
+	gs_eparam_t *effect_kernel_size;
 
 	gs_technique_t *draw_tech;
 	gs_technique_t *extract_luminance_tech;
@@ -72,14 +71,17 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 
 	context->filter = source;
 
+	context->extraction_mode = EXTRACTION_MODE_DEFAULT;
+
 	context->effect_path = obs_module_file("effects/drawing-emphasizer.effect");
 
 	context->source_texture = NULL;
 	context->target_texture = NULL;
 
 	context->effect = NULL;
-	context->effect_texel_height = NULL;
-	context->effect_texel_width = NULL;
+
+	context->effect_image = NULL;
+	context->effect_kernel_size = NULL;
 
 	context->draw_tech = NULL;
 	context->extract_luminance_tech = NULL;
@@ -176,8 +178,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		context->effect = effect;
 
 		context->effect_image = gs_effect_get_param_by_name(context->effect, "image");
-		context->effect_texel_width = gs_effect_get_param_by_name(context->effect, "texelWidth");
-		context->effect_texel_height = gs_effect_get_param_by_name(context->effect, "texelHeight");
+		context->effect_kernel_size = gs_effect_get_param_by_name(context->effect, "kernelSize");
 
 		context->draw_tech = gs_effect_get_technique(context->effect, "Draw");
 		context->extract_luminance_tech = gs_effect_get_technique(context->effect, "ExtractLuminance");
@@ -251,7 +252,9 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	size_t passes;
 
 	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION) {
-		gs_effect_set_texture(context->effect_image, context->target_texture);
+		gs_set_render_target(context->target_texture, NULL);
+		gs_copy_texture(context->source_texture, context->target_texture);
+		gs_effect_set_texture(context->effect_image, context->source_texture);
 
 		passes = gs_technique_begin(context->extract_luminance_tech);
 		for (size_t i = 0; i < passes; i++) {
@@ -264,7 +267,9 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	}
 
 	if (extractionMode >= EXTRACTION_MODE_EDGE_DETECTION) {
-		gs_effect_set_texture(context->effect_image, context->target_texture);
+		gs_set_render_target(context->target_texture, NULL);
+		gs_copy_texture(context->source_texture, context->target_texture);
+		gs_effect_set_texture(context->effect_image, context->source_texture);
 
 		passes = gs_technique_begin(context->detect_edge_tech);
 		for (size_t i = 0; i < passes; i++) {
