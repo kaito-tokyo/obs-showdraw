@@ -441,7 +441,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		gs_set_render_target(context->target_texture, NULL);
 		gs_copy_texture(context->source_texture, context->target_texture);
 		gs_effect_set_texture(context->effect_image, context->source_texture);
-		gs_effect_set_int(context->effect_kernel_size, context->morphology_opening_erosion_kernel_size);
+		gs_effect_set_int(context->effect_kernel_size, (int)context->morphology_opening_erosion_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_erosion);
 		for (size_t i = 0; i < passes; i++) {
@@ -472,7 +472,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		gs_set_render_target(context->target_texture, NULL);
 		gs_copy_texture(context->source_texture, context->target_texture);
 		gs_effect_set_texture(context->effect_image, context->source_texture);
-		gs_effect_set_int(context->effect_kernel_size, context->morphology_closing_dilation_kernel_size);
+		gs_effect_set_int(context->effect_kernel_size, (int)context->morphology_closing_dilation_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_dilation);
 		for (size_t i = 0; i < passes; i++) {
