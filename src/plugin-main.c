@@ -372,7 +372,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		gs_set_render_target(context->target_texture, NULL);
 		gs_copy_texture(context->source_texture, context->target_texture);
 		gs_effect_set_texture(context->effect_image, context->source_texture);
-		gs_effect_set_float(context->effect_gain, context->extract_luminance_gain);
+		gs_effect_set_float(context->effect_gain, (float)context->extract_luminance_gain);
 
 		passes = gs_technique_begin(context->effect_tech_extract_luminance);
 		for (size_t i = 0; i < passes; i++) {
@@ -388,7 +388,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		gs_set_render_target(context->target_texture, NULL);
 		gs_copy_texture(context->source_texture, context->target_texture);
 		gs_effect_set_texture(context->effect_image, context->source_texture);
-		gs_effect_set_int(context->effect_kernel_size, context->median_filtering_kernel_size);
+		gs_effect_set_int(context->effect_kernel_size, (int)context->median_filtering_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_median_filtering);
 		for (size_t i = 0; i < passes; i++) {
