@@ -44,6 +44,9 @@ struct showdraw_filter_context {
 
 	long long extraction_mode;
 
+	long long medianFilteringKernelSize;
+	bool medianFilteringEnabled;
+
 	const char *effect_path;
 
 	gs_texture_t *source_texture;
@@ -72,6 +75,9 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 	context->filter = source;
 
 	context->extraction_mode = EXTRACTION_MODE_DEFAULT;
+
+	context->medianFilteringKernelSize = 1;
+	context->medianFilteringEnabled = false;
 
 	context->effect_path = obs_module_file("effects/drawing-emphasizer.effect");
 
@@ -120,6 +126,8 @@ void showdraw_get_defaults(obs_data_t *data)
 {
 	obs_data_set_default_double(data, "sensitivityFactorDb", 0.0);
 	obs_data_set_default_int(data, "extractionMode", EXTRACTION_MODE_DEFAULT);
+	obs_data_set_default_bool(data, "medianFilteringGroup", false);
+	obs_data_set_default_int(data, "medianFilteringKernelSize", 1);
 }
 
 obs_properties_t *showdraw_get_properties(void *data)
@@ -142,6 +150,13 @@ obs_properties_t *showdraw_get_properties(void *data)
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeEdgeDetection"),
 				  EXTRACTION_MODE_EDGE_DETECTION);
 
+	obs_properties_t *propMedianFilteringGroup = obs_properties_create();
+	obs_properties_add_group(
+		props, "medianFilteringGroup", obs_module_text("medianFilteringGroup"), OBS_GROUP_CHECKABLE, propMedianFilteringGroup
+	);
+
+	obs_properties_add_int_slider(propMedianFilteringGroup, "medianFilteringKernelSize", obs_module_text("medianFilteringKernelSize"), 1, 5, 1);
+
 	return props;
 }
 
@@ -150,6 +165,9 @@ void showdraw_update(void *data, obs_data_t *settings)
 	struct showdraw_filter_context *context = (struct showdraw_filter_context *)data;
 
 	context->extraction_mode = obs_data_get_int(settings, "extractionMode");
+
+	context->medianFilteringEnabled = obs_data_get_bool(settings, "medianFilteringGroup");
+	context->medianFilteringKernelSize = obs_data_get_int(settings, "medianFilteringKernelSize");
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
@@ -264,6 +282,22 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 			}
 		}
 		gs_technique_end(context->extract_luminance_tech);
+	}
+
+	if (context->medianFilteringEnabled) {
+		gs_set_render_target(context->source_texture, NULL);
+		gs_copy_texture(context->target_texture, context->source_texture);
+		gs_effect_set_texture(context->effect_image, context->source_texture);
+		gs_effect_set_integer(context->effect_kernel_size, context->medianFilteringKernelSize);
+
+		passes = gs_technique_begin(context->draw_tech);
+		for (size_t i = 0; i < passes; i++) {
+			if (gs_technique_begin_pass(context->draw_tech, i)) {
+				gs_draw_sprite(context->source_texture, 0, 0, 0);
+				gs_technique_end_pass(context->draw_tech);
+			}
+		}
+		gs_technique_end(context->draw_tech);
 	}
 
 	if (extractionMode >= EXTRACTION_MODE_EDGE_DETECTION) {
