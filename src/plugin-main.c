@@ -406,9 +406,9 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		gs_effect_set_texture(context->effect_image, context->source_texture);
 		gs_effect_set_texture(context->effect_image1, context->previous_luminance_texture);
 		gs_effect_set_float(context->effect_motion_adaptive_filtering_strength,
-				    context->motion_adaptive_filtering_strength);
+				    (float)context->motion_adaptive_filtering_strength);
 		gs_effect_set_float(context->effect_motion_adaptive_filtering_motion_threshold,
-				    context->motion_adaptive_filtering_motion_threshold);
+				    (float)context->motion_adaptive_filtering_motion_threshold);
 
 		passes = gs_technique_begin(context->effect_tech_motion_adaptive_filtering);
 		for (size_t i = 0; i < passes; i++) {
@@ -455,7 +455,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		gs_set_render_target(context->target_texture, NULL);
 		gs_copy_texture(context->source_texture, context->target_texture);
 		gs_effect_set_texture(context->effect_image, context->source_texture);
-		gs_effect_set_int(context->effect_kernel_size, context->morphology_opening_dilation_kernel_size);
+		gs_effect_set_int(context->effect_kernel_size, (int)context->morphology_opening_dilation_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_dilation);
 		for (size_t i = 0; i < passes; i++) {
@@ -486,7 +486,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		gs_set_render_target(context->target_texture, NULL);
 		gs_copy_texture(context->source_texture, context->target_texture);
 		gs_effect_set_texture(context->effect_image, context->source_texture);
-		gs_effect_set_int(context->effect_kernel_size, context->morphology_closing_erosion_kernel_size);
+		gs_effect_set_int(context->effect_kernel_size, (int)context->morphology_closing_erosion_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_erosion);
 		for (size_t i = 0; i < passes; i++) {
