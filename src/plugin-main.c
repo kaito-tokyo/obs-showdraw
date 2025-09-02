@@ -44,6 +44,7 @@ struct showdraw_filter_context {
 	const char *effect_path;
 
 	gs_texture_t *source_texture;
+	gs_texture_t *target_texture;
 
 	gs_effect_t *effect;
 
@@ -53,7 +54,7 @@ struct showdraw_filter_context {
 	gs_eparam_t *effect_texel_width;
 
 	gs_technique_t *extract_luminance_tech;
-	gs_technique_t *draw_tech;
+	gs_technique_t *draw_input_image_tech;
 };
 
 void showdraw_update(void *data, obs_data_t *settings);
@@ -71,6 +72,7 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 	context->effect_path = obs_module_file("effects/drawing-emphasizer.effect");
 
 	context->source_texture = NULL;
+	context->target_texture = NULL;
 
 	context->effect = NULL;
 	context->effect_texel_height = NULL;
@@ -92,6 +94,11 @@ void showdraw_destroy(void *data)
 	if (context->source_texture) {
 		gs_texture_destroy(context->source_texture);
 		context->source_texture = NULL;
+	}
+
+	if (context->target_texture) {
+		gs_texture_destroy(context->target_texture);
+		context->target_texture = NULL;
 	}
 
 	if (context->effect) {
@@ -167,6 +174,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		context->effect_texel_height = gs_effect_get_param_by_name(context->effect, "texelHeight");
 
 		context->extract_luminance_tech = gs_effect_get_technique(context->effect, "ExtractLuminance");
+		context->draw_input_image_tech = gs_effect_get_technique(context->effect, "DrawInputImage");
 
 		obs_log(LOG_INFO, "Effect loaded successfully");
 	}
@@ -193,6 +201,19 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		}
 	}
 
+	if (!context->target_texture || gs_texture_get_width(context->target_texture) != width ||
+	    gs_texture_get_height(context->target_texture) != height) {
+		if (context->target_texture) {
+			gs_texture_destroy(context->target_texture);
+		}
+		context->target_texture = gs_texture_create(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
+		if (!context->target_texture) {
+			obs_log(LOG_ERROR, "Could not create target texture");
+			obs_source_skip_video_filter(context->filter);
+			return;
+		}
+	}
+
 	long long extractionMode = context->extraction_mode == EXTRACTION_MODE_DEFAULT ? EXTRACTION_MODE_PASSTHROUGH
 										       : context->extraction_mode;
 
@@ -206,11 +227,10 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	if (!obs_source_process_filter_begin(context->filter, GS_BGRA, OBS_ALLOW_DIRECT_RENDERING)) {
 		obs_log(LOG_ERROR, "Could not begin processing filter");
 		obs_source_skip_video_filter(context->filter);
-		gs_set_render_target(default_render_target, NULL);
 		return;
 	}
 
-	gs_set_render_target(context->source_texture, NULL);
+	gs_set_render_target(context->target_texture, NULL);
 
 	gs_viewport_push();
 	gs_projection_push();
@@ -221,22 +241,34 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 
 	obs_source_process_filter_end(context->filter, context->effect, 0, 0);
 
-	gs_effect_set_texture(context->effect_input_image, context->source_texture);
+	size_t passes;
 
-	gs_set_render_target(default_render_target, NULL);
+	gs_effect_set_texture(context->effect_input_image, context->target_texture);
 
-	gs_viewport_pop();
-	gs_projection_pop();
-	gs_matrix_pop();
-
-	const size_t extract_luminance_passes = gs_technique_begin(context->extract_luminance_tech);
-	for (size_t i = 0; i < extract_luminance_passes; i++) {
+	passes = gs_technique_begin(context->extract_luminance_tech);
+	for (size_t i = 0; i < passes; i++) {
 		if (gs_technique_begin_pass(context->extract_luminance_tech, i)) {
 			gs_draw_sprite(context->source_texture, 0, 0, 0);
 			gs_technique_end_pass(context->extract_luminance_tech);
 		}
 	}
 	gs_technique_end(context->extract_luminance_tech);
+
+	gs_viewport_pop();
+	gs_projection_pop();
+	gs_matrix_pop();
+	gs_set_render_target(default_render_target, NULL);
+
+	gs_effect_set_texture(context->effect_input_image, context->target_texture);
+
+	passes = gs_technique_begin(context->draw_input_image_tech);
+	for (size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(context->draw_input_image_tech, i)) {
+			gs_draw_sprite(context->target_texture, 0, 0, 0);
+			gs_technique_end_pass(context->draw_input_image_tech);
+		}
+	}
+	gs_technique_end(context->draw_input_image_tech);
 }
 
 struct obs_source_info showdraw_filter = {
