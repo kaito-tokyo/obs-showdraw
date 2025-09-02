@@ -1,5 +1,11 @@
 uniform float4x4 ViewProj;
 uniform texture2d image;
+uniform texture2d image1;
+uniform float gain;
+uniform int kernelSize;
+
+uniform float motionAdaptiveFilteringStrength;
+uniform float motionAdaptiveFilteringMotionThreshold;
 
 sampler_state def_sampler {
 	Filter   = Linear;
@@ -28,8 +34,119 @@ float4 PSDraw(VertInOut vert_in) : TARGET
 float4 PSExtractLuminance(VertInOut vert_in) : TARGET
 {
 	float4 color = image.Sample(def_sampler, vert_in.uv);
-	float luminance = dot(color.rgb, float3(0.299, 0.587, 0.114));
+	float luminance = clamp(dot(color.rgb, float3(0.299, 0.587, 0.114)) * gain, 0.0f, 1.0f);
 	return float4(luminance, luminance, luminance, 1.0);
+}
+
+float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
+{
+	float value = image.Sample(def_sampler, vert_in.uv).r;
+	float value1 = image1.Sample(def_sampler, vert_in.uv).r;
+	float motion = abs(value - value1);
+	float adaptive_alpha = motionAdaptiveFilteringStrength * (1.0 - smoothstep(0.0, motionAdaptiveFilteringMotionThreshold, motion));
+	float final_color = lerp(value, value1, adaptive_alpha);
+	return float4(final_color, final_color, final_color, 1.0);
+}
+
+#define MEDIAN_SWAP(a,b) { float temp=a; a=min(a,b); b=max(temp,b); }
+
+float median3(float v0, float v1, float v2) {
+    return max(min(v0, v1), min(max(v0, v1), v2));
+}
+
+float median5(float v0, float v1, float v2, float v3, float v4) {
+    MEDIAN_SWAP(v0, v1); MEDIAN_SWAP(v3, v4); MEDIAN_SWAP(v0, v3);
+    MEDIAN_SWAP(v1, v4); MEDIAN_SWAP(v1, v2); MEDIAN_SWAP(v2, v3);
+    MEDIAN_SWAP(v1, v2);
+    return v2;
+}
+
+float median7(float v0, float v1, float v2, float v3, float v4, float v5, float v6) {
+    MEDIAN_SWAP(v1, v2); MEDIAN_SWAP(v3, v4); MEDIAN_SWAP(v5, v6);
+    MEDIAN_SWAP(v0, v1); MEDIAN_SWAP(v2, v3); MEDIAN_SWAP(v4, v5);
+    MEDIAN_SWAP(v1, v2); MEDIAN_SWAP(v3, v4); MEDIAN_SWAP(v5, v6);
+    MEDIAN_SWAP(v0, v3); MEDIAN_SWAP(v1, v4); MEDIAN_SWAP(v2, v5);
+    MEDIAN_SWAP(v3, v6); MEDIAN_SWAP(v1, v3); MEDIAN_SWAP(v2, v4);
+    MEDIAN_SWAP(v3, v5); MEDIAN_SWAP(v2, v3);
+    return v3;
+}
+
+float median9(float v0,float v1,float v2,float v3,float v4,float v5,float v6,float v7,float v8) {
+    MEDIAN_SWAP(v1, v2); MEDIAN_SWAP(v4, v5); MEDIAN_SWAP(v7, v8);
+    MEDIAN_SWAP(v0, v1); MEDIAN_SWAP(v3, v4); MEDIAN_SWAP(v6, v7);
+    MEDIAN_SWAP(v1, v2); MEDIAN_SWAP(v4, v5); MEDIAN_SWAP(v7, v8);
+    MEDIAN_SWAP(v0, v3); MEDIAN_SWAP(v5, v8); MEDIAN_SWAP(v4, v7);
+    MEDIAN_SWAP(v3, v6); MEDIAN_SWAP(v1, v4); MEDIAN_SWAP(v2, v5);
+    MEDIAN_SWAP(v4, v7); MEDIAN_SWAP(v4, v2); MEDIAN_SWAP(v6, v4);
+    MEDIAN_SWAP(v4, v2);
+    return v4;
+}
+
+float4 PSMedianFiltering(VertInOut vert_in) : TARGET
+{
+	float2 texel_size = float2(length(ddx(vert_in.uv)), length(ddy(vert_in.uv)));
+	float2 uv = vert_in.uv;
+	float final_median;
+
+	if (kernelSize == 1) {
+		final_median = image.Sample(def_sampler, uv).r;
+	} else if (kernelSize == 3) {
+		int radius = 1;
+		float p[9];
+		for (int y = -radius; y <= radius; y++) {
+			for (int x = -radius; x <= radius; x++) {
+				p[(y+radius)*3 + (x+radius)] = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+			}
+		}
+		float h_medians[3];
+		for (int i = 0; i < 3; i++) {
+			h_medians[i] = median3(p[i*3+0], p[i*3+1], p[i*3+2]);
+		}
+		final_median = median3(h_medians[0], h_medians[1], h_medians[2]);
+	} else if (kernelSize == 5) {
+		int radius = 2;
+		float p[25];
+		for (int y = -radius; y <= radius; y++) {
+			for (int x = -radius; x <= radius; x++) {
+				p[(y+radius)*5 + (x+radius)] = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+			}
+		}
+		float h_medians[5];
+		for (int i = 0; i < 5; i++) {
+			h_medians[i] = median5(p[i*5+0], p[i*5+1], p[i*5+2], p[i*5+3], p[i*5+4]);
+		}
+		final_median = median5(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4]);
+	} else if (kernelSize == 7) {
+		int radius = 3;
+		float p[49];
+		for (int y = -radius; y <= radius; y++) {
+			for (int x = -radius; x <= radius; x++) {
+				p[(y+radius)*7 + (x+radius)] = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+			}
+		}
+		float h_medians[7];
+		for (int i = 0; i < 7; i++) {
+			h_medians[i] = median7(p[i*7+0], p[i*7+1], p[i*7+2], p[i*7+3], p[i*7+4], p[i*7+5], p[i*7+6]);
+		}
+		final_median = median7(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4], h_medians[5], h_medians[6]);
+	} else if (kernelSize == 9) {
+		int radius = 4;
+		float p[81];
+		for (int y = -radius; y <= radius; y++) {
+			for (int x = -radius; x <= radius; x++) {
+				p[(y+radius)*9 + (x+radius)] = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+			}
+		}
+		float h_medians[9];
+		for (int i = 0; i < 9; i++) {
+			h_medians[i] = median9(p[i*9+0], p[i*9+1], p[i*9+2], p[i*9+3], p[i*9+4], p[i*9+5], p[i*9+6], p[i*9+7], p[i*9+8]);
+		}
+		final_median = median9(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4], h_medians[5], h_medians[6], h_medians[7], h_medians[8]);
+	} else {
+		return image.Sample(def_sampler, vert_in.uv);
+	}
+
+	return float4(final_median, final_median, final_median, 1.0);
 }
 
 float4 PSDetectEdge(VertInOut vert_in) : TARGET
@@ -56,6 +173,46 @@ float4 PSDetectEdge(VertInOut vert_in) : TARGET
 	return float4(edge, edge, edge, 1.0);
 }
 
+float4 PSErosion(VertInOut vert_in) : TARGET
+{
+	float2 texel_size = float2(length(ddx(vert_in.uv)), length(ddy(vert_in.uv)));
+	float2 uv = vert_in.uv;
+	float min_val = 1.0;
+	int radius = kernelSize / 2;
+
+	if (radius > 0) {
+		for (int y = -radius; y <= radius; y++) {
+			for (int x = -radius; x <= radius; x++) {
+				min_val = min(min_val, image.Sample(def_sampler, uv + texel_size * float2(x, y)).r);
+			}
+		}
+	} else {
+		min_val = image.Sample(def_sampler, uv).r;
+	}
+
+	return float4(min_val, min_val, min_val, 1.0);
+}
+
+float4 PSDilation(VertInOut vert_in) : TARGET
+{
+	float2 texel_size = float2(length(ddx(vert_in.uv)), length(ddy(vert_in.uv)));
+	float2 uv = vert_in.uv;
+	float max_val = 0.0;
+	int radius = kernelSize / 2;
+
+	if (radius > 0) {
+		for (int y = -radius; y <= radius; y++) {
+			for (int x = -radius; x <= radius; x++) {
+				max_val = max(max_val, image.Sample(def_sampler, uv + texel_size * float2(x, y)).r);
+			}
+		}
+	} else {
+		max_val = image.Sample(def_sampler, uv).r;
+	}
+
+	return float4(max_val, max_val, max_val, 1.0);
+}
+
 technique Draw
 {
 	pass
@@ -74,11 +231,47 @@ technique ExtractLuminance
 	}
 }
 
+technique MotionAdaptiveFiltering
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSMotionAdaptiveFiltering(vert_in);
+	}
+}
+
+technique MedianFiltering
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSMedianFiltering(vert_in);
+	}
+}
+
 technique DetectEdge
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
 		pixel_shader  = PSDetectEdge(vert_in);
+	}
+}
+
+technique Erosion
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSErosion(vert_in);
+	}
+}
+
+technique Dilation
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSDilation(vert_in);
 	}
 }
