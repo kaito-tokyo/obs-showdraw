@@ -1,12 +1,18 @@
 uniform float4x4 ViewProj;
 uniform texture2d image;
 uniform texture2d image1;
-uniform float gain;
+
+// Common parameters
+uniform float texelWidth;
+uniform float texelHeight;
 uniform int kernelSize;
 
 // Motion adaptive filtering parameters
+uniform texture2d motionMap;
 uniform float strength;
 uniform float motionThreshold;
+
+uniform float gain;
 
 sampler_state def_sampler {
 	Filter   = Linear;
@@ -35,15 +41,16 @@ float4 PSDraw(VertInOut vert_in) : TARGET
 float4 PSExtractLuminance(VertInOut vert_in) : TARGET
 {
 	float4 color = image.Sample(def_sampler, vert_in.uv);
-	float luminance = clamp(dot(color.rgb, float3(0.299, 0.587, 0.114)) * gain, 0.0f, 1.0f);
-	return float4(luminance, luminance, luminance, 1.0);
+	float luma = saturate(dot(color.rgb, float3(0.299, 0.587, 0.114)));
+	return float4(luma, luma, luma, 1.0);
 }
 
 #define MEDIAN_SWAP(a,b) { float temp=a; a=min(a,b); b=max(temp,b); }
 
 float median3(float v0, float v1, float v2) {
-    return max(min(v0, v1), min(max(v0, v1), v2));
-}
+    float a = min(v0, v1);
+    float b = max(v0, v1);
+    return max(a, min(b, v2));}
 
 float median5(float v0, float v1, float v2, float v3, float v4) {
     MEDIAN_SWAP(v0, v1); MEDIAN_SWAP(v3, v4); MEDIAN_SWAP(v0, v3);
@@ -75,7 +82,7 @@ float median9(float v0,float v1,float v2,float v3,float v4,float v5,float v6,flo
 
 float4 PSMedianFiltering(VertInOut vert_in) : TARGET
 {
-	float2 texel_size = float2(length(ddx(vert_in.uv)), length(ddy(vert_in.uv)));
+	float2 texel_size = float2(texelWidth, texelHeight);
 	float2 uv = vert_in.uv;
 	float final_median;
 
@@ -140,6 +147,26 @@ float4 PSMedianFiltering(VertInOut vert_in) : TARGET
 	return float4(final_median, final_median, final_median, 1.0);
 }
 
+float4 PSCalculateMotionMap(VertInOut vert_in) : TARGET
+{
+	float2 texel_size = float2(texelWidth, texelHeight);
+	float2 uv = vert_in.uv;
+	float sad = 0.0;
+	int radius = kernelSize / 2;
+
+	for (int y = -radius; y <= radius; y++) {
+		for (int x = -radius; x <= radius; x++) {
+			float luma = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+			float luma1 = image1.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+			sad += abs(luma - luma1);
+		}
+	}
+
+	sad /= float(kernelSize * kernelSize);
+
+	return float4(sad, sad, sad, 1.0);
+}
+
 float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
 {
 	float luma = image.Sample(def_sampler, vert_in.uv).r;
@@ -153,7 +180,7 @@ float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
 
 float4 PSDetectEdge(VertInOut vert_in) : TARGET
 {
-	float2 texel_size = float2(length(ddx(vert_in.uv)), length(ddy(vert_in.uv)));
+	float2 texel_size = float2(texelWidth, texelHeight);
 	float2 uv = vert_in.uv;
 
 	float lum[9];
@@ -177,7 +204,7 @@ float4 PSDetectEdge(VertInOut vert_in) : TARGET
 
 float4 PSErosion(VertInOut vert_in) : TARGET
 {
-	float2 texel_size = float2(length(ddx(vert_in.uv)), length(ddy(vert_in.uv)));
+	float2 texel_size = float2(texelWidth, texelHeight);
 	float2 uv = vert_in.uv;
 	float min_val = 1.0;
 	int radius = kernelSize / 2;
@@ -197,7 +224,7 @@ float4 PSErosion(VertInOut vert_in) : TARGET
 
 float4 PSDilation(VertInOut vert_in) : TARGET
 {
-	float2 texel_size = float2(length(ddx(vert_in.uv)), length(ddy(vert_in.uv)));
+	float2 texel_size = float2(texelWidth, texelHeight);
 	float2 uv = vert_in.uv;
 	float max_val = 0.0;
 	int radius = kernelSize / 2;
@@ -239,6 +266,15 @@ technique MedianFiltering
 	{
 		vertex_shader = VSDefault(vert_in);
 		pixel_shader  = PSMedianFiltering(vert_in);
+	}
+}
+
+technique CalculateMotionMap
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSCalculateMotionMap(vert_in);
 	}
 }
 
