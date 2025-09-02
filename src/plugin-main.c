@@ -69,8 +69,8 @@ struct showdraw_filter_context {
 	gs_eparam_t *effect_image1;
 	gs_eparam_t *effect_gain;
 	gs_eparam_t *effect_kernel_size;
-	gs_eparam_t *effect_motion_adaptive_filtering_strength;
-	gs_eparam_t *effect_motion_adaptive_filtering_motion_threshold;
+	gs_eparam_t *effect_strength;
+	gs_eparam_t *effect_motion_threshold;
 
 	gs_technique_t *effect_tech_draw;
 	gs_technique_t *effect_tech_extract_luminance;
@@ -119,8 +119,8 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 	context->effect_image1 = NULL;
 	context->effect_gain = NULL;
 	context->effect_kernel_size = NULL;
-	context->effect_motion_adaptive_filtering_strength = NULL;
-	context->effect_motion_adaptive_filtering_motion_threshold = NULL;
+	context->effect_strength = NULL;
+	context->effect_motion_threshold = NULL;
 
 	context->effect_tech_draw = NULL;
 	context->effect_tech_extract_luminance = NULL;
@@ -167,7 +167,7 @@ void showdraw_get_defaults(obs_data_t *data)
 
 	obs_data_set_default_int(data, "medianFilteringKernelSize", 1);
 
-	obs_data_set_default_double(data, "motionAdaptiveFilteringStrength", 1.0);
+	obs_data_set_default_double(data, "motionAdaptiveFilteringStrength", 0.0);
 	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold", 0.1);
 
 	obs_data_set_default_int(data, "morphologyOpeningErosionKernelSize", 1);
@@ -233,6 +233,10 @@ void showdraw_update(void *data, obs_data_t *settings)
 
 	context->median_filtering_kernel_size = obs_data_get_int(settings, "medianFilteringKernelSize");
 
+	context->motion_adaptive_filtering_strength = obs_data_get_double(settings, "motionAdaptiveFilteringStrength");
+	context->motion_adaptive_filtering_motion_threshold =
+		obs_data_get_double(settings, "motionAdaptiveFilteringMotionThreshold");
+
 	context->morphology_opening_erosion_kernel_size =
 		obs_data_get_int(settings, "morphologyOpeningErosionKernelSize");
 	context->morphology_opening_dilation_kernel_size =
@@ -272,10 +276,8 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		context->effect_image1 = gs_effect_get_param_by_name(context->effect, "image1");
 		context->effect_gain = gs_effect_get_param_by_name(context->effect, "gain");
 		context->effect_kernel_size = gs_effect_get_param_by_name(context->effect, "kernelSize");
-		context->effect_motion_adaptive_filtering_strength =
-			gs_effect_get_param_by_name(context->effect, "motionAdaptiveFilteringStrength");
-		context->effect_motion_adaptive_filtering_motion_threshold =
-			gs_effect_get_param_by_name(context->effect, "motionAdaptiveFilteringMotionThreshold");
+		context->effect_strength = gs_effect_get_param_by_name(context->effect, "strength");
+		context->effect_motion_threshold = gs_effect_get_param_by_name(context->effect, "motionThreshold");
 
 		context->effect_tech_draw = gs_effect_get_technique(context->effect, "Draw");
 		context->effect_tech_extract_luminance = gs_effect_get_technique(context->effect, "ExtractLuminance");
@@ -400,14 +402,14 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		gs_technique_end(context->effect_tech_median_filtering);
 	}
 
-	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION) {
+	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION &&
+	    context->motion_adaptive_filtering_strength > 0.0) {
 		gs_set_render_target(context->target_texture, NULL);
 		gs_copy_texture(context->source_texture, context->target_texture);
 		gs_effect_set_texture(context->effect_image, context->source_texture);
 		gs_effect_set_texture(context->effect_image1, context->previous_luminance_texture);
-		gs_effect_set_float(context->effect_motion_adaptive_filtering_strength,
-				    (float)context->motion_adaptive_filtering_strength);
-		gs_effect_set_float(context->effect_motion_adaptive_filtering_motion_threshold,
+		gs_effect_set_float(context->effect_strength, (float)context->motion_adaptive_filtering_strength);
+		gs_effect_set_float(context->effect_motion_threshold,
 				    (float)context->motion_adaptive_filtering_motion_threshold);
 
 		passes = gs_technique_begin(context->effect_tech_motion_adaptive_filtering);
