@@ -44,9 +44,9 @@ struct showdraw_filter_context {
 
 	long long extraction_mode;
 
-	double extract_luminance_gain;
-
 	long long median_filtering_kernel_size;
+
+	long long motion_map_kernel_size;
 
 	double motion_adaptive_filtering_strength;
 	double motion_adaptive_filtering_motion_threshold;
@@ -61,12 +61,18 @@ struct showdraw_filter_context {
 
 	gs_texture_t *source_texture;
 	gs_texture_t *target_texture;
+	gs_texture_t *motion_map_texture;
 	gs_texture_t *previous_luminance_texture;
 
 	gs_effect_t *effect;
 
 	gs_eparam_t *effect_image;
 	gs_eparam_t *effect_image1;
+
+	gs_eparam_t *effect_float_texel_width;
+	gs_eparam_t *effect_float_texel_height;
+
+	gs_eparam_t *effect_texture_motion_map;
 	gs_eparam_t *effect_gain;
 	gs_eparam_t *effect_kernel_size;
 	gs_eparam_t *effect_strength;
@@ -75,6 +81,7 @@ struct showdraw_filter_context {
 	gs_technique_t *effect_tech_draw;
 	gs_technique_t *effect_tech_extract_luminance;
 	gs_technique_t *effect_tech_median_filtering;
+	gs_technique_t *effect_tech_calculate_motion_map;
 	gs_technique_t *effect_tech_motion_adaptive_filtering;
 	gs_technique_t *effect_tech_detect_edge;
 	gs_technique_t *effect_tech_erosion;
@@ -95,9 +102,9 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 
 	context->extraction_mode = EXTRACTION_MODE_DEFAULT;
 
-	context->extract_luminance_gain = 1.0;
-
 	context->median_filtering_kernel_size = 1;
+
+	context->motion_map_kernel_size = 1;
 
 	context->motion_adaptive_filtering_strength = 1.0;
 	context->motion_adaptive_filtering_motion_threshold = 0.1;
@@ -111,12 +118,18 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 
 	context->source_texture = NULL;
 	context->target_texture = NULL;
+	context->motion_map_texture = NULL;
 	context->previous_luminance_texture = NULL;
 
 	context->effect = NULL;
 
 	context->effect_image = NULL;
 	context->effect_image1 = NULL;
+
+	context->effect_float_texel_width = NULL;
+	context->effect_float_texel_height = NULL;
+
+	context->effect_texture_motion_map = NULL;
 	context->effect_gain = NULL;
 	context->effect_kernel_size = NULL;
 	context->effect_strength = NULL;
@@ -125,6 +138,7 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 	context->effect_tech_draw = NULL;
 	context->effect_tech_extract_luminance = NULL;
 	context->effect_tech_median_filtering = NULL;
+	context->effect_tech_calculate_motion_map = NULL;
 	context->effect_tech_motion_adaptive_filtering = NULL;
 	context->effect_tech_detect_edge = NULL;
 	context->effect_tech_erosion = NULL;
@@ -151,6 +165,16 @@ void showdraw_destroy(void *data)
 		context->target_texture = NULL;
 	}
 
+	if (context->motion_map_texture) {
+		gs_texture_destroy(context->motion_map_texture);
+		context->motion_map_texture = NULL;
+	}
+
+	if (context->previous_luminance_texture) {
+		gs_texture_destroy(context->previous_luminance_texture);
+		context->previous_luminance_texture = NULL;
+	}
+
 	if (context->effect) {
 		gs_effect_destroy(context->effect);
 		context->effect = NULL;
@@ -163,9 +187,9 @@ void showdraw_get_defaults(obs_data_t *data)
 {
 	obs_data_set_default_int(data, "extractionMode", EXTRACTION_MODE_DEFAULT);
 
-	obs_data_set_default_double(data, "extractLuminanceGainDb", 0.0);
-
 	obs_data_set_default_int(data, "medianFilteringKernelSize", 1);
+
+	obs_data_set_default_int(data, "motionMapKernelSize", 1);
 
 	obs_data_set_default_double(data, "motionAdaptiveFilteringStrength", 0.0);
 	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold", 0.1);
@@ -193,14 +217,6 @@ obs_properties_t *showdraw_get_properties(void *data)
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeEdgeDetection"),
 				  EXTRACTION_MODE_EDGE_DETECTION);
 
-	obs_properties_add_float_slider(props, "extractLuminanceGainDb", obs_module_text("extractLuminanceGainDb"),
-					-10.0, 100.0, 0.001);
-
-	obs_properties_add_float_slider(props, "motionAdaptiveFilteringStrength",
-					obs_module_text("motionAdaptiveFilteringStrength"), 0.0, 1.0, 0.01);
-	obs_properties_add_float_slider(props, "motionAdaptiveFilteringMotionThreshold",
-					obs_module_text("motionAdaptiveFilteringMotionThreshold"), 0.0, 1.0, 0.01);
-
 	obs_property_t *propMedianFilteringKernelSize = obs_properties_add_list(
 		props, "medianFilteringKernelSize", obs_module_text("medianFilteringKernelSize"), OBS_COMBO_TYPE_LIST,
 		OBS_COMBO_FORMAT_INT);
@@ -211,10 +227,26 @@ obs_properties_t *showdraw_get_properties(void *data)
 	obs_property_list_add_int(propMedianFilteringKernelSize, obs_module_text("medianFilteringKernelSize7"), 7);
 	obs_property_list_add_int(propMedianFilteringKernelSize, obs_module_text("medianFilteringKernelSize9"), 9);
 
+	obs_property_t *propMMotionMapKernelSize = obs_properties_add_list(props, "motionMapKernelSize",
+									   obs_module_text("motionMapKernelSize"),
+									   OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+
+	obs_property_list_add_int(propMMotionMapKernelSize, obs_module_text("motionMapKernelSize1"), 1);
+	obs_property_list_add_int(propMMotionMapKernelSize, obs_module_text("motionMapKernelSize3"), 3);
+	obs_property_list_add_int(propMMotionMapKernelSize, obs_module_text("motionMapKernelSize5"), 5);
+	obs_property_list_add_int(propMMotionMapKernelSize, obs_module_text("motionMapKernelSize7"), 7);
+	obs_property_list_add_int(propMMotionMapKernelSize, obs_module_text("motionMapKernelSize9"), 9);
+
+	obs_properties_add_float_slider(props, "motionAdaptiveFilteringStrength",
+					obs_module_text("motionAdaptiveFilteringStrength"), 0.0, 1.0, 0.01);
+	obs_properties_add_float_slider(props, "motionAdaptiveFilteringMotionThreshold",
+					obs_module_text("motionAdaptiveFilteringMotionThreshold"), 0.0, 1.0, 0.01);
+
 	obs_properties_add_int_slider(props, "morphologyOpeningErosionKernelSize",
 				      obs_module_text("morphologyOpeningErosionKernelSize"), 1, 31, 2);
 	obs_properties_add_int_slider(props, "morphologyOpeningDilationKernelSize",
 				      obs_module_text("morphologyOpeningDilationKernelSize"), 1, 31, 2);
+
 	obs_properties_add_int_slider(props, "morphologyClosingDilationKernelSize",
 				      obs_module_text("morphologyClosingDilationKernelSize"), 1, 31, 2);
 	obs_properties_add_int_slider(props, "morphologyClosingErosionKernelSize",
@@ -229,9 +261,9 @@ void showdraw_update(void *data, obs_data_t *settings)
 
 	context->extraction_mode = obs_data_get_int(settings, "extractionMode");
 
-	context->extract_luminance_gain = pow(10.0, obs_data_get_double(settings, "extractLuminanceGainDb") / 10.0);
-
 	context->median_filtering_kernel_size = obs_data_get_int(settings, "medianFilteringKernelSize");
+
+	context->motion_map_kernel_size = obs_data_get_int(settings, "motionMapKernelSize");
 
 	context->motion_adaptive_filtering_strength = obs_data_get_double(settings, "motionAdaptiveFilteringStrength");
 	context->motion_adaptive_filtering_motion_threshold =
@@ -245,6 +277,13 @@ void showdraw_update(void *data, obs_data_t *settings)
 		obs_data_get_int(settings, "morphologyClosingDilationKernelSize");
 	context->morphology_closing_erosion_kernel_size =
 		obs_data_get_int(settings, "morphologyClosingErosionKernelSize");
+}
+
+void swap_textures(struct showdraw_filter_context *context)
+{
+	gs_texture_t *temp = context->source_texture;
+	context->source_texture = context->target_texture;
+	context->target_texture = temp;
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
@@ -274,6 +313,11 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 
 		context->effect_image = gs_effect_get_param_by_name(context->effect, "image");
 		context->effect_image1 = gs_effect_get_param_by_name(context->effect, "image1");
+
+		context->effect_float_texel_width = gs_effect_get_param_by_name(context->effect, "texelWidth");
+		context->effect_float_texel_height = gs_effect_get_param_by_name(context->effect, "texelHeight");
+
+		context->effect_texture_motion_map = gs_effect_get_param_by_name(context->effect, "motionMap");
 		context->effect_gain = gs_effect_get_param_by_name(context->effect, "gain");
 		context->effect_kernel_size = gs_effect_get_param_by_name(context->effect, "kernelSize");
 		context->effect_strength = gs_effect_get_param_by_name(context->effect, "strength");
@@ -282,6 +326,8 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		context->effect_tech_draw = gs_effect_get_technique(context->effect, "Draw");
 		context->effect_tech_extract_luminance = gs_effect_get_technique(context->effect, "ExtractLuminance");
 		context->effect_tech_median_filtering = gs_effect_get_technique(context->effect, "MedianFiltering");
+		context->effect_tech_calculate_motion_map =
+			gs_effect_get_technique(context->effect, "CalculateMotionMap");
 		context->effect_tech_motion_adaptive_filtering =
 			gs_effect_get_technique(context->effect, "MotionAdaptiveFiltering");
 		context->effect_tech_detect_edge = gs_effect_get_technique(context->effect, "DetectEdge");
@@ -326,6 +372,19 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		}
 	}
 
+	if (!context->motion_map_texture || gs_texture_get_width(context->motion_map_texture) != width ||
+	    gs_texture_get_height(context->motion_map_texture) != height) {
+		if (context->motion_map_texture) {
+			gs_texture_destroy(context->motion_map_texture);
+		}
+		context->motion_map_texture = gs_texture_create(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
+		if (!context->motion_map_texture) {
+			obs_log(LOG_ERROR, "Could not create motion map texture");
+			obs_source_skip_video_filter(context->filter);
+			return;
+		}
+	}
+
 	if (!context->previous_luminance_texture ||
 	    gs_texture_get_width(context->previous_luminance_texture) != width ||
 	    gs_texture_get_height(context->previous_luminance_texture) != height) {
@@ -344,10 +403,8 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	long long extractionMode = context->extraction_mode == EXTRACTION_MODE_DEFAULT ? EXTRACTION_MODE_DEFAULT_VALUE
 										       : context->extraction_mode;
 
-	if (extractionMode <= EXTRACTION_MODE_PASSTHROUGH) {
-		obs_source_skip_video_filter(context->filter);
-		return;
-	}
+	const float texelWidth = 1.0f / (float)width;
+	const float texelHeight = 1.0f / (float)height;
 
 	gs_texture_t *default_render_target = gs_get_render_target();
 
@@ -357,7 +414,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	gs_set_render_target(context->target_texture, NULL);
+	gs_set_render_target(context->source_texture, NULL);
 
 	gs_viewport_push();
 	gs_projection_push();
@@ -372,9 +429,8 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 
 	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION) {
 		gs_set_render_target(context->target_texture, NULL);
-		gs_copy_texture(context->source_texture, context->target_texture);
+
 		gs_effect_set_texture(context->effect_image, context->source_texture);
-		gs_effect_set_float(context->effect_gain, (float)context->extract_luminance_gain);
 
 		passes = gs_technique_begin(context->effect_tech_extract_luminance);
 		for (size_t i = 0; i < passes; i++) {
@@ -384,12 +440,17 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 			}
 		}
 		gs_technique_end(context->effect_tech_extract_luminance);
+
+		swap_textures(context);
 	}
 
 	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION && context->median_filtering_kernel_size > 1) {
 		gs_set_render_target(context->target_texture, NULL);
-		gs_copy_texture(context->source_texture, context->target_texture);
+
 		gs_effect_set_texture(context->effect_image, context->source_texture);
+
+		gs_effect_set_float(context->effect_float_texel_width, texelWidth);
+		gs_effect_set_float(context->effect_float_texel_height, texelHeight);
 		gs_effect_set_int(context->effect_kernel_size, (int)context->median_filtering_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_median_filtering);
@@ -400,14 +461,38 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 			}
 		}
 		gs_technique_end(context->effect_tech_median_filtering);
+
+		swap_textures(context);
 	}
 
 	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION &&
 	    context->motion_adaptive_filtering_strength > 0.0) {
-		gs_set_render_target(context->target_texture, NULL);
-		gs_copy_texture(context->source_texture, context->target_texture);
+		gs_set_render_target(context->motion_map_texture, NULL);
+
 		gs_effect_set_texture(context->effect_image, context->source_texture);
 		gs_effect_set_texture(context->effect_image1, context->previous_luminance_texture);
+
+		gs_effect_set_float(context->effect_float_texel_width, texelWidth);
+		gs_effect_set_float(context->effect_float_texel_height, texelHeight);
+		gs_effect_set_int(context->effect_kernel_size, (int)context->motion_map_kernel_size);
+
+		passes = gs_technique_begin(context->effect_tech_calculate_motion_map);
+		for (size_t i = 0; i < passes; i++) {
+			if (gs_technique_begin_pass(context->effect_tech_calculate_motion_map, i)) {
+				gs_draw_sprite(context->source_texture, 0, 0, 0);
+				gs_technique_end_pass(context->effect_tech_calculate_motion_map);
+			}
+		}
+		gs_technique_end(context->effect_tech_calculate_motion_map);
+
+		gs_set_render_target(context->target_texture, NULL);
+		gs_effect_set_texture(context->effect_image, context->source_texture);
+		gs_effect_set_texture(context->effect_image1, context->previous_luminance_texture);
+
+		gs_effect_set_float(context->effect_float_texel_width, texelWidth);
+		gs_effect_set_float(context->effect_float_texel_height, texelHeight);
+
+		gs_effect_set_texture(context->effect_texture_motion_map, context->motion_map_texture);
 		gs_effect_set_float(context->effect_strength, (float)context->motion_adaptive_filtering_strength);
 		gs_effect_set_float(context->effect_motion_threshold,
 				    (float)context->motion_adaptive_filtering_motion_threshold);
@@ -420,13 +505,19 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 			}
 		}
 		gs_technique_end(context->effect_tech_motion_adaptive_filtering);
-		gs_copy_texture(context->previous_luminance_texture, context->target_texture);
+
+		swap_textures(context);
+
+		gs_copy_texture(context->target_texture, context->previous_luminance_texture);
 	}
 
 	if (extractionMode >= EXTRACTION_MODE_EDGE_DETECTION) {
 		gs_set_render_target(context->target_texture, NULL);
-		gs_copy_texture(context->source_texture, context->target_texture);
+
 		gs_effect_set_texture(context->effect_image, context->source_texture);
+
+		gs_effect_set_float(context->effect_float_texel_width, texelWidth);
+		gs_effect_set_float(context->effect_float_texel_height, texelHeight);
 
 		passes = gs_technique_begin(context->effect_tech_detect_edge);
 		for (size_t i = 0; i < passes; i++) {
@@ -436,13 +527,19 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 			}
 		}
 		gs_technique_end(context->effect_tech_detect_edge);
+
+		swap_textures(context);
 	}
 
-	if (context->morphology_opening_erosion_kernel_size > 1 ||
-	    context->morphology_opening_dilation_kernel_size > 1) {
+	if (extractionMode >= EXTRACTION_MODE_EDGE_DETECTION &&
+	    (context->morphology_opening_erosion_kernel_size > 1 ||
+	     context->morphology_opening_dilation_kernel_size > 1)) {
 		gs_set_render_target(context->target_texture, NULL);
-		gs_copy_texture(context->source_texture, context->target_texture);
+
 		gs_effect_set_texture(context->effect_image, context->source_texture);
+
+		gs_effect_set_float(context->effect_float_texel_width, texelWidth);
+		gs_effect_set_float(context->effect_float_texel_height, texelHeight);
 		gs_effect_set_int(context->effect_kernel_size, (int)context->morphology_opening_erosion_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_erosion);
@@ -454,9 +551,14 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		}
 		gs_technique_end(context->effect_tech_erosion);
 
+		swap_textures(context);
+
 		gs_set_render_target(context->target_texture, NULL);
-		gs_copy_texture(context->source_texture, context->target_texture);
+
 		gs_effect_set_texture(context->effect_image, context->source_texture);
+
+		gs_effect_set_float(context->effect_float_texel_width, texelWidth);
+		gs_effect_set_float(context->effect_float_texel_height, texelHeight);
 		gs_effect_set_int(context->effect_kernel_size, (int)context->morphology_opening_dilation_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_dilation);
@@ -467,13 +569,18 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 			}
 		}
 		gs_technique_end(context->effect_tech_dilation);
+
+		swap_textures(context);
 	}
 
-	if (context->morphology_closing_dilation_kernel_size > 1 ||
-	    context->morphology_closing_erosion_kernel_size > 1) {
+	if (extractionMode >= EXTRACTION_MODE_EDGE_DETECTION && (context->morphology_closing_dilation_kernel_size > 1 ||
+								 context->morphology_closing_erosion_kernel_size > 1)) {
 		gs_set_render_target(context->target_texture, NULL);
-		gs_copy_texture(context->source_texture, context->target_texture);
+
 		gs_effect_set_texture(context->effect_image, context->source_texture);
+
+		gs_effect_set_float(context->effect_float_texel_width, texelWidth);
+		gs_effect_set_float(context->effect_float_texel_height, texelHeight);
 		gs_effect_set_int(context->effect_kernel_size, (int)context->morphology_closing_dilation_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_dilation);
@@ -485,9 +592,14 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		}
 		gs_technique_end(context->effect_tech_dilation);
 
+		swap_textures(context);
+
 		gs_set_render_target(context->target_texture, NULL);
-		gs_copy_texture(context->source_texture, context->target_texture);
+
 		gs_effect_set_texture(context->effect_image, context->source_texture);
+
+		gs_effect_set_float(context->effect_float_texel_width, texelWidth);
+		gs_effect_set_float(context->effect_float_texel_height, texelHeight);
 		gs_effect_set_int(context->effect_kernel_size, (int)context->morphology_closing_erosion_kernel_size);
 
 		passes = gs_technique_begin(context->effect_tech_erosion);
@@ -498,6 +610,8 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 			}
 		}
 		gs_technique_end(context->effect_tech_erosion);
+
+		swap_textures(context);
 	}
 
 	gs_viewport_pop();
@@ -505,7 +619,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	gs_matrix_pop();
 	gs_set_render_target(default_render_target, NULL);
 
-	gs_effect_set_texture(context->effect_image, context->target_texture);
+	gs_effect_set_texture(context->effect_image, context->source_texture);
 
 	passes = gs_technique_begin(context->effect_tech_draw);
 	for (size_t i = 0; i < passes; i++) {
