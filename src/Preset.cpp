@@ -130,18 +130,17 @@ std::optional<std::string> Preset::validate(void) const noexcept
 Preset Preset::fromObsData(obs_data_t *data) noexcept
 {
 	return {
-		.presetName = obs_data_get_string(data, "presetName"),
-		.extractionMode = static_cast<ExtractionMode>(obs_data_get_int(data, "extractionMode")),
-		.medianFilteringKernelSize = obs_data_get_int(data, "medianFilteringKernelSize"),
-		.motionMapKernelSize = obs_data_get_int(data, "motionMapKernelSize"),
-		.motionAdaptiveFilteringStrength = obs_data_get_double(data, "motionAdaptiveFilteringStrength"),
-		.motionAdaptiveFilteringMotionThreshold =
-			obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold"),
-		.morphologyOpeningErosionKernelSize = obs_data_get_int(data, "morphologyOpeningErosionKernelSize"),
-		.morphologyOpeningDilationKernelSize = obs_data_get_int(data, "morphologyOpeningDilationKernelSize"),
-		.morphologyClosingDilationKernelSize = obs_data_get_int(data, "morphologyClosingDilationKernelSize"),
-		.morphologyClosingErosionKernelSize = obs_data_get_int(data, "morphologyClosingErosionKernelSize"),
-		.scalingFactorDb = obs_data_get_double(data, "scalingFactorDb"),
+		obs_data_get_string(data, "presetName"),
+		static_cast<ExtractionMode>(obs_data_get_int(data, "extractionMode")),
+		obs_data_get_int(data, "medianFilteringKernelSize"),
+		obs_data_get_int(data, "motionMapKernelSize"),
+		obs_data_get_double(data, "motionAdaptiveFilteringStrength"),
+		obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold"),
+		obs_data_get_int(data, "morphologyOpeningErosionKernelSize"),
+		obs_data_get_int(data, "morphologyOpeningDilationKernelSize"),
+		obs_data_get_int(data, "morphologyClosingDilationKernelSize"),
+		obs_data_get_int(data, "morphologyClosingErosionKernelSize"),
+		obs_data_get_double(data, "scalingFactorDb"),
 	};
 }
 
@@ -225,16 +224,16 @@ std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcep
 Preset Preset::getStrongDefault(void) noexcept
 {
 	return {
-		.presetName = "strong default",
-		.extractionMode = ExtractionMode::Default,
-		.medianFilteringKernelSize = 3,
-		.motionMapKernelSize = 3,
-		.motionAdaptiveFilteringStrength = 0.5,
-		.motionAdaptiveFilteringMotionThreshold = 0.3,
-		.morphologyOpeningErosionKernelSize = 1,
-		.morphologyOpeningDilationKernelSize = 1,
-		.morphologyClosingDilationKernelSize = 7,
-		.morphologyClosingErosionKernelSize = 5,
-		.scalingFactorDb = 6.0,
+		"strong default",
+		ExtractionMode::Default,
+		3,
+		3,
+		0.5,
+		0.3,
+		1,
+		1,
+		7,
+		5,
+		6.0,
 	};
 }

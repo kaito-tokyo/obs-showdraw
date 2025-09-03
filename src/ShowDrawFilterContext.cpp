@@ -112,7 +112,7 @@ ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t 
 {
 	obs_log(LOG_INFO, "Creating showdraw filter context");
 
-	runningPreset.presetName = " working";
+	runningPreset.presetName = " running";
 
 	update(settings);
 }
