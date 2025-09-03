@@ -36,7 +36,7 @@ endif()
 
 target_sources(
   ${CMAKE_PROJECT_NAME}
-  PRIVATE src/Preset.cpp src/PresetWindow.cpp src/ShowDrawFilterContext.cpp src/plugin-main.cpp
+  PRIVATE src/Preset.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp src/plugin-main.cpp
 )
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
