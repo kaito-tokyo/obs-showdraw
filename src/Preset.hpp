@@ -64,6 +64,6 @@ public:
     std::optional<std::string> validate(void) const noexcept;
 
     static Preset fromObsData(obs_data_t *data) noexcept;
-    static void saveUserPresets(const std::vector<const Preset> &presets) noexcept;
+    static void saveUserPresets(const std::vector<Preset> &presets) noexcept;
     static Preset getStrongDefault(void) noexcept;
 };

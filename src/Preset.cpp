@@ -129,7 +129,7 @@ Preset Preset::fromObsData(obs_data_t *data) noexcept
     };
 }
 
-void Preset::saveUserPresets(const std::vector<const Preset> &presets) noexcept
+void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 {
 	char *config_dir_path = obs_module_config_path("");
     std::filesystem::create_directories(config_dir_path);

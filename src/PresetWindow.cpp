@@ -37,9 +37,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <util/platform.h>
 #include <util/dstr.h>
 
-std::vector<const Preset> initializePresets(const Preset &runningPreset)
+std::vector<Preset> initializePresets(const Preset &runningPreset)
 {
-	std::vector<const Preset> presets{runningPreset, Preset::getStrongDefault()};
+	std::vector<Preset> presets{runningPreset, Preset::getStrongDefault()};
 
 	char *configPath = obs_module_config_path(UserPresetsJson);
 	obs_data_t *configData = obs_data_create_from_json_file_safe(configPath, "bak");
