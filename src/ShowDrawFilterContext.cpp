@@ -361,7 +361,8 @@ void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(const float texelWi
 	gs_effect_set_texture(drawingEffect->texture_image1, texture_previous_luminance);
 
 	gs_effect_set_float(drawingEffect->float_strength, (float)runningPreset.motionAdaptiveFilteringStrength);
-	gs_effect_set_float(drawingEffect->float_motion_threshold, (float)runningPreset.motionAdaptiveFilteringMotionThreshold);
+	gs_effect_set_float(drawingEffect->float_motion_threshold,
+			    (float)runningPreset.motionAdaptiveFilteringMotionThreshold);
 
 	applyEffectPass(drawingEffect->tech_motion_adaptive_filtering, texture_source);
 
