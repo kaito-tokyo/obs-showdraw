@@ -32,6 +32,12 @@ struct bfree_deleter {
 
 using unique_bfree_t = std::unique_ptr<char, bfree_deleter>;
 
+struct obs_data_array_deleter {
+	void operator()(obs_data_array_t *array) const { obs_data_array_release(array); }
+};
+
+using unique_obs_data_array_t = std::unique_ptr<obs_data_array_t, obs_data_array_deleter>;
+
 struct obs_data_deleter {
 	void operator()(obs_data_t *data) const { obs_data_release(data); }
 };

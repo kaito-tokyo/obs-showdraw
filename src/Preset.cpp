@@ -30,6 +30,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "bridge.hpp"
 
 using kaitotokyo::obs::unique_bfree_t;
+using kaitotokyo::obs::unique_obs_data_array_t;
 using kaitotokyo::obs::unique_obs_data_t;
 
 const char *UserPresetsJson = "UserPresets.json";
@@ -163,7 +164,7 @@ void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 
 	obs_data_set_string(config_data.get(), "version", UserPresetsVersion);
 
-	obs_data_array_t *settings_array = obs_data_array_create();
+	unique_obs_data_array_t settings_array(obs_data_array_create());
 
 	std::vector<unique_obs_data_t> newPresets;
 	for (size_t i = 0; i < presets.size(); i++) {
@@ -174,17 +175,15 @@ void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 
 		unique_obs_data_t newPreset(obs_data_create());
 		preset.loadIntoObsData(newPreset.get());
-		obs_data_array_push_back(settings_array, newPreset.get());
+		obs_data_array_push_back(settings_array.get(), newPreset.get());
 		newPresets.push_back(std::move(newPreset));
 	}
 
-	obs_data_set_array(config_data.get(), "settings", settings_array);
+	obs_data_set_array(config_data.get(), "settings", settings_array.get());
 
 	if (!obs_data_save_json_pretty_safe(config_data.get(), config_path.get(), "_", "bak")) {
 		obs_log(LOG_ERROR, "Failed to save preset to %s", config_path.get());
 	}
-
-	obs_data_array_release(settings_array);
 }
 
 std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcept
@@ -198,14 +197,14 @@ std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcep
 		return presets;
 	}
 
-	obs_data_array_t *settingsArray = obs_data_get_array(configData.get(), "settings");
+	unique_obs_data_array_t settingsArray(obs_data_get_array(configData.get(), "settings"));
 
 	if (!settingsArray) {
 		return presets;
 	}
 
-	for (size_t i = 0; i < obs_data_array_count(settingsArray); ++i) {
-		unique_obs_data_t presetData(obs_data_array_item(settingsArray, i));
+	for (size_t i = 0; i < obs_data_array_count(settingsArray.get()); ++i) {
+		unique_obs_data_t presetData(obs_data_array_item(settingsArray.get(), i));
 		if (!presetData) {
 			continue;
 		}
@@ -214,8 +213,6 @@ std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcep
 
 		presets.push_back(preset);
 	}
-
-	obs_data_array_release(settingsArray);
 
 	return presets;
 }
