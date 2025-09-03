@@ -86,6 +86,8 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 
 	context->filter = source;
 
+	context->current_settings.filter = source;
+
 	context->current_settings.extraction_mode = EXTRACTION_MODE_DEFAULT;
 
 	context->current_settings.median_filtering_kernel_size = 1;

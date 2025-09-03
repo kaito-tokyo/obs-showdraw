@@ -34,8 +34,12 @@ void show_preset_window(struct settings *current_settings, void *parent_window_p
 
 #ifdef __cplusplus
 
+#include <vector>
+
+#include <QComboBox>
 #include <QDialog>
 #include <QTextEdit>
+#include <QToolButton>
 
 namespace Ui {
 class PresetWindow;
@@ -50,12 +54,20 @@ public:
 
 private slots:
 	void onPresetSelectionChanged(int index);
-	void onApplyButtonClicked();
+	void onAddButtonClicked(void);
+	void onRemoveButtonClicked(void);
+	void onApplyButtonClicked(void);
 
 private:
 	struct settings *currentSettings;
-	QTextEdit *settingsJsonTextEdit;
 	struct settings selectedPreset;
+	std::vector<struct settings> presets;
+
+	QComboBox *presetSelector;
+	QToolButton *removeButton;
+	QTextEdit *settingsJsonTextEdit;
+
+	void updatePresetSelector(void);
 };
 
 #endif

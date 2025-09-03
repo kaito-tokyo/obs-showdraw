@@ -1,5 +1,8 @@
 #pragma once
 
+#include <obs-module.h>
+#include <util/dstr.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -11,6 +14,11 @@ const long long EXTRACTION_MODE_EDGE_DETECTION = 300;
 const long long EXTRACTION_MODE_SCALING = 400;
 
 struct settings {
+	obs_source_t *filter;
+
+	struct dstr preset_name;
+	bool is_system;
+
 	long long extraction_mode;
 
 	long long median_filtering_kernel_size;
