@@ -17,14 +17,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include <obs-module.h>
-#include <obs-frontend-api.h>
 #include <plugin-support.h>
-
-#include <math.h>
 
 #include "ShowDrawFilterContext.hpp"
 
-#define EXTRACTION_MODE_DEFAULT_VALUE EXTRACTION_MODE_SCALING
+extern "C" {
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
@@ -52,4 +49,6 @@ bool obs_module_load(void)
 void obs_module_unload(void)
 {
 	obs_log(LOG_INFO, "plugin unloaded");
+}
+
 }
