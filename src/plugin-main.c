@@ -60,7 +60,7 @@ struct showdraw_filter_context {
 
 	double scaling_factor;
 
-	const char *effect_path;
+	char *effect_path;
 
 	gs_texture_t *source_texture;
 	gs_texture_t *target_texture;
@@ -164,6 +164,7 @@ void showdraw_destroy(void *data)
 
 	struct showdraw_filter_context *context = (struct showdraw_filter_context *)data;
 
+	obs_enter_graphics();
 	if (context->source_texture) {
 		gs_texture_destroy(context->source_texture);
 		context->source_texture = NULL;
@@ -184,10 +185,16 @@ void showdraw_destroy(void *data)
 		context->previous_luminance_texture = NULL;
 	}
 
+	if (context->effect_path) {
+		bfree((void *)context->effect_path);
+		context->effect_path = NULL;
+	}
+
 	if (context->effect) {
 		gs_effect_destroy(context->effect);
 		context->effect = NULL;
 	}
+	obs_leave_graphics();
 
 	bfree(context);
 }
@@ -209,7 +216,6 @@ void showdraw_get_defaults(obs_data_t *data)
 	obs_data_set_default_int(data, "morphologyClosingErosionKernelSize", 1);
 
 	obs_data_set_default_double(data, "scalingFactorDb", 0.0);
-	;
 }
 
 obs_properties_t *showdraw_get_properties(void *data)
@@ -320,14 +326,12 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	if (!context->effect) {
 		char *error_string = NULL;
 
-		gs_effect_t *effect = gs_effect_create_from_file(context->effect_path, &error_string);
-		if (!effect) {
+		context->effect = gs_effect_create_from_file(context->effect_path, &error_string);
+		if (!context->effect) {
 			obs_log(LOG_ERROR, "Error loading effect: %s", error_string);
 			bfree(error_string);
 			return;
 		}
-
-		context->effect = effect;
 
 		context->effect_image = gs_effect_get_param_by_name(context->effect, "image");
 		context->effect_image1 = gs_effect_get_param_by_name(context->effect, "image1");
@@ -370,6 +374,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	    gs_texture_get_height(context->source_texture) != height) {
 		if (context->source_texture) {
 			gs_texture_destroy(context->source_texture);
+			context->source_texture = NULL;
 		}
 		context->source_texture = gs_texture_create(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
 		if (!context->source_texture) {
@@ -383,6 +388,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	    gs_texture_get_height(context->target_texture) != height) {
 		if (context->target_texture) {
 			gs_texture_destroy(context->target_texture);
+			context->target_texture = NULL;
 		}
 		context->target_texture = gs_texture_create(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
 		if (!context->target_texture) {
@@ -396,6 +402,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	    gs_texture_get_height(context->motion_map_texture) != height) {
 		if (context->motion_map_texture) {
 			gs_texture_destroy(context->motion_map_texture);
+			context->motion_map_texture = NULL;
 		}
 		context->motion_map_texture = gs_texture_create(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
 		if (!context->motion_map_texture) {
@@ -410,6 +417,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	    gs_texture_get_height(context->previous_luminance_texture) != height) {
 		if (context->previous_luminance_texture) {
 			gs_texture_destroy(context->previous_luminance_texture);
+			context->previous_luminance_texture = NULL;
 		}
 		context->previous_luminance_texture =
 			gs_texture_create(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
@@ -526,9 +534,9 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		}
 		gs_technique_end(context->effect_tech_motion_adaptive_filtering);
 
-		swap_textures(context);
+		gs_copy_texture(context->previous_luminance_texture, context->target_texture);
 
-		gs_copy_texture(context->target_texture, context->previous_luminance_texture);
+		swap_textures(context);
 	}
 
 	if (extractionMode >= EXTRACTION_MODE_EDGE_DETECTION) {
