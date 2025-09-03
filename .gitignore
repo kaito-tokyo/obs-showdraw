@@ -2,6 +2,8 @@
 /*
 
 # Except for default project files
+!/.aiexclude
+!/.editorconfig
 !/.github
 !/build-aux
 !/cmake
