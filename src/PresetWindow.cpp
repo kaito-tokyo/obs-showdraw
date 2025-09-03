@@ -17,6 +17,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include "PresetWindow.hpp"
+#include "bridge.hpp"
 
 #include <functional>
 #include <sstream>
@@ -37,6 +38,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <plugin-support.h>
 #include <util/platform.h>
 #include <util/dstr.h>
+
+using kaitotokyo::obs::unique_obs_data_t;
 
 PresetWindow::PresetWindow(obs_source_t *filter, const Preset &runningPreset, QWidget *parent)
 	: QDialog(parent),
@@ -80,11 +83,10 @@ PresetWindow::PresetWindow(obs_source_t *filter, const Preset &runningPreset, QW
 	settingsJsonTextEdit->setStyleSheet("QTextEdit[error=\"true\"] { border: 2px solid red; }");
 	connect(settingsJsonTextEdit, &QTextEdit::textChanged, this, &PresetWindow::onSettingsJsonTextEditChanged);
 
-	obs_data_t *settingsData = obs_data_create();
-	runningPreset.loadIntoObsData(settingsData);
-	const char *settingsJson = obs_data_get_json_pretty(settingsData);
+	unique_obs_data_t settingsData(obs_data_create());
+	runningPreset.loadIntoObsData(settingsData.get());
+	const char *settingsJson = obs_data_get_json_pretty(settingsData.get());
 	settingsJsonTextEdit->setPlainText(QString::fromUtf8(settingsJson));
-	obs_data_release(settingsData);
 
 	connect(applyButton, &QPushButton::clicked, this, &PresetWindow::onApplyButtonClicked);
 
@@ -107,14 +109,13 @@ void PresetWindow::onPresetSelectionChanged(int index)
 
 	const Preset &selectedPreset = presets[index];
 
-	obs_data_t *settingsData = obs_data_create();
-	selectedPreset.loadIntoObsData(settingsData);
-	const char *settingsJson = obs_data_get_json_pretty(settingsData);
+	unique_obs_data_t settingsData(obs_data_create());
+	selectedPreset.loadIntoObsData(settingsData.get());
+	const char *settingsJson = obs_data_get_json_pretty(settingsData.get());
 	{
 		QSignalBlocker blocker(settingsJsonTextEdit);
 		settingsJsonTextEdit->setPlainText(QString::fromUtf8(settingsJson));
 	}
-	obs_data_release(settingsData);
 	validateSettingsJsonTextEdit();
 
 	removeButton->setEnabled(selectedPreset.isUser());
@@ -144,16 +145,15 @@ void PresetWindow::onAddButtonClicked(void)
 
 	std::string newPresetJson = settingsJsonTextEdit->toPlainText().toStdString();
 
-	obs_data_t *newPresetData = obs_data_create_from_json(newPresetJson.c_str());
+	unique_obs_data_t newPresetData(obs_data_create_from_json(newPresetJson.c_str()));
 	if (!newPresetData) {
 		obs_log(LOG_ERROR, "Failed to create obs_data_t from JSON");
 		return;
 	}
 
-	obs_data_set_string(newPresetData, "presetName", presetName.toUtf8().constData());
+	obs_data_set_string(newPresetData.get(), "presetName", presetName.toUtf8().constData());
 
-	const Preset newPreset = Preset::fromObsData(newPresetData);
-	obs_data_release(newPresetData);
+	const Preset newPreset = Preset::fromObsData(newPresetData.get());
 
 	presetSelector->addItem(presetName);
 	{
@@ -223,7 +223,7 @@ bool PresetWindow::validateSettingsJsonTextEdit(void)
 {
 	std::string newPresetJson = settingsJsonTextEdit->toPlainText().toStdString();
 
-	obs_data_t *newPresetData = obs_data_create_from_json(newPresetJson.c_str());
+	unique_obs_data_t newPresetData(obs_data_create_from_json(newPresetJson.c_str()));
 	if (!newPresetData) {
 		settingsJsonTextEdit->setStyleSheet("QTextEdit { border: 2px solid red; }");
 		settingsJsonTextEdit->setToolTip(obs_module_text("presetWindowInvalidJson"));
@@ -231,10 +231,9 @@ bool PresetWindow::validateSettingsJsonTextEdit(void)
 		return false;
 	}
 
-	obs_data_set_string(newPresetData, "presetName", "new preset");
+	obs_data_set_string(newPresetData.get(), "presetName", "new preset");
 
-	const Preset newPreset = Preset::fromObsData(newPresetData);
-	obs_data_release(newPresetData);
+	const Preset newPreset = Preset::fromObsData(newPresetData.get());
 
 	std::optional<std::string> errorMessage = newPreset.validate();
 	if (errorMessage) {
