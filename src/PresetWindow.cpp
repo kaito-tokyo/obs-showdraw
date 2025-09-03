@@ -18,6 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "PresetWindow.hpp"
 
+#include <functional>
 #include <sstream>
 #include <string>
 
@@ -31,61 +32,17 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <QSignalBlocker>
 #include <QToolButton>
 
+#include <obs-module.h>
 #include <obs-frontend-api.h>
 #include <plugin-support.h>
 #include <util/platform.h>
 #include <util/dstr.h>
 
-#include "showdraw-conf.hpp"
-
-std::vector<struct showdraw_preset *> initializePresets(struct showdraw_global_state *globalState)
-{
-	struct showdraw_preset *currentPreset = showdraw_preset_create(" current", true);
-	showdraw_preset_copy(currentPreset, globalState->running_preset);
-
-	std::vector<struct showdraw_preset *> presets{currentPreset, showdraw_preset_get_strong_default()};
-
-	char *configPath = obs_module_config_path(USER_PRESETS_JSON);
-	obs_data_t *configData = obs_data_create_from_json_file_safe(configPath, "bak");
-	bfree(configPath);
-
-	if (!configData) {
-		return presets;
-	}
-
-	obs_data_array_t *settingsArray = obs_data_get_array(configData, "settings");
-
-	if (!settingsArray) {
-		return presets;
-	}
-
-	for (size_t i = 0; i < obs_data_array_count(settingsArray); ++i) {
-		obs_data_t *presetData = obs_data_array_item(settingsArray, i);
-		if (!presetData) {
-			continue;
-		}
-
-		struct showdraw_preset *preset = showdraw_conf_load_preset_from_obs_data(presetData);
-
-		if (!preset) {
-			obs_log(LOG_ERROR, "Failed to create preset from JSON");
-			continue;
-		}
-
-		presets.push_back(preset);
-		obs_data_release(presetData);
-	}
-
-	obs_data_array_release(settingsArray);
-	obs_data_release(configData);
-
-	return presets;
-}
-
-PresetWindow::PresetWindow(struct showdraw_global_state *globalState, QWidget *parent)
+PresetWindow::PresetWindow(obs_source_t *filter, const Preset &runningPreset, QWidget *parent)
 	: QDialog(parent),
-	  globalState(globalState),
-	  presets(initializePresets(globalState)),
+	  filter(filter),
+	  runningPreset(runningPreset),
+	  presets(Preset::loadUserPresets(runningPreset)),
 	  presetSelector(new QComboBox()),
 	  addButton(new QToolButton()),
 	  removeButton(new QToolButton()),
@@ -97,14 +54,13 @@ PresetWindow::PresetWindow(struct showdraw_global_state *globalState, QWidget *p
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	for (struct showdraw_preset *preset : presets) {
-		std::string presetName(preset->preset_name.array);
-		if (presetName == " current") {
+	for (const Preset &preset : presets) {
+		if (preset.presetName == " current") {
 			presetSelector->addItem("-");
-		} else if (presetName == " strong default") {
+		} else if (preset.presetName == " strong default") {
 			presetSelector->addItem(QString::fromUtf8(obs_module_text("presetWindowStrongDefault")));
 		} else {
-			presetSelector->addItem(QString::fromStdString(presetName));
+			presetSelector->addItem(QString::fromStdString(preset.presetName));
 		}
 	}
 	connect(presetSelector, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
@@ -125,7 +81,7 @@ PresetWindow::PresetWindow(struct showdraw_global_state *globalState, QWidget *p
 	connect(settingsJsonTextEdit, &QTextEdit::textChanged, this, &PresetWindow::onSettingsJsonTextEditChanged);
 
 	obs_data_t *settingsData = obs_data_create();
-	showdraw_conf_load_preset_into_obs_data(settingsData, globalState->running_preset);
+	runningPreset.loadIntoObsData(settingsData);
 	const char *settingsJson = obs_data_get_json_pretty(settingsData);
 	settingsJsonTextEdit->setPlainText(QString::fromUtf8(settingsJson));
 	obs_data_release(settingsData);
@@ -140,12 +96,7 @@ PresetWindow::PresetWindow(struct showdraw_global_state *globalState, QWidget *p
 	setLayout(layout);
 }
 
-PresetWindow::~PresetWindow()
-{
-	for (struct showdraw_preset *preset : presets) {
-		showdraw_preset_destroy(preset);
-	}
-}
+PresetWindow::~PresetWindow() {}
 
 void PresetWindow::onPresetSelectionChanged(int index)
 {
@@ -154,10 +105,10 @@ void PresetWindow::onPresetSelectionChanged(int index)
 		return;
 	}
 
-	struct showdraw_preset *selectedPreset = presets[index];
+	const Preset &selectedPreset = presets[index];
 
 	obs_data_t *settingsData = obs_data_create();
-	showdraw_conf_load_preset_into_obs_data(settingsData, selectedPreset);
+	selectedPreset.loadIntoObsData(settingsData);
 	const char *settingsJson = obs_data_get_json_pretty(settingsData);
 	{
 		QSignalBlocker blocker(settingsJsonTextEdit);
@@ -166,12 +117,13 @@ void PresetWindow::onPresetSelectionChanged(int index)
 	obs_data_release(settingsData);
 	validateSettingsJsonTextEdit();
 
-	removeButton->setEnabled(!showdraw_preset_is_system(selectedPreset));
+	removeButton->setEnabled(selectedPreset.isUser());
 }
 
 void PresetWindow::onAddButtonClicked(void)
 {
-	size_t userPresetCount = std::count_if(presets.begin(), presets.end(), &showdraw_preset_is_user);
+	size_t userPresetCount =
+		std::count_if(presets.begin(), presets.end(), std::function<bool(const Preset &)>(&Preset::isUser));
 
 	std::ostringstream oss;
 	oss << obs_module_text("presetWindowAddNewPrefix") << " " << (userPresetCount + 1);
@@ -200,7 +152,7 @@ void PresetWindow::onAddButtonClicked(void)
 
 	obs_data_set_string(newPresetData, "presetName", presetName.toUtf8().constData());
 
-	struct showdraw_preset *newPreset = showdraw_conf_load_preset_from_obs_data(newPresetData);
+	const Preset newPreset = Preset::fromObsData(newPresetData);
 	obs_data_release(newPresetData);
 
 	presetSelector->addItem(presetName);
@@ -212,7 +164,7 @@ void PresetWindow::onAddButtonClicked(void)
 
 	presets.push_back(newPreset);
 
-	showdraw_conf_save_user_presets(presets.data(), presets.size());
+	Preset::saveUserPresets(presets);
 }
 
 void PresetWindow::onRemoveButtonClicked(void)
@@ -223,9 +175,9 @@ void PresetWindow::onRemoveButtonClicked(void)
 		return;
 	}
 
-	showdraw_preset *preset = presets[presetIndex];
-	if (showdraw_preset_is_system(preset)) {
-		obs_log(LOG_ERROR, "Attempted to remove system preset %s", preset->preset_name.array);
+	const Preset &preset = presets[presetIndex];
+	if (preset.isSystem()) {
+		obs_log(LOG_ERROR, "Attempted to remove system preset %s", preset.presetName.c_str());
 		return;
 	}
 
@@ -239,9 +191,8 @@ void PresetWindow::onRemoveButtonClicked(void)
 
 	presets.erase(presets.begin() + presetIndex);
 	presetSelector->removeItem(presetIndex);
-	showdraw_preset_destroy(preset);
 
-	showdraw_conf_save_user_presets(presets.data(), presets.size());
+	Preset::saveUserPresets(presets);
 }
 
 void PresetWindow::onSettingsJsonTextEditChanged(void)
@@ -257,13 +208,13 @@ void PresetWindow::onSettingsJsonTextEditChanged(void)
 
 void PresetWindow::onApplyButtonClicked(void)
 {
-	obs_data_t *settings = obs_source_get_settings(globalState->filter);
+	// obs_data_t *settings = obs_source_get_settings(filter);
 
 	// showdraw_conf_load_preset_into_obs_data(settings, &selectedPreset);
 
-	obs_source_update(globalState->filter, settings);
+	// obs_source_update(globalState->filter, settings);
 
-	obs_data_release(settings);
+	// obs_data_release(settings);
 
 	close();
 }
@@ -282,27 +233,20 @@ bool PresetWindow::validateSettingsJsonTextEdit(void)
 
 	obs_data_set_string(newPresetData, "presetName", "new preset");
 
-	struct showdraw_preset *newPreset = showdraw_conf_load_preset_from_obs_data(newPresetData);
+	const Preset newPreset = Preset::fromObsData(newPresetData);
 	obs_data_release(newPresetData);
 
-	if (!newPreset) {
-		obs_log(LOG_ERROR, "Failed to create new preset from JSON");
-		return false;
-	}
-
-	const char *errorMessage = showdraw_conf_validate_settings(newPreset);
+	std::optional<std::string> errorMessage = newPreset.validate();
 	if (errorMessage) {
 		settingsJsonTextEdit->setStyleSheet("QTextEdit { border: 2px solid red; }");
-		settingsJsonTextEdit->setToolTip(errorMessage);
-		settingsErrorLabel->setText(errorMessage);
+		settingsJsonTextEdit->setToolTip(QString::fromStdString(*errorMessage));
+		settingsErrorLabel->setText(QString::fromStdString(*errorMessage));
 		return false;
 	}
 
 	settingsJsonTextEdit->setStyleSheet("");
 	settingsJsonTextEdit->setToolTip(obs_module_text("presetWindowJsonOk"));
 	settingsErrorLabel->setText(obs_module_text("presetWindowJsonOk"));
-
-	showdraw_preset_destroy(newPreset);
 
 	return true;
 }

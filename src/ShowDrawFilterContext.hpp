@@ -20,7 +20,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs-module.h>
 
-#include "showdraw-global-state.hpp"
+#include "Preset.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,9 +68,8 @@ private:
 	void drawFinalImage(void) noexcept;
 
 	obs_data_t *settings;
-	obs_source_t *source;
-
-	struct showdraw_global_state global_state;
+	obs_source_t *filter;
+	Preset runningPreset;
 
 	double scaling_factor;
 

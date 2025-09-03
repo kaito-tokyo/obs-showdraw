@@ -20,8 +20,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs-module.h>
 
-#include "showdraw-preset.hpp"
-#include "showdraw-global-state.hpp"
+#include "Preset.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,7 +51,7 @@ class PresetWindow : public QDialog {
 	Q_OBJECT
 
 public:
-	PresetWindow(struct showdraw_global_state *globalState, QWidget *parent = nullptr);
+	PresetWindow(obs_source_t *filter, const Preset &runningPreset, QWidget *parent = nullptr);
 	~PresetWindow();
 
 private slots:
@@ -63,8 +62,9 @@ private slots:
 	void onApplyButtonClicked(void);
 
 private:
-	struct showdraw_global_state *globalState;
-	std::vector<struct showdraw_preset *> presets;
+	obs_source_t *filter;
+	const Preset &runningPreset;
+	std::vector<Preset> presets;
 
 	QComboBox *const presetSelector;
 	QToolButton *const addButton;

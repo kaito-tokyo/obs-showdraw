@@ -17,29 +17,34 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include <obs-module.h>
-#include <obs-frontend-api.h>
 #include <plugin-support.h>
-
-#include <math.h>
 
 #include "ShowDrawFilterContext.hpp"
 
-#define EXTRACTION_MODE_DEFAULT_VALUE EXTRACTION_MODE_SCALING
+extern "C" {
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 struct obs_source_info showdraw_filter = {
-	.id = "showdraw",
-	.type = OBS_SOURCE_TYPE_FILTER,
-	.output_flags = OBS_SOURCE_VIDEO,
-	.get_name = showdraw_get_name,
-	.create = showdraw_create,
-	.destroy = showdraw_destroy,
-	.get_defaults = showdraw_get_defaults,
-	.get_properties = showdraw_get_properties,
-	.update = showdraw_update,
-	.video_render = showdraw_video_render,
+	"showdraw",              // id
+	OBS_SOURCE_TYPE_FILTER,  // type
+	OBS_SOURCE_VIDEO,        // output_flags
+	showdraw_get_name,       // get_name
+	showdraw_create,         // create
+	showdraw_destroy,        // destroy
+	nullptr,                 // get_width
+	nullptr,                 // get_height
+	showdraw_get_defaults,   // get_defaults
+	showdraw_get_properties, // get_properties
+	showdraw_update,         // update
+	nullptr,                 // activate
+	nullptr,                 // deactivate
+	nullptr,                 // show
+	nullptr,                 // hide
+	nullptr,                 // video_tick
+	showdraw_video_render,   // video_render
+				 // The rest of the fields will be zero-initialized
 };
 
 bool obs_module_load(void)
@@ -52,4 +57,5 @@ bool obs_module_load(void)
 void obs_module_unload(void)
 {
 	obs_log(LOG_INFO, "plugin unloaded");
+}
 }

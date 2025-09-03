@@ -20,9 +20,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <stdexcept>
 
 #include <obs-frontend-api.h>
+#include <plugin-support.h>
 
 #include "ShowDrawFilterContext.hpp"
-#include "showdraw-preset.hpp"
+#include "Preset.hpp"
 #include "PresetWindow.hpp"
 
 const char *showdraw_get_name(void *type_data)
@@ -107,17 +108,11 @@ const char *ShowDrawFilterContext::getName(void) noexcept
 
 ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source)
 	: settings(settings),
-	  source(source)
+	  filter(source)
 {
 	obs_log(LOG_INFO, "Creating showdraw filter context");
 
-	global_state.filter = source;
-	global_state.running_preset = showdraw_preset_create(" working", true);
-
-	if (global_state.running_preset == NULL) {
-		obs_log(LOG_ERROR, "Failed to create showdraw preset");
-		throw std::bad_alloc();
-	}
+	runningPreset.presetName = " running";
 
 	update(settings);
 }
@@ -125,8 +120,6 @@ ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t 
 ShowDrawFilterContext::~ShowDrawFilterContext(void) noexcept
 {
 	obs_log(LOG_INFO, "Destroying showdraw filter context");
-
-	showdraw_preset_destroy(global_state.running_preset);
 
 	obs_enter_graphics();
 	gs_texture_destroy(texture_source);
@@ -139,31 +132,29 @@ ShowDrawFilterContext::~ShowDrawFilterContext(void) noexcept
 
 void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 {
-	struct showdraw_preset *default_preset = showdraw_preset_get_strong_default();
+	struct Preset defaultPreset = Preset::getStrongDefault();
 
-	obs_data_set_default_int(data, "extractionMode", default_preset->extraction_mode);
+	obs_data_set_default_int(data, "extractionMode", (long long)defaultPreset.extractionMode);
 
-	obs_data_set_default_int(data, "medianFilteringKernelSize", default_preset->median_filtering_kernel_size);
+	obs_data_set_default_int(data, "medianFilteringKernelSize", (long long)defaultPreset.medianFilteringKernelSize);
 
-	obs_data_set_default_int(data, "motionMapKernelSize", default_preset->motion_map_kernel_size);
+	obs_data_set_default_int(data, "motionMapKernelSize", (long long)defaultPreset.motionMapKernelSize);
 
 	obs_data_set_default_double(data, "motionAdaptiveFilteringStrength",
-				    default_preset->motion_adaptive_filtering_strength);
+				    defaultPreset.motionAdaptiveFilteringStrength);
 	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold",
-				    default_preset->motion_adaptive_filtering_motion_threshold);
+				    defaultPreset.motionAdaptiveFilteringMotionThreshold);
 
 	obs_data_set_default_int(data, "morphologyOpeningErosionKernelSize",
-				 default_preset->morphology_opening_erosion_kernel_size);
+				 defaultPreset.morphologyOpeningErosionKernelSize);
 	obs_data_set_default_int(data, "morphologyOpeningDilationKernelSize",
-				 default_preset->morphology_opening_dilation_kernel_size);
+				 defaultPreset.morphologyOpeningDilationKernelSize);
 	obs_data_set_default_int(data, "morphologyClosingDilationKernelSize",
-				 default_preset->morphology_closing_dilation_kernel_size);
+				 defaultPreset.morphologyClosingDilationKernelSize);
 	obs_data_set_default_int(data, "morphologyClosingErosionKernelSize",
-				 default_preset->morphology_closing_erosion_kernel_size);
+				 defaultPreset.morphologyClosingErosionKernelSize);
 
-	obs_data_set_default_double(data, "scalingFactorDb", default_preset->scaling_factor_db);
-
-	showdraw_preset_destroy(default_preset);
+	obs_data_set_default_double(data, "scalingFactorDb", defaultPreset.scalingFactorDb);
 }
 
 obs_properties_t *ShowDrawFilterContext::getProperties(void) noexcept
@@ -176,7 +167,7 @@ obs_properties_t *ShowDrawFilterContext::getProperties(void) noexcept
 			UNUSED_PARAMETER(props);
 			UNUSED_PARAMETER(property);
 			ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-			PresetWindow *window = new PresetWindow(&context->global_state,
+			PresetWindow *window = new PresetWindow(context->filter, context->runningPreset,
 								static_cast<QWidget *>(obs_frontend_get_main_window()));
 			window->exec();
 			return false;
@@ -186,15 +177,15 @@ obs_properties_t *ShowDrawFilterContext::getProperties(void) noexcept
 	obs_property_t *propExtractionMode = obs_properties_add_list(
 		props, "extractionMode", obs_module_text("extractionMode"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeDefault"),
-				  EXTRACTION_MODE_DEFAULT);
+				  static_cast<long long>(ExtractionMode::Default));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModePassthrough"),
-				  EXTRACTION_MODE_PASSTHROUGH);
+				  static_cast<long long>(ExtractionMode::Passthrough));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeLuminanceExtraction"),
-				  EXTRACTION_MODE_LUMINANCE_EXTRACTION);
+				  static_cast<long long>(ExtractionMode::LuminanceExtraction));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeEdgeDetection"),
-				  EXTRACTION_MODE_EDGE_DETECTION);
+				  static_cast<long long>(ExtractionMode::EdgeDetection));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeScaling"),
-				  EXTRACTION_MODE_SCALING);
+				  static_cast<long long>(ExtractionMode::Scaling));
 
 	obs_property_t *propMedianFilteringKernelSize = obs_properties_add_list(
 		props, "medianFilteringKernelSize", obs_module_text("medianFilteringKernelSize"), OBS_COMBO_TYPE_LIST,
@@ -238,30 +229,28 @@ obs_properties_t *ShowDrawFilterContext::getProperties(void) noexcept
 
 void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 {
-	struct showdraw_preset *running_preset = global_state.running_preset;
+	runningPreset.extractionMode = static_cast<ExtractionMode>(obs_data_get_int(settings, "extractionMode"));
 
-	running_preset->extraction_mode = obs_data_get_int(settings, "extractionMode");
+	runningPreset.medianFilteringKernelSize = obs_data_get_int(settings, "medianFilteringKernelSize");
 
-	running_preset->median_filtering_kernel_size = obs_data_get_int(settings, "medianFilteringKernelSize");
+	runningPreset.motionMapKernelSize = obs_data_get_int(settings, "motionMapKernelSize");
 
-	running_preset->motion_map_kernel_size = obs_data_get_int(settings, "motionMapKernelSize");
-
-	running_preset->motion_adaptive_filtering_strength =
+	runningPreset.motionAdaptiveFilteringStrength =
 		obs_data_get_double(settings, "motionAdaptiveFilteringStrength");
-	running_preset->motion_adaptive_filtering_motion_threshold =
+	runningPreset.motionAdaptiveFilteringMotionThreshold =
 		obs_data_get_double(settings, "motionAdaptiveFilteringMotionThreshold");
 
-	running_preset->morphology_opening_erosion_kernel_size =
+	runningPreset.morphologyOpeningErosionKernelSize =
 		obs_data_get_int(settings, "morphologyOpeningErosionKernelSize");
-	running_preset->morphology_opening_dilation_kernel_size =
+	runningPreset.morphologyOpeningDilationKernelSize =
 		obs_data_get_int(settings, "morphologyOpeningDilationKernelSize");
-	running_preset->morphology_closing_dilation_kernel_size =
+	runningPreset.morphologyClosingDilationKernelSize =
 		obs_data_get_int(settings, "morphologyClosingDilationKernelSize");
-	running_preset->morphology_closing_erosion_kernel_size =
+	runningPreset.morphologyClosingErosionKernelSize =
 		obs_data_get_int(settings, "morphologyClosingErosionKernelSize");
 
-	running_preset->scaling_factor_db = obs_data_get_double(settings, "scalingFactorDb");
-	scaling_factor = pow(10.0, running_preset->scaling_factor_db / 10.0);
+	runningPreset.scalingFactorDb = obs_data_get_double(settings, "scalingFactorDb");
+	scaling_factor = pow(10.0, runningPreset.scalingFactorDb / 10.0);
 }
 
 gs_eparam_t *getEffectParam(gs_effect_t *effect, const char *name)
@@ -418,7 +407,7 @@ void ShowDrawFilterContext::applyMedianFilteringPass(const float texelWidth, con
 
 	gs_effect_set_float(effect_float_texel_width, texelWidth);
 	gs_effect_set_float(effect_float_texel_height, texelHeight);
-	gs_effect_set_int(effect_int_kernel_size, (int)global_state.running_preset->median_filtering_kernel_size);
+	gs_effect_set_int(effect_int_kernel_size, (int)runningPreset.medianFilteringKernelSize);
 
 	applyEffectPass(effect_tech_median_filtering, texture_source);
 
@@ -434,7 +423,7 @@ void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(const float texelWi
 
 	gs_effect_set_float(effect_float_texel_width, texelWidth);
 	gs_effect_set_float(effect_float_texel_height, texelHeight);
-	gs_effect_set_int(effect_int_kernel_size, (int)global_state.running_preset->motion_map_kernel_size);
+	gs_effect_set_int(effect_int_kernel_size, (int)runningPreset.motionMapKernelSize);
 
 	applyEffectPass(effect_tech_calculate_motion_map, texture_source);
 
@@ -442,10 +431,8 @@ void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(const float texelWi
 	gs_effect_set_texture(effect_texture_image, texture_source);
 	gs_effect_set_texture(effect_texture_image1, texture_previous_luminance);
 
-	gs_effect_set_float(effect_float_strength,
-			    (float)global_state.running_preset->motion_adaptive_filtering_strength);
-	gs_effect_set_float(effect_float_motion_threshold,
-			    (float)global_state.running_preset->motion_adaptive_filtering_motion_threshold);
+	gs_effect_set_float(effect_float_strength, (float)runningPreset.motionAdaptiveFilteringStrength);
+	gs_effect_set_float(effect_float_motion_threshold, (float)runningPreset.motionAdaptiveFilteringMotionThreshold);
 
 	applyEffectPass(effect_tech_motion_adaptive_filtering, texture_source);
 
@@ -542,8 +529,6 @@ void ShowDrawFilterContext::drawFinalImage(void) noexcept
 
 void ShowDrawFilterContext::videoRender(void) noexcept
 {
-	obs_source_t *filter = global_state.filter;
-
 	if (!filter) {
 		obs_log(LOG_ERROR, "Filter source not found");
 		return;
@@ -580,11 +565,9 @@ void ShowDrawFilterContext::videoRender(void) noexcept
 		return;
 	}
 
-	struct showdraw_preset *running_preset = global_state.running_preset;
-
-	long long extractionMode = running_preset->extraction_mode == EXTRACTION_MODE_DEFAULT
-					   ? EXTRACTION_MODE_SCALING
-					   : running_preset->extraction_mode;
+	ExtractionMode extractionMode = runningPreset.extractionMode == ExtractionMode::Default
+						? ExtractionMode::Scaling
+						: runningPreset.extractionMode;
 
 	const float texelWidth = 1.0f / (float)width;
 	const float texelHeight = 1.0f / (float)height;
@@ -610,45 +593,45 @@ void ShowDrawFilterContext::videoRender(void) noexcept
 
 	std::swap(texture_source, texture_target);
 
-	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION) {
+	if (extractionMode >= ExtractionMode::LuminanceExtraction) {
 		applyLuminanceExtractionPass();
 
-		if (running_preset->median_filtering_kernel_size > 1) {
+		if (runningPreset.medianFilteringKernelSize > 1) {
 			applyMedianFilteringPass(texelWidth, texelHeight);
 		}
 
-		if (running_preset->motion_adaptive_filtering_strength > 0.0) {
+		if (runningPreset.motionAdaptiveFilteringStrength > 0.0) {
 			applyMotionAdaptiveFilteringPass(texelWidth, texelHeight);
 		}
 	}
 
-	if (extractionMode >= EXTRACTION_MODE_EDGE_DETECTION) {
+	if (extractionMode >= ExtractionMode::EdgeDetection) {
 		applySobelPass(texelWidth, texelHeight);
 
 		applySuppressNonMaximumPass(texelWidth, texelHeight);
 
-		if (running_preset->morphology_opening_erosion_kernel_size > 1) {
+		if (runningPreset.morphologyOpeningErosionKernelSize > 1) {
 			applyMorphologyPass(texelWidth, texelHeight, effect_tech_erosion,
-					    (int)running_preset->morphology_opening_erosion_kernel_size);
+					    (int)runningPreset.morphologyOpeningErosionKernelSize);
 		}
 
-		if (running_preset->morphology_opening_dilation_kernel_size > 1) {
+		if (runningPreset.morphologyOpeningDilationKernelSize > 1) {
 			applyMorphologyPass(texelWidth, texelHeight, effect_tech_dilation,
-					    (int)running_preset->morphology_opening_dilation_kernel_size);
+					    (int)runningPreset.morphologyOpeningDilationKernelSize);
 		}
 
-		if (running_preset->morphology_closing_dilation_kernel_size > 1) {
+		if (runningPreset.morphologyClosingDilationKernelSize > 1) {
 			applyMorphologyPass(texelWidth, texelHeight, effect_tech_dilation,
-					    (int)running_preset->morphology_closing_dilation_kernel_size);
+					    (int)runningPreset.morphologyClosingDilationKernelSize);
 		}
 
-		if (running_preset->morphology_closing_erosion_kernel_size > 1) {
+		if (runningPreset.morphologyClosingErosionKernelSize > 1) {
 			applyMorphologyPass(texelWidth, texelHeight, effect_tech_erosion,
-					    (int)running_preset->morphology_closing_erosion_kernel_size);
+					    (int)runningPreset.morphologyClosingErosionKernelSize);
 		}
 	}
 
-	if (extractionMode >= EXTRACTION_MODE_SCALING) {
+	if (extractionMode >= ExtractionMode::Scaling) {
 		applyScalingPass();
 	}
 
