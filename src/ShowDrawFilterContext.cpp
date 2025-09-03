@@ -105,7 +105,6 @@ const char *ShowDrawFilterContext::getName(void) noexcept
 	return obs_module_text("pluginName");
 }
 
-
 ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source)
 	: settings(settings),
 	  source(source)
