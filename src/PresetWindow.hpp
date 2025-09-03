@@ -20,13 +20,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs-module.h>
 
-#include "settings.hpp"
+#include "showdraw-preset.hpp"
+#include "showdraw-global-state.hpp"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void show_preset_window(struct settings *current_settings, void *parent_window_pointer);
+void showdraw_preset_window_show(struct showdraw_global_state *global_state);
 
 #ifdef __cplusplus
 }
@@ -38,8 +39,12 @@ void show_preset_window(struct settings *current_settings, void *parent_window_p
 
 #include <QComboBox>
 #include <QDialog>
+#include <QLabel>
 #include <QTextEdit>
 #include <QToolButton>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QPushButton>
 
 namespace Ui {
 class PresetWindow;
@@ -49,25 +54,30 @@ class PresetWindow : public QDialog {
 	Q_OBJECT
 
 public:
-	explicit PresetWindow(struct settings *currentSettings, QWidget *parent = nullptr);
+	PresetWindow(struct showdraw_global_state *globalState, QWidget *parent = nullptr);
 	~PresetWindow();
 
 private slots:
 	void onPresetSelectionChanged(int index);
 	void onAddButtonClicked(void);
 	void onRemoveButtonClicked(void);
+	void onSettingsJsonTextEditChanged(void);
 	void onApplyButtonClicked(void);
 
 private:
-	struct settings *currentSettings;
-	struct settings selectedPreset;
-	std::vector<struct settings> presets;
+	struct showdraw_global_state *globalState;
+	std::vector<struct showdraw_preset *> presets;
 
-	QComboBox *presetSelector;
-	QToolButton *removeButton;
-	QTextEdit *settingsJsonTextEdit;
+	QComboBox *const presetSelector;
+	QToolButton *const addButton;
+	QToolButton *const removeButton;
+	QHBoxLayout *const presetSelectorLayout;
+	QTextEdit *const settingsJsonTextEdit;
+	QLabel *const settingsErrorLabel;
+	QPushButton *const applyButton;
+	QVBoxLayout *const layout;
 
-	void updatePresetSelector(void);
+	void validateSettingsJsonTextEdit(void);
 };
 
 #endif

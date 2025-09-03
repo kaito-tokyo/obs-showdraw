@@ -1,215 +1,67 @@
+/*
+obs-showdraw
+Copyright (C) 2025 Kaito Udagawa umireon@kaito.tokyo
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/>
+*/
+
 #include "PresetWindow.hpp"
 
 #include <sstream>
 
 #include <QByteArray>
 #include <QComboBox>
-#include <QHBoxLayout>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QPushButton>
-#include <QVBoxLayout>
+#include <QMessageBox>
+#include <QSignalBlocker>
 #include <QToolButton>
 
-#include "settings.hpp"
-
+#include <obs-frontend-api.h>
 #include <plugin-support.h>
 #include <util/platform.h>
 #include <util/dstr.h>
 
-#define USER_PRESETS_JSON "UserPresets.json"
+#include "showdraw-conf.hpp"
 
-void show_preset_window(struct settings *current_settings, void *parent_window_pointer)
+void showdraw_preset_window_show(struct showdraw_global_state *global_state)
 {
-	QWidget *parent = static_cast<QWidget *>(parent_window_pointer);
-	PresetWindow *window = new PresetWindow(current_settings, parent);
+	PresetWindow *window = new PresetWindow(global_state, static_cast<QWidget *>(obs_frontend_get_main_window()));
 	window->exec();
 }
 
-QByteArray settingsToJson(const struct settings &settings)
+std::vector<struct showdraw_preset *> initializePresets(struct showdraw_global_state *globalState)
 {
-	QJsonObject obj;
+	struct showdraw_preset *currentPreset = showdraw_preset_create(" current", true);
+	showdraw_preset_copy(currentPreset, globalState->running_preset);
 
-	obj["extraction_mode"] = settings.extraction_mode;
-	obj["median_filtering_kernel_size"] = settings.median_filtering_kernel_size;
-	obj["motion_map_kernel_size"] = settings.motion_map_kernel_size;
-	obj["motion_adaptive_filtering_strength"] = settings.motion_adaptive_filtering_strength;
-	obj["motion_adaptive_filtering_motion_threshold"] = settings.motion_adaptive_filtering_motion_threshold;
-	obj["morphology_opening_erosion_kernel_size"] = settings.morphology_opening_erosion_kernel_size;
-	obj["morphology_opening_dilation_kernel_size"] = settings.morphology_opening_dilation_kernel_size;
-	obj["morphology_closing_dilation_kernel_size"] = settings.morphology_closing_dilation_kernel_size;
-	obj["morphology_closing_erosion_kernel_size"] = settings.morphology_closing_erosion_kernel_size;
-	obj["scaling_factor"] = pow(10.0, settings.scaling_factor_db / 10.0);
-	obj["scaling_factor_db"] = settings.scaling_factor_db;
-
-	QJsonDocument doc(obj);
-	QByteArray jsonData = doc.toJson(QJsonDocument::Indented);
-	return jsonData;
-}
-
-void loadSettingsIntoObsData(obs_data_t *data, const struct settings &settings)
-{
-	obs_data_set_int(data, "extractionMode", settings.extraction_mode);
-	obs_data_set_int(data, "medianFilteringKernelSize", settings.median_filtering_kernel_size);
-	obs_data_set_int(data, "motionMapKernelSize", settings.motion_map_kernel_size);
-	obs_data_set_double(data, "motionAdaptiveFilteringStrength", settings.motion_adaptive_filtering_strength);
-	obs_data_set_double(data, "motionAdaptiveFilteringMotionThreshold",
-			    settings.motion_adaptive_filtering_motion_threshold);
-	obs_data_set_int(data, "morphologyOpeningErosionKernelSize", settings.morphology_opening_erosion_kernel_size);
-	obs_data_set_int(data, "morphologyOpeningDilationKernelSize", settings.morphology_opening_dilation_kernel_size);
-	obs_data_set_int(data, "morphologyClosingDilationKernelSize", settings.morphology_closing_dilation_kernel_size);
-	obs_data_set_int(data, "morphologyClosingErosionKernelSize", settings.morphology_closing_erosion_kernel_size);
-	obs_data_set_double(data, "scalingFactorDb", settings.scaling_factor_db);
-	obs_data_set_double(data, "scalingFactor", settings.scaling_factor);
-}
-
-struct settings loadSettingsFromObsData(obs_data_t *data)
-{
-	struct settings settings;
-
-	const char *presetName = obs_data_get_string(data, "presetName");
-	dstr_init_copy(&settings.preset_name, presetName);
-	settings.is_system = false;
-
-	settings.extraction_mode = obs_data_get_int(data, "extractionMode");
-	settings.median_filtering_kernel_size = obs_data_get_int(data, "medianFilteringKernelSize");
-	settings.motion_map_kernel_size = obs_data_get_int(data, "motionMapKernelSize");
-	settings.motion_adaptive_filtering_strength = obs_data_get_double(data, "motionAdaptiveFilteringStrength");
-	settings.motion_adaptive_filtering_motion_threshold =
-		obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold");
-	settings.morphology_opening_erosion_kernel_size = obs_data_get_int(data, "morphologyOpeningErosionKernelSize");
-	settings.morphology_opening_dilation_kernel_size =
-		obs_data_get_int(data, "morphologyOpeningDilationKernelSize");
-	settings.morphology_closing_dilation_kernel_size =
-		obs_data_get_int(data, "morphologyClosingDilationKernelSize");
-	settings.morphology_closing_erosion_kernel_size = obs_data_get_int(data, "morphologyClosingErosionKernelSize");
-	settings.scaling_factor_db = obs_data_get_double(data, "scalingFactorDb");
-	settings.scaling_factor = pow(10.0, settings.scaling_factor_db / 10.0);
-
-	return settings;
-}
-
-bool validateSettings(const struct settings &settings)
-{
-	switch (settings.extraction_mode) {
-	case EXTRACTION_MODE_DEFAULT:
-	case EXTRACTION_MODE_PASSTHROUGH:
-	case EXTRACTION_MODE_LUMINANCE_EXTRACTION:
-	case EXTRACTION_MODE_EDGE_DETECTION:
-	case EXTRACTION_MODE_SCALING:
-		break;
-	default:
-		return false;
-	}
-
-	switch (settings.median_filtering_kernel_size) {
-	case 1:
-	case 3:
-	case 5:
-	case 7:
-	case 9:
-		break;
-	default:
-		return false;
-	}
-
-	switch (settings.motion_map_kernel_size) {
-	case 1:
-	case 3:
-	case 5:
-	case 7:
-	case 9:
-		break;
-	default:
-		return false;
-	}
-
-	if (settings.motion_adaptive_filtering_strength < 0.0 || settings.motion_adaptive_filtering_strength > 1.0) {
-		return false;
-	}
-
-	if (settings.motion_adaptive_filtering_motion_threshold < 0.0 ||
-	    settings.motion_adaptive_filtering_motion_threshold > 1.0) {
-		return false;
-	}
-
-	if (settings.morphology_opening_erosion_kernel_size < 1 ||
-	    settings.morphology_opening_erosion_kernel_size > 31 ||
-	    settings.morphology_opening_erosion_kernel_size % 2 == 1) {
-		return false;
-	}
-
-	if (settings.morphology_opening_dilation_kernel_size < 1 ||
-	    settings.morphology_opening_dilation_kernel_size > 31 ||
-	    settings.morphology_opening_dilation_kernel_size % 2 == 1) {
-		return false;
-	}
-
-	if (settings.morphology_closing_dilation_kernel_size < 1 ||
-	    settings.morphology_closing_dilation_kernel_size > 31 ||
-	    settings.morphology_closing_dilation_kernel_size % 2 == 1) {
-		return false;
-	}
-
-	if (settings.morphology_closing_erosion_kernel_size < 1 ||
-	    settings.morphology_closing_erosion_kernel_size > 31 ||
-	    settings.morphology_closing_erosion_kernel_size % 2 == 1) {
-		return false;
-	}
-
-	if (settings.scaling_factor_db < -20.0 || settings.scaling_factor_db > 20.0) {
-		return false;
-	}
-
-	return true;
-}
-
-struct settings getDefaultHighSettings()
-{
-	struct settings settings;
-
-	dstr_init_copy(&settings.preset_name, obs_module_text("presetWindowHighDefault"));
-	settings.is_system = true;
-	settings.extraction_mode = EXTRACTION_MODE_DEFAULT;
-	settings.median_filtering_kernel_size = 3;
-	settings.motion_map_kernel_size = 3;
-	settings.motion_adaptive_filtering_strength = 0.5;
-	settings.motion_adaptive_filtering_motion_threshold = 0.3;
-	settings.morphology_opening_erosion_kernel_size = 1;
-	settings.morphology_opening_dilation_kernel_size = 1;
-	settings.morphology_closing_dilation_kernel_size = 7;
-	settings.morphology_closing_erosion_kernel_size = 5;
-	settings.scaling_factor_db = 6.0;
-	settings.scaling_factor = pow(10.0, settings.scaling_factor_db / 10.0);
-
-	return settings;
-}
-
-std::vector<struct settings> readUserPresets(const struct settings &currentSettings)
-{
-	std::vector<struct settings> presets{
-		currentSettings,
-		getDefaultHighSettings()
-	};
-
-	dstr_init_copy(&presets[0].preset_name, "-");
-	presets[0].is_system = true;
+	std::vector<struct showdraw_preset *> presets{currentPreset, showdraw_preset_get_strong_default()};
 
 	char *configPath = obs_module_config_path(USER_PRESETS_JSON);
 	obs_data_t *configData = obs_data_create_from_json_file_safe(configPath, "bak");
 	bfree(configPath);
 
-
 	if (!configData) {
-		return {};
+		return presets;
 	}
 
 	obs_data_array_t *settingsArray = obs_data_get_array(configData, "settings");
 
 	if (!settingsArray) {
-		return {};
+		return presets;
 	}
 
 	for (size_t i = 0; i < obs_data_array_count(settingsArray); ++i) {
@@ -218,7 +70,7 @@ std::vector<struct settings> readUserPresets(const struct settings &currentSetti
 			continue;
 		}
 
-		struct settings preset = loadSettingsFromObsData(presetData);
+		struct showdraw_preset *preset = showdraw_conf_load_preset_from_obs_data(presetData);
 		presets.push_back(preset);
 		obs_data_release(presetData);
 	}
@@ -229,138 +81,179 @@ std::vector<struct settings> readUserPresets(const struct settings &currentSetti
 	return presets;
 }
 
-void PresetWindow::updatePresetSelector()
-{
-	presetSelector->clear();
-
-	for (const auto &preset : presets) {
-		presetSelector->addItem(QString::fromUtf8(preset.preset_name.array));
-	}
-}
-
-PresetWindow::PresetWindow(struct settings *currentSettings, QWidget *parent)
+PresetWindow::PresetWindow(struct showdraw_global_state *globalState, QWidget *parent)
 	: QDialog(parent),
-	  currentSettings(currentSettings),
-	  selectedPreset(*currentSettings),
-	  presets(readUserPresets(*currentSettings))
+	  globalState(globalState),
+	  presets(initializePresets(globalState)),
+	  presetSelector(new QComboBox()),
+	  addButton(new QToolButton()),
+	  removeButton(new QToolButton()),
+	  presetSelectorLayout(new QHBoxLayout()),
+	  settingsJsonTextEdit(new QTextEdit()),
+	  settingsErrorLabel(new QLabel()),
+	  applyButton(new QPushButton(obs_module_text("presetWindowApply"))),
+	  layout(new QVBoxLayout())
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	presetSelector = new QComboBox();
-	updatePresetSelector();
+	for (struct showdraw_preset *preset : presets) {
+		presetSelector->addItem(QString::fromUtf8(preset->preset_name.array));
+	}
 	connect(presetSelector, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
 		&PresetWindow::onPresetSelectionChanged);
 
-	QToolButton *addButton = new QToolButton();
 	addButton->setText("+");
 	connect(addButton, &QToolButton::clicked, this, &PresetWindow::onAddButtonClicked);
 
-	removeButton = new QToolButton();
 	removeButton->setText("-");
 	removeButton->setEnabled(false);
 	connect(removeButton, &QToolButton::clicked, this, &PresetWindow::onRemoveButtonClicked);
 
-	QHBoxLayout *presetSelectorLayout = new QHBoxLayout();
 	presetSelectorLayout->addWidget(presetSelector);
 	presetSelectorLayout->addWidget(addButton);
 	presetSelectorLayout->addWidget(removeButton);
 
-	settingsJsonTextEdit = new QTextEdit();
-	QByteArray settingsData = settingsToJson(*currentSettings);
-	settingsJsonTextEdit->setPlainText(QString::fromUtf8(settingsData));
+	settingsJsonTextEdit->setStyleSheet("QTextEdit[error=\"true\"] { border: 2px solid red; }");
+	connect(settingsJsonTextEdit, &QTextEdit::textChanged, this, &PresetWindow::onSettingsJsonTextEditChanged);
 
-	QPushButton *applyButton = new QPushButton(obs_module_text("presetWindowApply"));
+	obs_data_t *settingsData = obs_data_create();
+	showdraw_conf_load_preset_into_obs_data(settingsData, globalState->running_preset);
+	const char *settingsJson = obs_data_get_json_pretty(settingsData);
+	settingsJsonTextEdit->setPlainText(QString::fromUtf8(settingsJson));
+	obs_data_release(settingsData);
+
 	connect(applyButton, &QPushButton::clicked, this, &PresetWindow::onApplyButtonClicked);
 
-	QVBoxLayout *layout = new QVBoxLayout();
 	layout->addLayout(presetSelectorLayout);
 	layout->addWidget(settingsJsonTextEdit);
+	layout->addWidget(settingsErrorLabel);
 	layout->addWidget(applyButton);
 
 	setLayout(layout);
 }
 
-void PresetWindow::onPresetSelectionChanged(int index)
+PresetWindow::~PresetWindow()
 {
-	struct settings selectedPreset = presets[index];
-
-	QByteArray settingsData = settingsToJson(selectedPreset);
-	settingsJsonTextEdit->setPlainText(QString::fromUtf8(settingsData));
-
-	removeButton->setEnabled(!selectedPreset.is_system);
+	for (struct showdraw_preset *preset : presets) {
+		showdraw_preset_destroy(preset);
+	}
 }
 
-void PresetWindow::onAddButtonClicked()
+void PresetWindow::onPresetSelectionChanged(int index)
 {
-	char *configDirPath = obs_module_config_path("");
-	os_mkdirs(configDirPath);
-	bfree(configDirPath);
-
-	char *configPath = obs_module_config_path(USER_PRESETS_JSON);
-
-	obs_data_t *configData = obs_data_create_from_json_file_safe(configPath, "bak");
-	if (!configData) {
-		obs_log(LOG_ERROR, "Trying to create user presets file at %s", configPath);
-		configData = obs_data_create();
-	}
-
-	obs_data_array_t *settingsArray = obs_data_get_array(configData, "settings");
-	if (!settingsArray) {
-		settingsArray = obs_data_array_create();
-		obs_data_set_array(configData, "settings", settingsArray);
-	}
-
-	std::ostringstream defaultPresetNameStream;
-	defaultPresetNameStream << obs_module_text("presetWindowAddNewPrefix") << " "
-				<< (obs_data_array_count(settingsArray) + 1);
-
-	bool ok;
-
-	QString presetName = QInputDialog::getText(this, obs_module_text("presetWindowAddTitle"),
-						   obs_module_text("presetWindowAddLabel"), QLineEdit::Normal,
-						   QString::fromUtf8(defaultPresetNameStream.str().c_str()), &ok);
-
-	if (!ok || presetName.isEmpty()) {
+	if (index == 0) {
 		return;
 	}
 
-	obs_data_t *newSettings = obs_data_create();
-	loadSettingsIntoObsData(newSettings, selectedPreset);
-	obs_data_set_string(newSettings, "presetName", presetName.toUtf8().constData());
-	obs_data_array_push_back(settingsArray, newSettings);
+	struct showdraw_preset *selectedPreset = presets[index];
 
-	if (!obs_data_save_json_pretty_safe(configData, configPath, "_", "bak")) {
-		obs_log(LOG_ERROR, "Failed to save preset to %s", configPath);
+	obs_data_t *settingsData = obs_data_create();
+	showdraw_conf_load_preset_into_obs_data(settingsData, selectedPreset);
+	const char *settingsJson = obs_data_get_json_pretty(settingsData);
+	{
+		QSignalBlocker blocker(settingsJsonTextEdit);
+		settingsJsonTextEdit->setPlainText(QString::fromUtf8(settingsJson));
 	}
+	obs_data_release(settingsData);
+	validateSettingsJsonTextEdit();
 
-	obs_data_release(newSettings);
-	obs_data_array_release(settingsArray);
-	obs_data_release(configData);
-	bfree(configPath);
+	removeButton->setEnabled(!showdraw_preset_is_system(selectedPreset));
+}
+
+void PresetWindow::onAddButtonClicked(void)
+{
+	// size_t userPresetCount = std::count_if(presets.begin(), presets.end(),
+	// 	      [](const struct settings &preset) { return !preset.is_system; });
+	// std::ostringstream defaultPresetNameStream;
+	// defaultPresetNameStream << obs_module_text("presetWindowAddNewPrefix") << " "
+	// 			<< (userPresetCount + 1);
+
+	// bool ok;
+
+	// QString presetName = QInputDialog::getText(this, obs_module_text("presetWindowAddTitle"),
+	// 					   obs_module_text("presetWindowAddLabel"), QLineEdit::Normal,
+	// 					   QString::fromUtf8(defaultPresetNameStream.str().c_str()), &ok);
+
+	// if (!ok || presetName.isEmpty()) {
+	// 	return;
+	// }
 }
 
 void PresetWindow::onRemoveButtonClicked(void)
 {
-	if (selectedPreset.is_system) {
+	int presetIndex = presetSelector->currentIndex();
+	if (presetIndex < 0 || presetIndex >= static_cast<int>(presets.size())) {
+		obs_log(LOG_ERROR, "Invalid preset index %d", presetIndex);
 		return;
 	}
 
-	int presetIndex = presetSelector->currentIndex();
+	if (showdraw_preset_is_system(presets[presetIndex])) {
+		obs_log(LOG_ERROR, "Attempted to remove system preset %s", presets[presetIndex]->preset_name.array);
+		return;
+	}
+
+	QMessageBox::StandardButton reply = QMessageBox::question(this, obs_module_text("presetWindowRemoveTitle"),
+								  obs_module_text("presetWindowRemoveLabel"),
+								  QMessageBox::Yes | QMessageBox::No);
+
+	if (reply != QMessageBox::Yes) {
+		return;
+	}
+
 	presets.erase(presets.begin() + presetIndex);
 	presetSelector->removeItem(presetIndex);
+
+	showdraw_conf_save_user_presets(presets.data(), presets.size());
 }
 
-void PresetWindow::onApplyButtonClicked()
+void PresetWindow::onSettingsJsonTextEditChanged(void)
 {
-	obs_data_t *settings = obs_source_get_settings(currentSettings->filter);
+	{
+		QSignalBlocker blocker(presetSelector);
+		presetSelector->setCurrentIndex(0);
+		removeButton->setDisabled(true);
+	}
 
-	loadSettingsIntoObsData(settings, selectedPreset);
+	validateSettingsJsonTextEdit();
+}
 
-	obs_source_update(currentSettings->filter, settings);
+void PresetWindow::onApplyButtonClicked(void)
+{
+	obs_data_t *settings = obs_source_get_settings(globalState->filter);
+
+	// showdraw_conf_load_preset_into_obs_data(settings, &selectedPreset);
+
+	obs_source_update(globalState->filter, settings);
 
 	obs_data_release(settings);
 
 	close();
 }
 
-PresetWindow::~PresetWindow() {}
+void PresetWindow::validateSettingsJsonTextEdit(void)
+{
+	std::string newPresetJson = settingsJsonTextEdit->toPlainText().toStdString();
+
+	obs_data_t *newPresetData = obs_data_create_from_json(newPresetJson.c_str());
+	if (!newPresetData) {
+		settingsJsonTextEdit->setStyleSheet("QTextEdit { border: 2px solid red; }");
+		settingsJsonTextEdit->setToolTip(obs_module_text("presetWindowInvalidJson"));
+		settingsErrorLabel->setText(obs_module_text("presetWindowInvalidJson"));
+		return;
+	}
+
+	struct showdraw_preset *newPreset = showdraw_conf_load_preset_from_obs_data(newPresetData);
+	obs_data_release(newPresetData);
+
+	const char *errorMessage = showdraw_conf_validate_settings(newPreset);
+	if (errorMessage) {
+		settingsJsonTextEdit->setStyleSheet("QTextEdit { border: 2px solid red; }");
+		settingsJsonTextEdit->setToolTip(errorMessage);
+		settingsErrorLabel->setText(errorMessage);
+		return;
+	}
+
+	settingsJsonTextEdit->setStyleSheet("");
+	settingsJsonTextEdit->setToolTip(obs_module_text("presetWindowJsonOk"));
+	settingsErrorLabel->setText(obs_module_text("presetWindowJsonOk"));
+}
