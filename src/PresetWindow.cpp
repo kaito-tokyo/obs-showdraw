@@ -156,6 +156,7 @@ PresetWindow::~PresetWindow()
 void PresetWindow::onPresetSelectionChanged(int index)
 {
 	if (index == 0) {
+		removeButton->setEnabled(false);
 		return;
 	}
 
@@ -176,21 +177,48 @@ void PresetWindow::onPresetSelectionChanged(int index)
 
 void PresetWindow::onAddButtonClicked(void)
 {
-	// size_t userPresetCount = std::count_if(presets.begin(), presets.end(),
-	// 	      [](const struct settings &preset) { return !preset.is_system; });
-	// std::ostringstream defaultPresetNameStream;
-	// defaultPresetNameStream << obs_module_text("presetWindowAddNewPrefix") << " "
-	// 			<< (userPresetCount + 1);
+	size_t userPresetCount = std::count_if(presets.begin(), presets.end(), &showdraw_preset_is_user);
 
-	// bool ok;
+	std::ostringstream oss;
+	oss << obs_module_text("presetWindowAddNewPrefix") << " " << (userPresetCount + 1);
 
-	// QString presetName = QInputDialog::getText(this, obs_module_text("presetWindowAddTitle"),
-	// 					   obs_module_text("presetWindowAddLabel"), QLineEdit::Normal,
-	// 					   QString::fromUtf8(defaultPresetNameStream.str().c_str()), &ok);
+	bool ok;
 
-	// if (!ok || presetName.isEmpty()) {
-	// 	return;
-	// }
+	QString presetName = QInputDialog::getText(this, obs_module_text("presetWindowAddTitle"),
+						   obs_module_text("presetWindowAddLabel"), QLineEdit::Normal,
+						   QString::fromStdString(oss.str()), &ok);
+
+	if (!ok || presetName.isEmpty()) {
+		return;
+	}
+
+	if (!validateSettingsJsonTextEdit()) {
+		return;
+	}
+
+	std::string newPresetJson = settingsJsonTextEdit->toPlainText().toStdString();
+
+	obs_data_t *newPresetData = obs_data_create_from_json(newPresetJson.c_str());
+	if (!newPresetData) {
+		obs_log(LOG_ERROR, "Failed to create obs_data_t from JSON");
+		return;
+	}
+
+	obs_data_set_string(newPresetData, "presetName", presetName.toUtf8().constData());
+
+	struct showdraw_preset *newPreset = showdraw_conf_load_preset_from_obs_data(newPresetData);
+	obs_data_release(newPresetData);
+
+	presetSelector->addItem(presetName);
+	{
+		QSignalBlocker blocker(presetSelector);
+		presetSelector->setCurrentIndex(presetSelector->count() - 1);
+		removeButton->setEnabled(true);
+	}
+
+	presets.push_back(newPreset);
+
+	showdraw_conf_save_user_presets(presets.data(), presets.size());
 }
 
 void PresetWindow::onRemoveButtonClicked(void)
@@ -201,8 +229,9 @@ void PresetWindow::onRemoveButtonClicked(void)
 		return;
 	}
 
-	if (showdraw_preset_is_system(presets[presetIndex])) {
-		obs_log(LOG_ERROR, "Attempted to remove system preset %s", presets[presetIndex]->preset_name.array);
+	showdraw_preset *preset = presets[presetIndex];
+	if (showdraw_preset_is_system(preset)) {
+		obs_log(LOG_ERROR, "Attempted to remove system preset %s", preset->preset_name.array);
 		return;
 	}
 
@@ -216,6 +245,7 @@ void PresetWindow::onRemoveButtonClicked(void)
 
 	presets.erase(presets.begin() + presetIndex);
 	presetSelector->removeItem(presetIndex);
+	showdraw_preset_destroy(preset);
 
 	showdraw_conf_save_user_presets(presets.data(), presets.size());
 }
@@ -244,7 +274,7 @@ void PresetWindow::onApplyButtonClicked(void)
 	close();
 }
 
-void PresetWindow::validateSettingsJsonTextEdit(void)
+bool PresetWindow::validateSettingsJsonTextEdit(void)
 {
 	std::string newPresetJson = settingsJsonTextEdit->toPlainText().toStdString();
 
@@ -253,7 +283,7 @@ void PresetWindow::validateSettingsJsonTextEdit(void)
 		settingsJsonTextEdit->setStyleSheet("QTextEdit { border: 2px solid red; }");
 		settingsJsonTextEdit->setToolTip(obs_module_text("presetWindowInvalidJson"));
 		settingsErrorLabel->setText(obs_module_text("presetWindowInvalidJson"));
-		return;
+		return false;
 	}
 
 	obs_data_set_string(newPresetData, "presetName", "new preset");
@@ -263,7 +293,7 @@ void PresetWindow::validateSettingsJsonTextEdit(void)
 
 	if (!newPreset) {
 		obs_log(LOG_ERROR, "Failed to create new preset from JSON");
-		return;
+		return false;
 	}
 
 	const char *errorMessage = showdraw_conf_validate_settings(newPreset);
@@ -271,7 +301,7 @@ void PresetWindow::validateSettingsJsonTextEdit(void)
 		settingsJsonTextEdit->setStyleSheet("QTextEdit { border: 2px solid red; }");
 		settingsJsonTextEdit->setToolTip(errorMessage);
 		settingsErrorLabel->setText(errorMessage);
-		return;
+		return false;
 	}
 
 	settingsJsonTextEdit->setStyleSheet("");
@@ -279,4 +309,6 @@ void PresetWindow::validateSettingsJsonTextEdit(void)
 	settingsErrorLabel->setText(obs_module_text("presetWindowJsonOk"));
 
 	showdraw_preset_destroy(newPreset);
+
+	return true;
 }

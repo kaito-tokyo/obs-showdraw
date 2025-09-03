@@ -76,8 +76,6 @@ static struct showdraw_preset *showdraw_preset_create(const char *preset_name, b
 		return NULL;
 	}
 
-	obs_log(LOG_ERROR, "%s", preset_name);
-
 	dstr_init_copy(&preset->preset_name, preset_name);
 
 	if (!preset->preset_name.array) {
@@ -101,7 +99,7 @@ static void showdraw_preset_copy(struct showdraw_preset *dest, const struct show
 	dest->preset_name = preset_name;
 }
 
-static bool showdraw_preset_is_system(struct showdraw_preset *preset)
+static bool showdraw_preset_is_system(const struct showdraw_preset *preset)
 {
 	if (!preset) {
 		obs_log(LOG_ERROR, "Preset is NULL");
@@ -114,6 +112,21 @@ static bool showdraw_preset_is_system(struct showdraw_preset *preset)
 	}
 
 	return preset->preset_name.array[0] == ' ';
+}
+
+static bool showdraw_preset_is_user(const struct showdraw_preset *preset)
+{
+	if (!preset) {
+		obs_log(LOG_ERROR, "Preset is NULL");
+		return false;
+	}
+
+	if (preset->preset_name.array == NULL) {
+		obs_log(LOG_ERROR, "Preset name is NULL");
+		return false;
+	}
+
+	return preset->preset_name.array[0] != ' ';
 }
 
 static void showdraw_preset_destroy(struct showdraw_preset *preset)

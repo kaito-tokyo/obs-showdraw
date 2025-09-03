@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <time.h>
 
 #include <obs-module.h>
 #include <plugin-support.h>
@@ -56,6 +56,27 @@ static struct showdraw_preset *showdraw_conf_load_preset_from_obs_data(obs_data_
 	return preset;
 }
 
+typedef char timestamp_string_t[sizeof("1990-01-01T00:00:00+00:00")];
+
+static bool showdraw_conf_generate_local_timestamp(timestamp_string_t buf)
+{
+	time_t t = time(NULL);
+
+	struct tm local_tm;
+	if (!localtime_r(&t, &local_tm)) {
+		return false;
+	}
+
+	strftime(buf, sizeof(timestamp_string_t), "%Y-%m-%dT%H:%M:%S", &local_tm);
+	strftime(buf + 19, sizeof(timestamp_string_t) - 19, "%z", &local_tm);
+	buf[sizeof(timestamp_string_t) - 1] = '\0';
+	buf[sizeof(timestamp_string_t) - 2] = buf[sizeof(timestamp_string_t) - 3];
+	buf[sizeof(timestamp_string_t) - 3] = buf[sizeof(timestamp_string_t) - 4];
+	buf[sizeof(timestamp_string_t) - 4] = ':';
+
+	return true;
+}
+
 static void showdraw_conf_save_user_presets(struct showdraw_preset **presets, size_t count)
 {
 	char *config_dir_path = obs_module_config_path("");
@@ -71,6 +92,10 @@ static void showdraw_conf_save_user_presets(struct showdraw_preset **presets, si
 	}
 
 	obs_data_set_string(config_data, "version", USER_PRESETS_VERSION);
+
+	timestamp_string_t timestamp;
+	showdraw_conf_generate_local_timestamp(timestamp);
+	obs_data_set_string(config_data, "lastModified", timestamp);
 
 	obs_data_array_t *settings_array = obs_data_array_create();
 

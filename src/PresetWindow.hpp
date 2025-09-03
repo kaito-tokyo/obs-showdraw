@@ -77,7 +77,7 @@ private:
 	QPushButton *const applyButton;
 	QVBoxLayout *const layout;
 
-	void validateSettingsJsonTextEdit(void);
+	bool validateSettingsJsonTextEdit(void);
 };
 
 #endif
