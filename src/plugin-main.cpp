@@ -47,7 +47,7 @@ struct obs_source_info showdraw_filter = {
 	nullptr,                 // hide
 	nullptr,                 // video_tick
 	showdraw_video_render,   // video_render
-	// The rest of the fields will be zero-initialized
+				 // The rest of the fields will be zero-initialized
 };
 
 bool obs_module_load(void)

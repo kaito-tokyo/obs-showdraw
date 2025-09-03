@@ -224,16 +224,6 @@ std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcep
 Preset Preset::getStrongDefault(void) noexcept
 {
 	return {
-		"strong default",
-		ExtractionMode::Default,
-		3,
-		3,
-		0.5,
-		0.3,
-		1,
-		1,
-		7,
-		5,
-		6.0,
+		"strong default", ExtractionMode::Default, 3, 3, 0.5, 0.3, 1, 1, 7, 5, 6.0,
 	};
 }
