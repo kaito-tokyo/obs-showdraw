@@ -15,3 +15,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
+
+#pragma once
+
+#include <memory>
+
+#include <obs-data.h>
+
+namespace kaitotokyo
+{
+namespace obs
+{
+
+struct obs_data_deleter {
+    void operator()(obs_data_t *data) const
+    {
+        obs_data_release(data);
+    }
+};
+
+using unique_obs_data_t = std::unique_ptr<obs_data_t, obs_data_deleter>;
+
+}
+}

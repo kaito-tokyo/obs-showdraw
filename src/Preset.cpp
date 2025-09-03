@@ -27,6 +27,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "plugin-support.h"
 
 #include "Preset.hpp"
+#include "bridge.hpp"
+
+using kaitotokyo::obs::unique_obs_data_t;
 
 const char *UserPresetsJson = "UserPresets.json";
 const char *UserPresetsVersion = "2025-09-03";
@@ -152,13 +155,13 @@ void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 
 	char *config_path = obs_module_config_path(UserPresetsJson);
 
-	obs_data_t *config_data = obs_data_create();
+	unique_obs_data_t config_data(obs_data_create_from_json_file_safe(config_path, "bak"));
 	if (!config_data) {
 		obs_log(LOG_ERROR, "Trying to create user presets file at %s", config_path);
-		config_data = obs_data_create();
+		config_data.reset(obs_data_create());
 	}
 
-	obs_data_set_string(config_data, "version", UserPresetsVersion);
+	obs_data_set_string(config_data.get(), "version", UserPresetsVersion);
 
 	obs_data_array_t *settings_array = obs_data_array_create();
 
@@ -168,20 +171,18 @@ void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 			continue;
 		}
 
-		obs_data_t *newPreset = obs_data_create();
-		preset.loadIntoObsData(newPreset);
-		obs_data_array_push_back(settings_array, newPreset);
-		obs_data_release(newPreset);
+		unique_obs_data_t newPreset(obs_data_create());
+		preset.loadIntoObsData(newPreset.get());
+		obs_data_array_push_back(settings_array, newPreset.get());
 	}
 
-	obs_data_set_array(config_data, "settings", settings_array);
+	obs_data_set_array(config_data.get(), "settings", settings_array);
 
-	if (!obs_data_save_json_pretty_safe(config_data, config_path, "_", "bak")) {
+	if (!obs_data_save_json_pretty_safe(config_data.get(), config_path, "_", "bak")) {
 		obs_log(LOG_ERROR, "Failed to save preset to %s", config_path);
 	}
 
 	obs_data_array_release(settings_array);
-	obs_data_release(config_data);
 	bfree(config_path);
 }
 
@@ -190,33 +191,31 @@ std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcep
 	std::vector<Preset> presets{runningPreset, Preset::getStrongDefault()};
 
 	char *configPath = obs_module_config_path(UserPresetsJson);
-	obs_data_t *configData = obs_data_create_from_json_file_safe(configPath, "bak");
+	unique_obs_data_t configData(obs_data_create_from_json_file_safe(configPath, "bak"));
 	bfree(configPath);
 
 	if (!configData) {
 		return presets;
 	}
 
-	obs_data_array_t *settingsArray = obs_data_get_array(configData, "settings");
+	obs_data_array_t *settingsArray = obs_data_get_array(configData.get(), "settings");
 
 	if (!settingsArray) {
 		return presets;
 	}
 
 	for (size_t i = 0; i < obs_data_array_count(settingsArray); ++i) {
-		obs_data_t *presetData = obs_data_array_item(settingsArray, i);
+		unique_obs_data_t presetData(obs_data_array_item(settingsArray, i));
 		if (!presetData) {
 			continue;
 		}
 
-		const Preset preset = Preset::fromObsData(presetData);
+		const Preset preset = Preset::fromObsData(presetData.get());
 
 		presets.push_back(preset);
-		obs_data_release(presetData);
 	}
 
 	obs_data_array_release(settingsArray);
-	obs_data_release(configData);
 
 	return presets;
 }
