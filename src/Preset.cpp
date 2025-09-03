@@ -224,6 +224,16 @@ std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcep
 Preset Preset::getStrongDefault(void) noexcept
 {
 	return {
-		"strong default", ExtractionMode::Default, 3, 3, 0.5, 0.3, 1, 1, 7, 5, 6.0,
+		"strong default",        // presetName
+		ExtractionMode::Default, // extractionMode
+		3,                       // medianFilteringKernelSize
+		3,                       // motionMapKernelSize
+		0.5,                     // motionAdaptiveFilteringStrength
+		0.3,                     // motionAdaptiveFilteringMotionThreshold
+		1,                       // morphologyOpeningErosionKernelSize
+		1,                       // morphologyOpeningDilationKernelSize
+		7,                       // morphologyClosingDilationKernelSize
+		5,                       // morphologyClosingErosionKernelSize
+		6.0,                     // scalingFactorDb
 	};
 }
