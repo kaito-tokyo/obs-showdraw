@@ -16,11 +16,12 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
+#include "DrawingEffect.hpp"
+
 #include <stdexcept>
 
 #include <plugin-support.h>
 
-#include "DrawingEffect.hpp"
 #include "bridge.hpp"
 
 using kaitotokyo::obs::unique_bfree_t;
