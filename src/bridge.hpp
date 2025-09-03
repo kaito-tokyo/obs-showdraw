@@ -20,7 +20,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <memory>
 
-#include <obs-data.h>
 #include <obs-module.h>
 
 namespace kaitotokyo {

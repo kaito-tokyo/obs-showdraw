@@ -23,7 +23,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <string>
 #include <vector>
 
-#include <obs.h>
+#include <obs-module.h>
 
 enum class ExtractionMode {
 	Default = 0,
