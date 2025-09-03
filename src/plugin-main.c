@@ -61,6 +61,8 @@ struct showdraw_filter_context {
 	gs_technique_t *effect_tech_median_filtering;
 	gs_technique_t *effect_tech_calculate_motion_map;
 	gs_technique_t *effect_tech_motion_adaptive_filtering;
+	gs_technique_t *effect_tech_apply_sobel;
+	gs_technique_t *effect_tech_suppress_non_maximum;
 	gs_technique_t *effect_tech_detect_edge;
 	gs_technique_t *effect_tech_erosion;
 	gs_technique_t *effect_tech_dilation;
@@ -326,6 +328,10 @@ static bool init_effect(struct showdraw_filter_context *context)
 	context->effect_tech_motion_adaptive_filtering =
 		gs_effect_get_technique(context->effect, "MotionAdaptiveFiltering");
 	CHECK_EFFECT_TECH(motion_adaptive_filtering);
+	context->effect_tech_apply_sobel = gs_effect_get_technique(context->effect, "ApplySobel");
+	CHECK_EFFECT_TECH(apply_sobel);
+	context->effect_tech_suppress_non_maximum = gs_effect_get_technique(context->effect, "SuppressNonMaximum");
+	CHECK_EFFECT_TECH(suppress_non_maximum);
 	context->effect_tech_detect_edge = gs_effect_get_technique(context->effect, "DetectEdge");
 	CHECK_EFFECT_TECH(detect_edge);
 	context->effect_tech_erosion = gs_effect_get_technique(context->effect, "Erosion");
@@ -438,6 +444,36 @@ static void apply_motion_adaptive_filtering_pass(struct showdraw_filter_context 
 	apply_effect_pass(context->effect_tech_motion_adaptive_filtering, context->texture_source);
 
 	gs_copy_texture(context->texture_previous_luminance, context->texture_target);
+
+	swap_source_and_target_textures(context);
+}
+
+static void apply_sobel_pass(struct showdraw_filter_context *context, const float texel_width,
+				      const float texel_height)
+{
+	gs_set_render_target(context->texture_target, NULL);
+
+	gs_effect_set_texture(context->effect_texture_image, context->texture_source);
+
+	gs_effect_set_float(context->effect_float_texel_width, texel_width);
+	gs_effect_set_float(context->effect_float_texel_height, texel_height);
+
+	apply_effect_pass(context->effect_tech_apply_sobel, context->texture_source);
+
+	swap_source_and_target_textures(context);
+}
+
+static void apply_supress_non_maximum_pass(struct showdraw_filter_context *context, const float texel_width,
+				      const float texel_height)
+{
+	gs_set_render_target(context->texture_target, NULL);
+
+	gs_effect_set_texture(context->effect_texture_image, context->texture_source);
+
+	gs_effect_set_float(context->effect_float_texel_width, texel_width);
+	gs_effect_set_float(context->effect_float_texel_height, texel_height);
+
+	apply_effect_pass(context->effect_tech_suppress_non_maximum, context->texture_source);
 
 	swap_source_and_target_textures(context);
 }
@@ -563,38 +599,40 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 
 	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION) {
 		apply_luminance_extraction_pass(context);
-	}
 
-	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION &&
-	    running_preset->median_filtering_kernel_size > 1) {
-		apply_median_filtering_pass(context, texel_width, texel_height);
-	}
+		if (running_preset->median_filtering_kernel_size > 1) {
+			apply_median_filtering_pass(context, texel_width, texel_height);
+		}
 
-	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION &&
-	    running_preset->motion_adaptive_filtering_strength > 0.0) {
-		apply_motion_adaptive_filtering_pass(context, texel_width, texel_height);
+		if (running_preset->motion_adaptive_filtering_strength > 0.0) {
+			apply_motion_adaptive_filtering_pass(context, texel_width, texel_height);
+		}
 	}
 
 	if (extractionMode >= EXTRACTION_MODE_EDGE_DETECTION) {
-		apply_edge_detection_pass(context, texel_width, texel_height);
-	}
+		apply_sobel_pass(context, texel_width, texel_height);
 
-	if (extractionMode >= EXTRACTION_MODE_EDGE_DETECTION &&
-	    (running_preset->morphology_opening_erosion_kernel_size > 1 ||
-	     running_preset->morphology_opening_dilation_kernel_size > 1)) {
-		apply_morphology_pass(context, texel_width, texel_height, context->effect_tech_erosion,
-				      (int)running_preset->morphology_opening_erosion_kernel_size);
-		apply_morphology_pass(context, texel_width, texel_height, context->effect_tech_dilation,
-				      (int)running_preset->morphology_opening_dilation_kernel_size);
-	}
+		apply_supress_non_maximum_pass(context, texel_width, texel_height);
 
-	if (extractionMode >= EXTRACTION_MODE_EDGE_DETECTION &&
-	    (running_preset->morphology_closing_dilation_kernel_size > 1 ||
-	     running_preset->morphology_closing_erosion_kernel_size > 1)) {
-		apply_morphology_pass(context, texel_width, texel_height, context->effect_tech_dilation,
-				      (int)running_preset->morphology_closing_dilation_kernel_size);
-		apply_morphology_pass(context, texel_width, texel_height, context->effect_tech_erosion,
-				      (int)running_preset->morphology_closing_erosion_kernel_size);
+		if (running_preset->morphology_opening_erosion_kernel_size > 1) {
+			apply_morphology_pass(context, texel_width, texel_height, context->effect_tech_erosion,
+					      (int)running_preset->morphology_opening_erosion_kernel_size);
+		}
+
+		if (running_preset->morphology_opening_dilation_kernel_size > 1) {
+			apply_morphology_pass(context, texel_width, texel_height, context->effect_tech_dilation,
+					      (int)running_preset->morphology_opening_dilation_kernel_size);
+		}
+
+		if (running_preset->morphology_closing_dilation_kernel_size > 1) {
+			apply_morphology_pass(context, texel_width, texel_height, context->effect_tech_dilation,
+					      (int)running_preset->morphology_closing_dilation_kernel_size);
+		}
+
+		if (running_preset->morphology_closing_erosion_kernel_size > 1) {
+			apply_morphology_pass(context, texel_width, texel_height, context->effect_tech_erosion,
+					      (int)running_preset->morphology_closing_erosion_kernel_size);
+		}
 	}
 
 	if (extractionMode >= EXTRACTION_MODE_SCALING) {
