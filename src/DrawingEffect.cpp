@@ -18,6 +18,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <stdexcept>
 
+#include <plugin-support.h>
+
 #include "DrawingEffect.hpp"
 #include "bridge.hpp"
 
