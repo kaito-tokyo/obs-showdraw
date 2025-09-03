@@ -21,9 +21,16 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <memory>
 
 #include <obs-data.h>
+#include <obs-module.h>
 
 namespace kaitotokyo {
 namespace obs {
+
+struct bfree_deleter {
+	void operator()(void *ptr) const { bfree(ptr); }
+};
+
+using unique_bfree_t = std::unique_ptr<char, bfree_deleter>;
 
 struct obs_data_deleter {
 	void operator()(obs_data_t *data) const { obs_data_release(data); }

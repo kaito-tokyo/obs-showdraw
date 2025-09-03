@@ -29,6 +29,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "Preset.hpp"
 #include "bridge.hpp"
 
+using kaitotokyo::obs::unique_bfree_t;
 using kaitotokyo::obs::unique_obs_data_t;
 
 const char *UserPresetsJson = "UserPresets.json";
@@ -149,15 +150,14 @@ Preset Preset::fromObsData(obs_data_t *data) noexcept
 
 void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 {
-	char *config_dir_path = obs_module_config_path("");
-	std::filesystem::create_directories(config_dir_path);
-	bfree(config_dir_path);
+	unique_bfree_t config_dir_path(obs_module_config_path(""));
+	std::filesystem::create_directories(config_dir_path.get());
 
-	char *config_path = obs_module_config_path(UserPresetsJson);
+	unique_bfree_t config_path(obs_module_config_path(UserPresetsJson));
 
-	unique_obs_data_t config_data(obs_data_create_from_json_file_safe(config_path, "bak"));
+	unique_obs_data_t config_data(obs_data_create_from_json_file_safe(config_path.get(), "bak"));
 	if (!config_data) {
-		obs_log(LOG_ERROR, "Trying to create user presets file at %s", config_path);
+		obs_log(LOG_ERROR, "Trying to create user presets file at %s", config_path.get());
 		config_data.reset(obs_data_create());
 	}
 
@@ -180,21 +180,19 @@ void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 
 	obs_data_set_array(config_data.get(), "settings", settings_array);
 
-	if (!obs_data_save_json_pretty_safe(config_data.get(), config_path, "_", "bak")) {
-		obs_log(LOG_ERROR, "Failed to save preset to %s", config_path);
+	if (!obs_data_save_json_pretty_safe(config_data.get(), config_path.get(), "_", "bak")) {
+		obs_log(LOG_ERROR, "Failed to save preset to %s", config_path.get());
 	}
 
 	obs_data_array_release(settings_array);
-	bfree(config_path);
 }
 
 std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcept
 {
 	std::vector<Preset> presets{runningPreset, Preset::getStrongDefault()};
 
-	char *configPath = obs_module_config_path(UserPresetsJson);
-	unique_obs_data_t configData(obs_data_create_from_json_file_safe(configPath, "bak"));
-	bfree(configPath);
+	unique_bfree_t configPath(obs_module_config_path(UserPresetsJson));
+	unique_obs_data_t configData(obs_data_create_from_json_file_safe(configPath.get(), "bak"));
 
 	if (!configData) {
 		return presets;
