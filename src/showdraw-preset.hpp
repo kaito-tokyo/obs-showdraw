@@ -76,9 +76,11 @@ static struct showdraw_preset *showdraw_preset_create(const char *preset_name, b
 		return NULL;
 	}
 
+	obs_log(LOG_ERROR, "%s", preset_name);
+
 	dstr_init_copy(&preset->preset_name, preset_name);
 
-	if (preset->preset_name.array == NULL) {
+	if (!preset->preset_name.array) {
 		obs_log(LOG_ERROR, "Failed to allocate memory for preset name");
 		bfree(preset);
 		return NULL;

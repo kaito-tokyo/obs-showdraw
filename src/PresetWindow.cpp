@@ -19,6 +19,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "PresetWindow.hpp"
 
 #include <sstream>
+#include <string>
 
 #include <QByteArray>
 #include <QComboBox>
@@ -71,6 +72,12 @@ std::vector<struct showdraw_preset *> initializePresets(struct showdraw_global_s
 		}
 
 		struct showdraw_preset *preset = showdraw_conf_load_preset_from_obs_data(presetData);
+
+		if (!preset) {
+			obs_log(LOG_ERROR, "Failed to create preset from JSON");
+			continue;
+		}
+
 		presets.push_back(preset);
 		obs_data_release(presetData);
 	}
@@ -97,7 +104,14 @@ PresetWindow::PresetWindow(struct showdraw_global_state *globalState, QWidget *p
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	for (struct showdraw_preset *preset : presets) {
-		presetSelector->addItem(QString::fromUtf8(preset->preset_name.array));
+		std::string presetName(preset->preset_name.array);
+		if (presetName == " current") {
+			presetSelector->addItem("-");
+		} else if (presetName == " strong default") {
+			presetSelector->addItem(QString::fromUtf8(obs_module_text("presetWindowStrongDefault")));
+		} else {
+			presetSelector->addItem(QString::fromStdString(presetName));
+		}
 	}
 	connect(presetSelector, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
 		&PresetWindow::onPresetSelectionChanged);
@@ -242,8 +256,15 @@ void PresetWindow::validateSettingsJsonTextEdit(void)
 		return;
 	}
 
+	obs_data_set_string(newPresetData, "presetName", "new preset");
+
 	struct showdraw_preset *newPreset = showdraw_conf_load_preset_from_obs_data(newPresetData);
 	obs_data_release(newPresetData);
+
+	if (!newPreset) {
+		obs_log(LOG_ERROR, "Failed to create new preset from JSON");
+		return;
+	}
 
 	const char *errorMessage = showdraw_conf_validate_settings(newPreset);
 	if (errorMessage) {
@@ -256,4 +277,6 @@ void PresetWindow::validateSettingsJsonTextEdit(void)
 	settingsJsonTextEdit->setStyleSheet("");
 	settingsJsonTextEdit->setToolTip(obs_module_text("presetWindowJsonOk"));
 	settingsErrorLabel->setText(obs_module_text("presetWindowJsonOk"));
+
+	showdraw_preset_destroy(newPreset);
 }
