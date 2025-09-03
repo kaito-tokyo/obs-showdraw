@@ -18,8 +18,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
+#include <memory>
+
 #include <obs-module.h>
 
+#include "DrawingEffect.hpp"
 #include "Preset.hpp"
 
 #ifdef __cplusplus
@@ -78,32 +81,7 @@ private:
 	gs_texture_t *texture_motion_map;
 	gs_texture_t *texture_previous_luminance;
 
-	gs_effect_t *effect;
-
-	gs_eparam_t *effect_texture_image;
-	gs_eparam_t *effect_texture_image1;
-
-	gs_eparam_t *effect_float_texel_width;
-	gs_eparam_t *effect_float_texel_height;
-	gs_eparam_t *effect_int_kernel_size;
-
-	gs_eparam_t *effect_texture_motion_map;
-	gs_eparam_t *effect_float_strength;
-	gs_eparam_t *effect_float_motion_threshold;
-
-	gs_eparam_t *effect_float_scaling_factor;
-
-	gs_technique_t *effect_tech_draw;
-	gs_technique_t *effect_tech_extract_luminance;
-	gs_technique_t *effect_tech_median_filtering;
-	gs_technique_t *effect_tech_calculate_motion_map;
-	gs_technique_t *effect_tech_motion_adaptive_filtering;
-	gs_technique_t *effect_tech_apply_sobel;
-	gs_technique_t *effect_tech_suppress_non_maximum;
-	gs_technique_t *effect_tech_detect_edge;
-	gs_technique_t *effect_tech_erosion;
-	gs_technique_t *effect_tech_dilation;
-	gs_technique_t *effect_tech_scaling;
+	std::unique_ptr<DrawingEffect> drawingEffect;
 };
 
 #endif
