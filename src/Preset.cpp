@@ -165,6 +165,7 @@ void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 
 	obs_data_array_t *settings_array = obs_data_array_create();
 
+	std::vector<unique_obs_data_t> newPresets;
 	for (size_t i = 0; i < presets.size(); i++) {
 		const struct Preset &preset = presets[i];
 		if (preset.presetName.length() >= 1 && preset.presetName[0] == ' ') {
@@ -174,6 +175,7 @@ void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 		unique_obs_data_t newPreset(obs_data_create());
 		preset.loadIntoObsData(newPreset.get());
 		obs_data_array_push_back(settings_array, newPreset.get());
+		newPresets.push_back(std::move(newPreset));
 	}
 
 	obs_data_set_array(config_data.get(), "settings", settings_array);
