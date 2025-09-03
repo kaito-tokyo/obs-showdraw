@@ -28,7 +28,6 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 struct obs_source_info showdraw_filter = {
 	"showdraw",              // id
-	0,                       // version
 	OBS_SOURCE_TYPE_FILTER,  // type
 	OBS_SOURCE_VIDEO,        // output_flags
 	showdraw_get_name,       // get_name
@@ -37,9 +36,7 @@ struct obs_source_info showdraw_filter = {
 	nullptr,                 // get_width
 	nullptr,                 // get_height
 	showdraw_get_defaults,   // get_defaults
-	nullptr,                 // get_defaults2
 	showdraw_get_properties, // get_properties
-	nullptr,                 // get_properties2
 	showdraw_update,         // update
 	nullptr,                 // activate
 	nullptr,                 // deactivate
