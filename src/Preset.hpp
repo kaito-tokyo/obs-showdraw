@@ -26,44 +26,44 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs.h>
 
 enum class ExtractionMode {
-    Default = 0,
-    Passthrough = 100,
-    LuminanceExtraction = 200,
-    EdgeDetection = 300,
-    Scaling = 400
+	Default = 0,
+	Passthrough = 100,
+	LuminanceExtraction = 200,
+	EdgeDetection = 300,
+	Scaling = 400
 };
-
-const char *UserPresetsJson = "UserPresets.json";
-const char *UserPresetsVersion = "2025-09-03";
 
 struct Preset {
 public:
-    std::string presetName;
+	std::string presetName;
 
-    ExtractionMode extractionMode;
+	ExtractionMode extractionMode;
 
-    std::int64_t medianFilteringKernelSize;
+	std::int64_t medianFilteringKernelSize;
 
-    std::int64_t motionMapKernelSize;
+	std::int64_t motionMapKernelSize;
 
-    double motionAdaptiveFilteringStrength;
-    double motionAdaptiveFilteringMotionThreshold;
+	double motionAdaptiveFilteringStrength;
+	double motionAdaptiveFilteringMotionThreshold;
 
-    std::int64_t morphologyOpeningErosionKernelSize;
-    std::int64_t morphologyOpeningDilationKernelSize;
+	std::int64_t morphologyOpeningErosionKernelSize;
+	std::int64_t morphologyOpeningDilationKernelSize;
 
-    std::int64_t morphologyClosingDilationKernelSize;
-    std::int64_t morphologyClosingErosionKernelSize;
+	std::int64_t morphologyClosingDilationKernelSize;
+	std::int64_t morphologyClosingErosionKernelSize;
 
-    double scalingFactorDb;
+	double scalingFactorDb;
 
-    bool isSystem(void) const noexcept;
-    bool isUser(void) const noexcept;
+	bool isSystem(void) const noexcept;
+	bool isUser(void) const noexcept;
 
-    obs_data_t *loadIntoObsData(obs_data_t *data) const noexcept;
-    std::optional<std::string> validate(void) const noexcept;
+	obs_data_t *loadIntoObsData(obs_data_t *data) const noexcept;
+	std::optional<std::string> validate(void) const noexcept;
 
-    static Preset fromObsData(obs_data_t *data) noexcept;
-    static void saveUserPresets(const std::vector<Preset> &presets) noexcept;
-    static Preset getStrongDefault(void) noexcept;
+	static Preset fromObsData(obs_data_t *data) noexcept;
+
+	static void saveUserPresets(const std::vector<Preset> &presets) noexcept;
+	static std::vector<Preset> loadUserPresets(const Preset &runningPreset) noexcept;
+
+	static Preset getStrongDefault(void) noexcept;
 };

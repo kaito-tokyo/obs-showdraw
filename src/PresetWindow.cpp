@@ -18,6 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "PresetWindow.hpp"
 
+#include <functional>
 #include <sstream>
 #include <string>
 
@@ -37,47 +38,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <util/platform.h>
 #include <util/dstr.h>
 
-std::vector<Preset> initializePresets(const Preset &runningPreset)
-{
-	std::vector<Preset> presets{runningPreset, Preset::getStrongDefault()};
-
-	char *configPath = obs_module_config_path(UserPresetsJson);
-	obs_data_t *configData = obs_data_create_from_json_file_safe(configPath, "bak");
-	bfree(configPath);
-
-	if (!configData) {
-		return presets;
-	}
-
-	obs_data_array_t *settingsArray = obs_data_get_array(configData, "settings");
-
-	if (!settingsArray) {
-		return presets;
-	}
-
-	for (size_t i = 0; i < obs_data_array_count(settingsArray); ++i) {
-		obs_data_t *presetData = obs_data_array_item(settingsArray, i);
-		if (!presetData) {
-			continue;
-		}
-
-		const Preset preset = Preset::fromObsData(presetData);
-
-		presets.push_back(preset);
-		obs_data_release(presetData);
-	}
-
-	obs_data_array_release(settingsArray);
-	obs_data_release(configData);
-
-	return presets;
-}
-
 PresetWindow::PresetWindow(obs_source_t *filter, const Preset &runningPreset, QWidget *parent)
 	: QDialog(parent),
 	  filter(filter),
 	  runningPreset(runningPreset),
-	  presets(initializePresets(runningPreset)),
+	  presets(Preset::loadUserPresets(runningPreset)),
 	  presetSelector(new QComboBox()),
 	  addButton(new QToolButton()),
 	  removeButton(new QToolButton()),
@@ -131,9 +96,7 @@ PresetWindow::PresetWindow(obs_source_t *filter, const Preset &runningPreset, QW
 	setLayout(layout);
 }
 
-PresetWindow::~PresetWindow()
-{
-}
+PresetWindow::~PresetWindow() {}
 
 void PresetWindow::onPresetSelectionChanged(int index)
 {
@@ -159,7 +122,8 @@ void PresetWindow::onPresetSelectionChanged(int index)
 
 void PresetWindow::onAddButtonClicked(void)
 {
-	size_t userPresetCount = std::count_if(presets.begin(), presets.end(), &Preset::isUser);
+	size_t userPresetCount =
+		std::count_if(presets.begin(), presets.end(), std::function<bool(const Preset &)>(&Preset::isUser));
 
 	std::ostringstream oss;
 	oss << obs_module_text("presetWindowAddNewPrefix") << " " << (userPresetCount + 1);

@@ -50,5 +50,4 @@ void obs_module_unload(void)
 {
 	obs_log(LOG_INFO, "plugin unloaded");
 }
-
 }

@@ -28,14 +28,33 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "Preset.hpp"
 
+const char *UserPresetsJson = "UserPresets.json";
+const char *UserPresetsVersion = "2025-09-03";
+
 bool Preset::isSystem(void) const noexcept
 {
-    return presetName.size() >= 1 && presetName[0] == ' ';
+	return presetName.size() >= 1 && presetName[0] == ' ';
 }
 
 bool Preset::isUser(void) const noexcept
 {
-    return presetName.size() >= 1 && presetName[0] != ' ';
+	return presetName.size() >= 1 && presetName[0] != ' ';
+}
+
+obs_data_t *Preset::loadIntoObsData(obs_data_t *data) const noexcept
+{
+	obs_data_set_string(data, "presetName", presetName.c_str());
+	obs_data_set_int(data, "extractionMode", static_cast<int>(extractionMode));
+	obs_data_set_int(data, "medianFilteringKernelSize", medianFilteringKernelSize);
+	obs_data_set_int(data, "motionMapKernelSize", motionMapKernelSize);
+	obs_data_set_double(data, "motionAdaptiveFilteringStrength", motionAdaptiveFilteringStrength);
+	obs_data_set_double(data, "motionAdaptiveFilteringMotionThreshold", motionAdaptiveFilteringMotionThreshold);
+	obs_data_set_int(data, "morphologyOpeningErosionKernelSize", morphologyOpeningErosionKernelSize);
+	obs_data_set_int(data, "morphologyOpeningDilationKernelSize", morphologyOpeningDilationKernelSize);
+	obs_data_set_int(data, "morphologyClosingErosionKernelSize", morphologyClosingErosionKernelSize);
+	obs_data_set_int(data, "morphologyClosingDilationKernelSize", morphologyClosingDilationKernelSize);
+	obs_data_set_double(data, "scalingFactorDb", scalingFactorDb);
+	return data;
 }
 
 std::optional<std::string> Preset::validate(void) const noexcept
@@ -77,8 +96,7 @@ std::optional<std::string> Preset::validate(void) const noexcept
 		return obs_module_text("configHelperInvalidMotionAdaptiveFilteringStrength");
 	}
 
-	if (motionAdaptiveFilteringMotionThreshold < 0.0 ||
-	    motionAdaptiveFilteringMotionThreshold > 1.0) {
+	if (motionAdaptiveFilteringMotionThreshold < 0.0 || motionAdaptiveFilteringMotionThreshold > 1.0) {
 		return obs_module_text("configHelperInvalidMotionAdaptiveFilteringMotionThreshold");
 	}
 
@@ -87,14 +105,12 @@ std::optional<std::string> Preset::validate(void) const noexcept
 		return obs_module_text("configHelperInvalidMorphologyOpeningErosionKernelSize");
 	}
 
-	if (morphologyOpeningDilationKernelSize < 1 ||
-	    morphologyOpeningDilationKernelSize > 31 ||
+	if (morphologyOpeningDilationKernelSize < 1 || morphologyOpeningDilationKernelSize > 31 ||
 	    morphologyOpeningDilationKernelSize % 2 == 0) {
 		return obs_module_text("configHelperInvalidMorphologyOpeningDilationKernelSize");
 	}
 
-	if (morphologyClosingDilationKernelSize < 1 ||
-	    morphologyClosingDilationKernelSize > 31 ||
+	if (morphologyClosingDilationKernelSize < 1 || morphologyClosingDilationKernelSize > 31 ||
 	    morphologyClosingDilationKernelSize % 2 == 0) {
 		return obs_module_text("configHelperInvalidMorphologyClosingDilationKernelSize");
 	}
@@ -113,26 +129,26 @@ std::optional<std::string> Preset::validate(void) const noexcept
 
 Preset Preset::fromObsData(obs_data_t *data) noexcept
 {
-    return {
-        .presetName = obs_data_get_string(data, "presetName"),
-        .extractionMode = static_cast<ExtractionMode>(obs_data_get_int(data, "extractionMode")),
-        .medianFilteringKernelSize = obs_data_get_int(data, "medianFilteringKernelSize"),
-        .motionMapKernelSize = obs_data_get_int(data, "motionMapKernelSize"),
-        .motionAdaptiveFilteringStrength = obs_data_get_double(data, "motionAdaptiveFilteringStrength"),
-        .motionAdaptiveFilteringMotionThreshold =
-            obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold"),
-        .morphologyOpeningErosionKernelSize = obs_data_get_int(data, "morphologyOpeningErosionKernelSize"),
-        .morphologyOpeningDilationKernelSize = obs_data_get_int(data, "morphologyOpeningDilationKernelSize"),
-        .morphologyClosingDilationKernelSize = obs_data_get_int(data, "morphologyClosingDilationKernelSize"),
-        .morphologyClosingErosionKernelSize = obs_data_get_int(data, "morphologyClosingErosionKernelSize"),
-        .scalingFactorDb = obs_data_get_double(data, "scalingFactorDb"),
-    };
+	return {
+		.presetName = obs_data_get_string(data, "presetName"),
+		.extractionMode = static_cast<ExtractionMode>(obs_data_get_int(data, "extractionMode")),
+		.medianFilteringKernelSize = obs_data_get_int(data, "medianFilteringKernelSize"),
+		.motionMapKernelSize = obs_data_get_int(data, "motionMapKernelSize"),
+		.motionAdaptiveFilteringStrength = obs_data_get_double(data, "motionAdaptiveFilteringStrength"),
+		.motionAdaptiveFilteringMotionThreshold =
+			obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold"),
+		.morphologyOpeningErosionKernelSize = obs_data_get_int(data, "morphologyOpeningErosionKernelSize"),
+		.morphologyOpeningDilationKernelSize = obs_data_get_int(data, "morphologyOpeningDilationKernelSize"),
+		.morphologyClosingDilationKernelSize = obs_data_get_int(data, "morphologyClosingDilationKernelSize"),
+		.morphologyClosingErosionKernelSize = obs_data_get_int(data, "morphologyClosingErosionKernelSize"),
+		.scalingFactorDb = obs_data_get_double(data, "scalingFactorDb"),
+	};
 }
 
 void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 {
 	char *config_dir_path = obs_module_config_path("");
-    std::filesystem::create_directories(config_dir_path);
+	std::filesystem::create_directories(config_dir_path);
 	bfree(config_dir_path);
 
 	char *config_path = obs_module_config_path(UserPresetsJson);
@@ -170,19 +186,55 @@ void Preset::saveUserPresets(const std::vector<Preset> &presets) noexcept
 	bfree(config_path);
 }
 
+std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcept
+{
+	std::vector<Preset> presets{runningPreset, Preset::getStrongDefault()};
+
+	char *configPath = obs_module_config_path(UserPresetsJson);
+	obs_data_t *configData = obs_data_create_from_json_file_safe(configPath, "bak");
+	bfree(configPath);
+
+	if (!configData) {
+		return presets;
+	}
+
+	obs_data_array_t *settingsArray = obs_data_get_array(configData, "settings");
+
+	if (!settingsArray) {
+		return presets;
+	}
+
+	for (size_t i = 0; i < obs_data_array_count(settingsArray); ++i) {
+		obs_data_t *presetData = obs_data_array_item(settingsArray, i);
+		if (!presetData) {
+			continue;
+		}
+
+		const Preset preset = Preset::fromObsData(presetData);
+
+		presets.push_back(preset);
+		obs_data_release(presetData);
+	}
+
+	obs_data_array_release(settingsArray);
+	obs_data_release(configData);
+
+	return presets;
+}
+
 Preset Preset::getStrongDefault(void) noexcept
 {
-    return {
-        .presetName = "strong default",
-        .extractionMode = ExtractionMode::Default,
-        .medianFilteringKernelSize = 3,
-        .motionMapKernelSize = 3,
-        .motionAdaptiveFilteringStrength = 0.5,
-        .motionAdaptiveFilteringMotionThreshold = 0.3,
-        .morphologyOpeningErosionKernelSize = 1,
-        .morphologyOpeningDilationKernelSize = 1,
-        .morphologyClosingDilationKernelSize = 7,
-        .morphologyClosingErosionKernelSize = 5,
-        .scalingFactorDb = 6.0,
-    };
+	return {
+		.presetName = "strong default",
+		.extractionMode = ExtractionMode::Default,
+		.medianFilteringKernelSize = 3,
+		.motionMapKernelSize = 3,
+		.motionAdaptiveFilteringStrength = 0.5,
+		.motionAdaptiveFilteringMotionThreshold = 0.3,
+		.morphologyOpeningErosionKernelSize = 1,
+		.morphologyOpeningDilationKernelSize = 1,
+		.morphologyClosingDilationKernelSize = 7,
+		.morphologyClosingErosionKernelSize = 5,
+		.scalingFactorDb = 6.0,
+	};
 }

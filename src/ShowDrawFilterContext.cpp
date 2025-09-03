@@ -431,10 +431,8 @@ void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(const float texelWi
 	gs_effect_set_texture(effect_texture_image, texture_source);
 	gs_effect_set_texture(effect_texture_image1, texture_previous_luminance);
 
-	gs_effect_set_float(effect_float_strength,
-			    (float)runningPreset.motionAdaptiveFilteringStrength);
-	gs_effect_set_float(effect_float_motion_threshold,
-			    (float)runningPreset.motionAdaptiveFilteringMotionThreshold);
+	gs_effect_set_float(effect_float_strength, (float)runningPreset.motionAdaptiveFilteringStrength);
+	gs_effect_set_float(effect_float_motion_threshold, (float)runningPreset.motionAdaptiveFilteringMotionThreshold);
 
 	applyEffectPass(effect_tech_motion_adaptive_filtering, texture_source);
 
@@ -568,8 +566,8 @@ void ShowDrawFilterContext::videoRender(void) noexcept
 	}
 
 	ExtractionMode extractionMode = runningPreset.extractionMode == ExtractionMode::Default
-					   ? ExtractionMode::Scaling
-					   : runningPreset.extractionMode;
+						? ExtractionMode::Scaling
+						: runningPreset.extractionMode;
 
 	const float texelWidth = 1.0f / (float)width;
 	const float texelHeight = 1.0f / (float)height;
