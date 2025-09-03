@@ -12,7 +12,8 @@ uniform texture2d motionMap;
 uniform float strength;
 uniform float motionThreshold;
 
-uniform float gain;
+// Scaling parameters
+uniform float scalingFactor;
 
 sampler_state def_sampler {
 	Filter   = Linear;
@@ -242,6 +243,11 @@ float4 PSDilation(VertInOut vert_in) : TARGET
 	return float4(max_val, max_val, max_val, 1.0);
 }
 
+float4 PSScaling(VertInOut vert_in) : TARGET
+{
+	return float4(image.Sample(def_sampler, vert_in.uv).rgb * scalingFactor, 1.0);
+}
+
 technique Draw
 {
 	pass
@@ -311,5 +317,14 @@ technique Dilation
 	{
 		vertex_shader = VSDefault(vert_in);
 		pixel_shader  = PSDilation(vert_in);
+	}
+}
+
+technique Scaling
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSScaling(vert_in);
 	}
 }
