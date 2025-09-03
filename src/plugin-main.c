@@ -38,7 +38,7 @@ const char *showdraw_get_name(void *type_data)
 #define EXTRACTION_MODE_EDGE_DETECTION 300
 #define EXTRACTION_MODE_SCALING 400
 
-#define EXTRACTION_MODE_DEFAULT_VALUE EXTRACTION_MODE_EDGE_DETECTION
+#define EXTRACTION_MODE_DEFAULT_VALUE EXTRACTION_MODE_SCALING
 
 struct showdraw_filter_context {
 	obs_source_t *filter;
