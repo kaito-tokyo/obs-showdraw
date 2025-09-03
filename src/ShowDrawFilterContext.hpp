@@ -42,31 +42,31 @@ void showdraw_video_render(void *data, gs_effect_t *effect);
 
 class ShowDrawFilterContext {
 public:
-    ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source);
-    ~ShowDrawFilterContext(void);
+	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source);
+	~ShowDrawFilterContext(void) noexcept;
 
-    static void getDefaults(obs_data_t *data);
-    obs_properties_t *getProperties(void);
-    void update(obs_data_t *settings);
-    void videoRender(gs_effect_t *effect);
+	static void getDefaults(obs_data_t *data) noexcept;
+	obs_properties_t *getProperties(void) noexcept;
+	void update(obs_data_t *settings) noexcept;
+	void videoRender(gs_effect_t *effect) noexcept;
 
 private:
-    bool initEffect(void) noexcept;
-    bool ensureTextures(uint32_t width, uint32_t height) noexcept;
+	bool initEffect(void) noexcept;
+	bool ensureTextures(uint32_t width, uint32_t height) noexcept;
 
-    void applyLuminanceExtractionPass(void) noexcept;
-    void applyMedianFilteringPass(const float texelWidth, const float texelHeight) noexcept;
-    void applyMotionAdaptiveFilteringPass(const float texelWidth, const float texelHeight) noexcept;
-    void applySobelPass(const float texelWidth, const float texelHeight) noexcept;
-    void applySuppressNonMaximumPass(const float texelWidth, const float texelHeight) noexcept;
-    void applyEdgeDetectionPass(const float texelWidth, const float texelHeight) noexcept;
-    void applyMorphologyPass(const float texelWidth, const float texelHeight, gs_technique_t *technique, int kernelSize) noexcept;
-    void applyScalingPass(void) noexcept;
-    void drawFinalImage(void) noexcept;
+	void applyLuminanceExtractionPass(void) noexcept;
+	void applyMedianFilteringPass(const float texelWidth, const float texelHeight) noexcept;
+	void applyMotionAdaptiveFilteringPass(const float texelWidth, const float texelHeight) noexcept;
+	void applySobelPass(const float texelWidth, const float texelHeight) noexcept;
+	void applySuppressNonMaximumPass(const float texelWidth, const float texelHeight) noexcept;
+	void applyEdgeDetectionPass(const float texelWidth, const float texelHeight) noexcept;
+	void applyMorphologyPass(const float texelWidth, const float texelHeight, gs_technique_t *technique,
+				 int kernelSize) noexcept;
+	void applyScalingPass(void) noexcept;
+	void drawFinalImage(void) noexcept;
 
-
-    obs_data_t *settings;
-    obs_source_t *source;
+	obs_data_t *settings;
+	obs_source_t *source;
 
 	struct showdraw_global_state global_state;
 

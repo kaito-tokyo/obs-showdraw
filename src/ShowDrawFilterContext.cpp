@@ -27,60 +27,81 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 const char *showdraw_get_name(void *type_data)
 {
-    UNUSED_PARAMETER(type_data);
-    return obs_module_text("showdrawName");
+	UNUSED_PARAMETER(type_data);
+	return obs_module_text("showdrawName");
 }
 
 void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 {
-    void *data = bzalloc(sizeof(ShowDrawFilterContext));
+	void *data = bzalloc(sizeof(ShowDrawFilterContext));
 
-    if (!data) {
-        obs_log(LOG_ERROR, "Failed to allocate memory for showdraw context");
-        return nullptr;
-    }
+	if (!data) {
+		obs_log(LOG_ERROR, "Failed to allocate memory for showdraw context");
+		return nullptr;
+	}
 
-    try {
-        ShowDrawFilterContext *context = new (data) ShowDrawFilterContext(settings, source);
-    } catch (const std::exception &e) {
-        obs_log(LOG_ERROR, "Failed to create showdraw context: %s", e.what());
-    }
-
-    return data;
+	try {
+		ShowDrawFilterContext *context = new (data) ShowDrawFilterContext(settings, source);
+		return context;
+	} catch (const std::exception &e) {
+		obs_log(LOG_ERROR, "Failed to create showdraw context: %s", e.what());
+		return nullptr;
+	}
 }
 
 void showdraw_destroy(void *data)
 {
-    ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-    context->~ShowDrawFilterContext();
-    bfree(context);
+	if (!data) {
+		obs_log(LOG_WARNING, "showdraw_destroy called with null data");
+		return;
+	}
+
+	ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
+	context->~ShowDrawFilterContext();
+	bfree(context);
 }
 
 void showdraw_get_defaults(obs_data_t *data)
 {
-    ShowDrawFilterContext::getDefaults(data);
+	ShowDrawFilterContext::getDefaults(data);
 }
 
 obs_properties_t *showdraw_get_properties(void *data)
 {
-    ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-    return context->getProperties();
+	if (!data) {
+		obs_log(LOG_WARNING, "showdraw_get_properties called with null data");
+		return nullptr;
+	}
+
+	ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
+	return context->getProperties();
 }
 
 void showdraw_update(void *data, obs_data_t *settings)
 {
-    ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-    context->update(settings);
+	if (!data) {
+		obs_log(LOG_WARNING, "showdraw_update called with null data");
+		return;
+	}
+
+	ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
+	context->update(settings);
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
 {
-    ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-    context->videoRender(effect);
+	if (!data) {
+		obs_log(LOG_WARNING, "showdraw_video_render called with null data");
+		return;
+	}
+
+	ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
+	context->videoRender(effect);
 }
 
-ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) :
-settings(settings), source(source)
+ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source)
+	: settings(settings),
+	  source(source)
 {
 	obs_log(LOG_INFO, "Creating showdraw filter context");
 
@@ -89,13 +110,13 @@ settings(settings), source(source)
 
 	if (global_state.running_preset == NULL) {
 		obs_log(LOG_ERROR, "Failed to create showdraw preset");
-        throw std::bad_alloc();
+		throw std::bad_alloc();
 	}
 
 	update(settings);
 }
 
-ShowDrawFilterContext::~ShowDrawFilterContext(void)
+ShowDrawFilterContext::~ShowDrawFilterContext(void) noexcept
 {
 	obs_log(LOG_INFO, "Destroying showdraw filter context");
 
@@ -110,7 +131,7 @@ ShowDrawFilterContext::~ShowDrawFilterContext(void)
 	obs_leave_graphics();
 }
 
-void ShowDrawFilterContext::getDefaults(obs_data_t *data)
+void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 {
 	struct showdraw_preset *default_preset = showdraw_preset_get_strong_default();
 
@@ -139,21 +160,22 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data)
 	showdraw_preset_destroy(default_preset);
 }
 
-obs_properties_t *ShowDrawFilterContext::getProperties(void)
+obs_properties_t *ShowDrawFilterContext::getProperties(void) noexcept
 {
 	obs_properties_t *props = obs_properties_create();
 
-	obs_properties_add_button(
-		props,
-		"openPresetWindow",
-		obs_module_text("openPresetWindow"),
-		[this](obs_properties_t *props, obs_property_t *property, void *data) {
+	obs_properties_add_button2(
+		props, "openPresetWindow", obs_module_text("openPresetWindow"),
+		[](obs_properties_t *props, obs_property_t *property, void *data) {
 			UNUSED_PARAMETER(props);
 			UNUSED_PARAMETER(property);
-			PresetWindow *window = new PresetWindow(&global_state, static_cast<QWidget *>(obs_frontend_get_main_window()));
+			ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
+			PresetWindow *window = new PresetWindow(&context->global_state,
+								static_cast<QWidget *>(obs_frontend_get_main_window()));
 			window->exec();
 			return false;
-		});
+		},
+		this);
 
 	obs_property_t *propExtractionMode = obs_properties_add_list(
 		props, "extractionMode", obs_module_text("extractionMode"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
@@ -208,7 +230,7 @@ obs_properties_t *ShowDrawFilterContext::getProperties(void)
 	return props;
 }
 
-void ShowDrawFilterContext::update(obs_data_t *settings)
+void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 {
 	struct showdraw_preset *running_preset = global_state.running_preset;
 
@@ -236,31 +258,32 @@ void ShowDrawFilterContext::update(obs_data_t *settings)
 	scaling_factor = pow(10.0, running_preset->scaling_factor_db / 10.0);
 }
 
-gs_eparam_t *getEffectParam(gs_effect_t *effect, const char *name) {
-    gs_eparam_t *param = gs_effect_get_param_by_name(effect, name);
+gs_eparam_t *getEffectParam(gs_effect_t *effect, const char *name)
+{
+	gs_eparam_t *param = gs_effect_get_param_by_name(effect, name);
 
 	if (!param) {
-        obs_log(LOG_ERROR, "Effect parameter %s not found", name);
-        throw std::runtime_error("Effect parameter not found");
-    }
+		obs_log(LOG_ERROR, "Effect parameter %s not found", name);
+		throw std::runtime_error("Effect parameter not found");
+	}
 
-    return param;
+	return param;
 }
 
-gs_technique_t *getEffectTech(gs_effect_t *effect, const char *name) {
-    gs_technique_t *tech = gs_effect_get_technique(effect, name);
+gs_technique_t *getEffectTech(gs_effect_t *effect, const char *name)
+{
+	gs_technique_t *tech = gs_effect_get_technique(effect, name);
 
 	if (!tech) {
-        obs_log(LOG_ERROR, "Effect technique %s not found", name);
-        throw std::runtime_error("Effect technique not found");
-    }
+		obs_log(LOG_ERROR, "Effect technique %s not found", name);
+		throw std::runtime_error("Effect technique not found");
+	}
 
-    return tech;
+	return tech;
 }
 
 bool ShowDrawFilterContext::initEffect(void) noexcept
 {
-    obs_source_t *filter = global_state.filter;
 	char *error_string = nullptr;
 
 	char *effect_path = obs_module_file("effects/drawing-emphasizer.effect");
@@ -311,7 +334,8 @@ bool ShowDrawFilterContext::initEffect(void) noexcept
 	return true;
 }
 
-gs_texture_t *ensureTexture(gs_texture_t *&texture, uint32_t width, uint32_t height) {
+void ensureTexture(gs_texture_t *&texture, uint32_t width, uint32_t height)
+{
 	if (!texture || gs_texture_get_width(texture) != width || gs_texture_get_height(texture) != height) {
 		if (texture) {
 			gs_texture_destroy(texture);
@@ -352,6 +376,8 @@ bool ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height) noex
 		obs_log(LOG_ERROR, "Failed to create previous luminance texture");
 		return false;
 	}
+
+	return true;
 }
 
 static void applyEffectPass(gs_technique_t *technique, gs_texture_t *texture) noexcept
@@ -385,8 +411,7 @@ void ShowDrawFilterContext::applyMedianFilteringPass(const float texelWidth, con
 
 	gs_effect_set_float(effect_float_texel_width, texelWidth);
 	gs_effect_set_float(effect_float_texel_height, texelHeight);
-	gs_effect_set_int(effect_int_kernel_size,
-			  (int)global_state.running_preset->median_filtering_kernel_size);
+	gs_effect_set_int(effect_int_kernel_size, (int)global_state.running_preset->median_filtering_kernel_size);
 
 	applyEffectPass(effect_tech_median_filtering, texture_source);
 
@@ -414,7 +439,8 @@ void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(const float texelWi
 	gs_effect_set_float(effect_float_texel_height, texelHeight);
 
 	gs_effect_set_texture(effect_texture_motion_map, texture_motion_map);
-	gs_effect_set_float(effect_float_strength, (float)global_state.running_preset->motion_adaptive_filtering_strength);
+	gs_effect_set_float(effect_float_strength,
+			    (float)global_state.running_preset->motion_adaptive_filtering_strength);
 	gs_effect_set_float(effect_float_motion_threshold,
 			    (float)global_state.running_preset->motion_adaptive_filtering_motion_threshold);
 
@@ -425,7 +451,7 @@ void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(const float texelWi
 	std::swap(texture_source, texture_target);
 }
 
-void ShowDrawFilterContext::applySobelPass(const float texelWidth, const float texelHeight)
+void ShowDrawFilterContext::applySobelPass(const float texelWidth, const float texelHeight) noexcept
 {
 	gs_set_render_target(texture_target, nullptr);
 
@@ -467,7 +493,8 @@ void ShowDrawFilterContext::applyEdgeDetectionPass(const float texelWidth, const
 	std::swap(texture_source, texture_target);
 }
 
-void ShowDrawFilterContext::applyMorphologyPass(const float texelWidth, const float texelHeight, gs_technique_t *technique, int kernelSize) noexcept
+void ShowDrawFilterContext::applyMorphologyPass(const float texelWidth, const float texelHeight,
+						gs_technique_t *technique, int kernelSize) noexcept
 {
 	gs_set_render_target(texture_target, nullptr);
 
@@ -599,22 +626,22 @@ void ShowDrawFilterContext::videoRender(gs_effect_t *effect) noexcept
 
 		if (running_preset->morphology_opening_erosion_kernel_size > 1) {
 			applyMorphologyPass(texelWidth, texelHeight, effect_tech_erosion,
-					      (int)running_preset->morphology_opening_erosion_kernel_size);
+					    (int)running_preset->morphology_opening_erosion_kernel_size);
 		}
 
 		if (running_preset->morphology_opening_dilation_kernel_size > 1) {
 			applyMorphologyPass(texelWidth, texelHeight, effect_tech_dilation,
-					      (int)running_preset->morphology_opening_dilation_kernel_size);
+					    (int)running_preset->morphology_opening_dilation_kernel_size);
 		}
 
 		if (running_preset->morphology_closing_dilation_kernel_size > 1) {
 			applyMorphologyPass(texelWidth, texelHeight, effect_tech_dilation,
-					      (int)running_preset->morphology_closing_dilation_kernel_size);
+					    (int)running_preset->morphology_closing_dilation_kernel_size);
 		}
 
 		if (running_preset->morphology_closing_erosion_kernel_size > 1) {
 			applyMorphologyPass(texelWidth, texelHeight, effect_tech_erosion,
-					      (int)running_preset->morphology_closing_erosion_kernel_size);
+					    (int)running_preset->morphology_closing_erosion_kernel_size);
 		}
 	}
 
