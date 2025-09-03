@@ -334,6 +334,7 @@ bool ShowDrawFilterContext::initEffect(void) noexcept
 	} catch (const std::exception &e) {
 		gs_effect_destroy(effect);
 		effect = nullptr;
+		obs_log(LOG_ERROR, "Error initializing effect: %s", e.what());
 		return false;
 	}
 
