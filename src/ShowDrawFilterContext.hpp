@@ -42,13 +42,15 @@ void showdraw_video_render(void *data, gs_effect_t *effect);
 
 class ShowDrawFilterContext {
 public:
+	static const char *getName(void) noexcept;
+
 	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source);
 	~ShowDrawFilterContext(void) noexcept;
 
 	static void getDefaults(obs_data_t *data) noexcept;
 	obs_properties_t *getProperties(void) noexcept;
 	void update(obs_data_t *settings) noexcept;
-	void videoRender(gs_effect_t *effect) noexcept;
+	void videoRender(void) noexcept;
 
 private:
 	bool initEffect(void) noexcept;

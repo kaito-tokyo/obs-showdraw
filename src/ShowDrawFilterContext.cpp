@@ -28,7 +28,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 const char *showdraw_get_name(void *type_data)
 {
 	UNUSED_PARAMETER(type_data);
-	return obs_module_text("showdrawName");
+	return ShowDrawFilterContext::getName();
 }
 
 void *showdraw_create(obs_data_t *settings, obs_source_t *source)
@@ -90,14 +90,21 @@ void showdraw_update(void *data, obs_data_t *settings)
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
 {
+	UNUSED_PARAMETER(effect);
 	if (!data) {
 		obs_log(LOG_WARNING, "showdraw_video_render called with null data");
 		return;
 	}
 
 	ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-	context->videoRender(effect);
+	context->videoRender();
 }
+
+const char *ShowDrawFilterContext::getName(void) noexcept
+{
+	return obs_module_text("pluginName");
+}
+
 
 ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source)
 	: settings(settings),
@@ -420,7 +427,7 @@ void ShowDrawFilterContext::applyMedianFilteringPass(const float texelWidth, con
 
 void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(const float texelWidth, const float texelHeight) noexcept
 {
-	gs_set_render_target(texture_motion_map, nullptr);
+	gs_set_render_target(texture_target, nullptr);
 
 	gs_effect_set_texture(effect_texture_image, texture_source);
 	gs_effect_set_texture(effect_texture_image1, texture_previous_luminance);
@@ -435,10 +442,6 @@ void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(const float texelWi
 	gs_effect_set_texture(effect_texture_image, texture_source);
 	gs_effect_set_texture(effect_texture_image1, texture_previous_luminance);
 
-	gs_effect_set_float(effect_float_texel_width, texelWidth);
-	gs_effect_set_float(effect_float_texel_height, texelHeight);
-
-	gs_effect_set_texture(effect_texture_motion_map, texture_motion_map);
 	gs_effect_set_float(effect_float_strength,
 			    (float)global_state.running_preset->motion_adaptive_filtering_strength);
 	gs_effect_set_float(effect_float_motion_threshold,
@@ -537,10 +540,8 @@ void ShowDrawFilterContext::drawFinalImage(void) noexcept
 	gs_technique_end(effect_tech_draw);
 }
 
-void ShowDrawFilterContext::videoRender(gs_effect_t *effect) noexcept
+void ShowDrawFilterContext::videoRender(void) noexcept
 {
-	UNUSED_PARAMETER(effect);
-
 	obs_source_t *filter = global_state.filter;
 
 	if (!filter) {
@@ -596,7 +597,7 @@ void ShowDrawFilterContext::videoRender(gs_effect_t *effect) noexcept
 		return;
 	}
 
-	gs_set_render_target(texture_source, NULL);
+	gs_set_render_target(texture_target, NULL);
 
 	gs_viewport_push();
 	gs_projection_push();
@@ -606,6 +607,8 @@ void ShowDrawFilterContext::videoRender(gs_effect_t *effect) noexcept
 	gs_matrix_identity();
 
 	obs_source_process_filter_end(filter, effect, 0, 0);
+
+	std::swap(texture_source, texture_target);
 
 	if (extractionMode >= EXTRACTION_MODE_LUMINANCE_EXTRACTION) {
 		applyLuminanceExtractionPass();
