@@ -15,6 +15,11 @@ uniform float motionThreshold;
 // Scaling parameters
 uniform float scalingFactor;
 
+#define PI 3.14159265359f
+#define SQRT_20 4.472136f
+#define TAN_22_5 0.41421356f
+#define TAN_67_5 2.41421356f
+
 sampler_state def_sampler {
 	Filter   = Linear;
 	AddressU = Clamp;
@@ -179,6 +184,63 @@ float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
 	return float4(finalLuma, finalLuma, finalLuma, 1.0);
 }
 
+float4 PSApplySobel(VertInOut vert_in) : TARGET
+{
+	float2 texel_size = float2(texelWidth, texelHeight);
+	float2 uv = vert_in.uv;
+
+	float luma[9];
+	luma[0] = image.Sample(def_sampler, uv + texel_size * float2(-1.0f, -1.0f)).r;
+	luma[1] = image.Sample(def_sampler, uv + texel_size * float2( 0.0f, -1.0f)).r;
+	luma[2] = image.Sample(def_sampler, uv + texel_size * float2( 1.0f, -1.0f)).r;
+	luma[3] = image.Sample(def_sampler, uv + texel_size * float2(-1.0f,  0.0f)).r;
+	luma[4] = image.Sample(def_sampler, uv).r;
+	luma[5] = image.Sample(def_sampler, uv + texel_size * float2( 1.0f,  0.0f)).r;
+	luma[6] = image.Sample(def_sampler, uv + texel_size * float2(-1.0f,  1.0f)).r;
+	luma[7] = image.Sample(def_sampler, uv + texel_size * float2( 0.0f,  1.0f)).r;
+	luma[8] = image.Sample(def_sampler, uv + texel_size * float2( 1.0f,  1.0f)).r;
+
+	float sobelX = -luma[0] - 2.0f * luma[3] - luma[6] + luma[2] + 2.0f * luma[5] + luma[8];
+	float sobelY = -luma[0] - 2.0f * luma[1] - luma[2] + luma[6] + 2.0f * luma[7] + luma[8];
+
+	float magnitude = sqrt(sobelX * sobelX + sobelY * sobelY);
+
+	return float4(magnitude / SQRT_20, sobelX / 8.0f + 0.5f, sobelY / 8.0f + 0.5f, 1.0f);
+}
+
+float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
+{
+	float4 encoded = image.Sample(def_sampler, vert_in.uv);
+	float encoded_magnitude = encoded.r;
+	float gx = (encoded.g - 0.5f) * 8.0f;
+	float gy = (encoded.b - 0.5f) * 8.0f;
+
+	float2 offset = float2(0.0f, 0.0f);
+	float gx_abs = abs(gx);
+	float gy_abs = abs(gy);
+
+	if (gy_abs < gx_abs * TAN_22_5) {
+		offset = float2(texelWidth, 0.0f);
+	} else if (gy_abs > gx_abs * TAN_67_5) {
+		offset = float2(0.0f, texelHeight);
+	} else {
+		offset = float2(texelWidth, texelHeight);
+		if ((gx > 0.0f && gy < 0.0f) || (gx < 0.0f && gy > 0.0f)) {
+			offset.y = -1.0f;
+		}
+	}
+
+	float neighbor_encoded_magnitude1 = image.Sample(def_sampler, vert_in.uv + offset).r;
+	float neighbor_encoded_magnitude2 = image.Sample(def_sampler, vert_in.uv - offset).r;
+
+	if (encoded_magnitude < neighbor_encoded_magnitude1 || encoded_magnitude < neighbor_encoded_magnitude2)
+	{
+		encoded_magnitude = 0.0f;
+	}
+
+	return float4(encoded_magnitude, encoded_magnitude, encoded_magnitude, 1.0f);
+}
+
 float4 PSDetectEdge(VertInOut vert_in) : TARGET
 {
 	float2 texel_size = float2(texelWidth, texelHeight);
@@ -290,6 +352,24 @@ technique MotionAdaptiveFiltering
 	{
 		vertex_shader = VSDefault(vert_in);
 		pixel_shader  = PSMotionAdaptiveFiltering(vert_in);
+	}
+}
+
+technique ApplySobel
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSApplySobel(vert_in);
+	}
+}
+
+technique SuppressNonMaximum
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSSuppressNonMaximum(vert_in);
 	}
 }
 

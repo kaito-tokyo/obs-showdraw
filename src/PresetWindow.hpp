@@ -27,8 +27,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 extern "C" {
 #endif
 
-void showdraw_preset_window_show(struct showdraw_global_state *global_state);
-
 #ifdef __cplusplus
 }
 #endif

@@ -38,12 +38,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "showdraw-conf.hpp"
 
-void showdraw_preset_window_show(struct showdraw_global_state *global_state)
-{
-	PresetWindow *window = new PresetWindow(global_state, static_cast<QWidget *>(obs_frontend_get_main_window()));
-	window->exec();
-}
-
 std::vector<struct showdraw_preset *> initializePresets(struct showdraw_global_state *globalState)
 {
 	struct showdraw_preset *currentPreset = showdraw_preset_create(" current", true);
