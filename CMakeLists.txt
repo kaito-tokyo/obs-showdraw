@@ -11,7 +11,7 @@ include(compilerconfig)
 include(defaults)
 include(helpers)
 
-if (BUILD_TESTING)
+if(BUILD_TESTING)
   if(APPLE)
     set(CMAKE_INSTALL_RPATH "/Applications/OBS.app/Contents/Frameworks")
     set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "/Applications/OBS.app/Contents/Frameworks")
@@ -51,10 +51,7 @@ target_sources(
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_PROJECT_NAME}_impl)
 
-target_sources(
-  ${CMAKE_PROJECT_NAME}
-  PRIVATE src/plugin-main.cpp
-)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
