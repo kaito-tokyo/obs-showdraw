@@ -63,7 +63,8 @@ private:
 	void applyMotionAdaptiveFilteringPass(const float texelWidth, const float texelHeight) noexcept;
 	void applySobelPass(const float texelWidth, const float texelHeight) noexcept;
 	void applySuppressNonMaximumPass(const float texelWidth, const float texelHeight) noexcept;
-	void applyHysteresisClassifyPass(const float texelWidth, const float texelHeight, const float highThreshold, const float lowThreshold) noexcept;
+	void applyHysteresisClassifyPass(const float texelWidth, const float texelHeight, const float highThreshold,
+					 const float lowThreshold) noexcept;
 	void applyHysteresisPropagatePass(const float texelWidth, const float texelHeight) noexcept;
 	void applyHysteresisFinalizePass(const float texelWidth, const float texelHeight) noexcept;
 	void applyMorphologyPass(const float texelWidth, const float texelHeight, gs_technique_t *technique,
@@ -82,7 +83,6 @@ private:
 	gs_texture_t *texture_target;
 	gs_texture_t *texture_motion_map;
 	gs_texture_t *texture_previous_luminance;
-
 };
 
 #endif

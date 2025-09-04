@@ -147,10 +147,8 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold",
 				    defaultPreset.motionAdaptiveFilteringMotionThreshold);
 
-	obs_data_set_default_double(data, "hysteresisHighThreshold",
-				    defaultPreset.hysteresisHighThreshold);
-	obs_data_set_default_double(data, "hysteresisLowThreshold",
-				    defaultPreset.hysteresisLowThreshold);
+	obs_data_set_default_double(data, "hysteresisHighThreshold", defaultPreset.hysteresisHighThreshold);
+	obs_data_set_default_double(data, "hysteresisLowThreshold", defaultPreset.hysteresisLowThreshold);
 
 	obs_data_set_default_int(data, "morphologyOpeningErosionKernelSize",
 				 defaultPreset.morphologyOpeningErosionKernelSize);
@@ -219,10 +217,10 @@ obs_properties_t *ShowDrawFilterContext::getProperties(void) noexcept
 	obs_properties_add_float_slider(props, "motionAdaptiveFilteringMotionThreshold",
 					obs_module_text("motionAdaptiveFilteringMotionThreshold"), 0.0, 1.0, 0.01);
 
-	obs_properties_add_float_slider(props, "hysteresisHighThreshold",
-					obs_module_text("hysteresisHighThreshold"), 0.0, std::sqrt(20.0), 0.01);
-	obs_properties_add_float_slider(props, "hysteresisLowThreshold",
-					obs_module_text("hysteresisLowThreshold"), 0.0, std::sqrt(20.0), 0.01);
+	obs_properties_add_float_slider(props, "hysteresisHighThreshold", obs_module_text("hysteresisHighThreshold"),
+					0.0, std::sqrt(20.0), 0.01);
+	obs_properties_add_float_slider(props, "hysteresisLowThreshold", obs_module_text("hysteresisLowThreshold"), 0.0,
+					std::sqrt(20.0), 0.01);
 
 	obs_properties_add_int_slider(props, "morphologyOpeningErosionKernelSize",
 				      obs_module_text("morphologyOpeningErosionKernelSize"), 1, 31, 2);
@@ -252,10 +250,8 @@ void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 	runningPreset.motionAdaptiveFilteringMotionThreshold =
 		obs_data_get_double(settings, "motionAdaptiveFilteringMotionThreshold");
 
-	runningPreset.hysteresisHighThreshold =
-		obs_data_get_double(settings, "hysteresisHighThreshold");
-	runningPreset.hysteresisLowThreshold =
-		obs_data_get_double(settings, "hysteresisLowThreshold");
+	runningPreset.hysteresisHighThreshold = obs_data_get_double(settings, "hysteresisHighThreshold");
+	runningPreset.hysteresisLowThreshold = obs_data_get_double(settings, "hysteresisLowThreshold");
 
 	runningPreset.morphologyOpeningErosionKernelSize =
 		obs_data_get_int(settings, "morphologyOpeningErosionKernelSize");
@@ -410,7 +406,8 @@ void ShowDrawFilterContext::applySuppressNonMaximumPass(const float texelWidth, 
 	std::swap(texture_source, texture_target);
 }
 
-void ShowDrawFilterContext::applyHysteresisClassifyPass(float texelWidth, float texelHeight, float highThreshold, float lowThreshold) noexcept
+void ShowDrawFilterContext::applyHysteresisClassifyPass(float texelWidth, float texelHeight, float highThreshold,
+							float lowThreshold) noexcept
 {
 	gs_set_render_target(texture_target, nullptr);
 
@@ -583,7 +580,8 @@ void ShowDrawFilterContext::videoRender(void) noexcept
 
 		applySuppressNonMaximumPass(texelWidth, texelHeight);
 
-		applyHysteresisClassifyPass(texelWidth, texelHeight, runningPreset.hysteresisHighThreshold, runningPreset.hysteresisLowThreshold);
+		applyHysteresisClassifyPass(texelWidth, texelHeight, runningPreset.hysteresisHighThreshold,
+					    runningPreset.hysteresisLowThreshold);
 
 		for (int i = 0; i < 8; i++) {
 			applyHysteresisPropagatePass(texelWidth, texelHeight);
