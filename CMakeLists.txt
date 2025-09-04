@@ -42,8 +42,16 @@ endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE plugin-support)
 
+if(NOT $ENV{VCPKG_ROOT} STREQUAL "")
+  set(VCPKG_ROOT $ENV{VCPKG_ROOT})
+elseif(NOT $ENV{VCPKG_INSTALLATION_ROOT} STREQUAL "")
+  set(VCPKG_ROOT $ENV{VCPKG_INSTALLATION_ROOT})
+else()
+  message(FATAL_ERROR "VCPKG_ROOT or VCPKG_INSTALLATION_ROOT environment variable is not set")
+endif()
+
 execute_process(
-  COMMAND $ENV{VCPKG_ROOT}/vcpkg install --triplet=${VCPKG_TARGET_TRIPLET}
+  COMMAND ${VCPKG_ROOT}/vcpkg install --triplet=${VCPKG_TARGET_TRIPLET}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   RESULT_VARIABLE _vcpkg_result
 )
