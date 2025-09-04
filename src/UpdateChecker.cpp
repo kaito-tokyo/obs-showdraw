@@ -18,6 +18,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "UpdateChecker.hpp"
 
+#include "plugin-support.hpp"
+
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
 #include <curlpp/cURLpp.hpp>
@@ -35,9 +37,9 @@ void UpdateChecker::fetch(void)
 		os << curlpp::options::Url("https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest");
 
 	} catch (curlpp::LogicError &e) {
-		// TODO: logging
+		obs_log(OBS_LOG_ERROR, "UpdateChecker LogicError: %s\n", e.what());
 	} catch (curlpp::RuntimeError &e) {
-		// TODO: logging
+		obs_log(OBS_LOG_ERROR, "UpdateChecker RuntimeError: %s\n", e.what());
 	}
 }
 
