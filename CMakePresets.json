@@ -11,7 +11,8 @@
       "hidden": true,
       "cacheVariables": {
         "ENABLE_FRONTEND_API": true,
-        "ENABLE_QT": true
+        "ENABLE_QT": true,
+        "BUILD_TESTING": false
       }
     },
     {
@@ -39,6 +40,28 @@
       "inherits": ["macos"],
       "displayName": "macOS Universal CI build",
       "description": "Build for macOS 12.0+ (Universal binary) for CI",
+      "generator": "Xcode",
+      "cacheVariables": {
+        "CMAKE_COMPILE_WARNING_AS_ERROR": true,
+        "ENABLE_CCACHE": true
+      }
+    },
+    {
+      "name": "macos-testing",
+      "inherits": ["macos"],
+      "displayName": "macOS Universal Testing build",
+      "description": "Build for macOS 12.0+ (Universal binary) for Testing",
+      "binaryDir": "${sourceDir}/build_macos_testing",
+      "generator": "Xcode",
+      "cacheVariables": {
+        "BUILD_TESTING": true
+      }
+    },
+    {
+      "name": "macos-testing-ci",
+      "inherits": ["macos-testing"],
+      "displayName": "macOS Universal CI build",
+      "description": "Build for macOS 12.0+ (Universal binary) for CI Testing",
       "generator": "Xcode",
       "cacheVariables": {
         "CMAKE_COMPILE_WARNING_AS_ERROR": true,
@@ -115,6 +138,20 @@
       "configuration": "RelWithDebInfo"
     },
     {
+      "name": "macos-testing",
+      "configurePreset": "macos-testing",
+      "displayName": "macOS Universal Testing",
+      "description": "macOS Testing build for Universal architectures",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "macos-testing-ci",
+      "configurePreset": "macos-testing-ci",
+      "displayName": "macOS Universal Testing CI",
+      "description": "macOS CI Testing build for Universal architectures",
+      "configuration": "RelWithDebInfo"
+    },
+    {
       "name": "windows-x64",
       "configurePreset": "windows-x64",
       "displayName": "Windows x64",
@@ -140,6 +177,18 @@
       "configurePreset": "ubuntu-ci-x86_64",
       "displayName": "Ubuntu x86_64 CI",
       "description": "Ubuntu CI build for x86_64",
+      "configuration": "RelWithDebInfo"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "macos-testing",
+      "configurePreset": "macos-testing",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "macos-testing-ci",
+      "configurePreset": "macos-testing-ci",
       "configuration": "RelWithDebInfo"
     }
   ]

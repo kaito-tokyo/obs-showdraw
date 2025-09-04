@@ -1,0 +1,44 @@
+name: "Tests"
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
+defaults:
+  run:
+    shell: "bash"
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: "read"
+
+jobs:
+  RunTestsOnMacOS:
+    name: "Run Tests on macOS"
+
+    runs-on: "macos-15"
+
+    timeout-minutes: 30
+
+    steps:
+      - name: "Install OBS.app"
+        run: "brew install obs"
+
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+
+      - name: "Configure for CI Testing"
+        run: "cmake --preset macos-testing-ci"
+
+      - name: "Build for CI Testing"
+        run: "cmake --build --preset macos-testing-ci"
+
+      - name: "Run tests"
+        run: "ctest --preset macos-testing-ci"

@@ -20,7 +20,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "DrawingEffect.hpp"
 
-#include <plugin-support.h>
+#include "plugin-support.h"
 
 #include "bridge.hpp"
 
