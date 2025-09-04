@@ -1,12 +1,12 @@
 include(GoogleTest)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-add_executable(preset_test test_preset.cpp obs_test_environment.cpp)
+add_executable(preset_test obs_test_environment.cpp test_preset.cpp)
 target_include_directories(preset_test PRIVATE ../src)
 target_link_libraries(preset_test PRIVATE GTest::gtest_main OBS::libobs ${CMAKE_PROJECT_NAME}_impl)
 gtest_discover_tests(preset_test DISCOVERY_MODE PRE_TEST)
 
-add_executable(UpdateChecker_test UpdateChecker_test.cpp)
+add_executable(UpdateChecker_test obs_test_environment.cpp UpdateChecker_test.cpp)
 target_link_libraries(UpdateChecker_test PRIVATE GTest::gtest Qt6::Core Qt6::Network ${CMAKE_PROJECT_NAME}_impl)
 gtest_discover_tests(UpdateChecker_test DISCOVERY_MODE PRE_TEST)
 
