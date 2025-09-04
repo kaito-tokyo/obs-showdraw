@@ -29,8 +29,8 @@ if(ENABLE_FRONTEND_API)
 endif()
 
 if(ENABLE_QT)
-  find_package(Qt6 COMPONENTS Widgets Core)
-  target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE Qt6::Core Qt6::Widgets)
+  find_package(Qt6 COMPONENTS Network Widgets Core)
+  target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE Qt6::Core Qt6::Widgets Qt6::Network)
   target_compile_options(
     ${CMAKE_PROJECT_NAME}_impl
     PRIVATE $<$<C_COMPILER_ID:Clang,AppleClang>:-Wno-quoted-include-in-framework-header -Wno-comma>
@@ -45,7 +45,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE plugin-support)
 
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl
-  PRIVATE src/Preset.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp
+  PRIVATE src/Preset.cpp src/UpdateChecker.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp
 )
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
