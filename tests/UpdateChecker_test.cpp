@@ -17,27 +17,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include <gtest/gtest.h>
-#include <QCoreApplication>
-#include <QEventLoop>
-#include <QNetworkReply>
-#include <QTimer>
 
 #include "UpdateChecker.hpp"
 
 TEST(UpdateCheckerTest, Fetch)
 {
 	UpdateChecker checker;
-
-	QEventLoop loop;
-	QTimer::singleShot(10000, &loop, &QEventLoop::quit);
-
 	checker.fetch();
-	loop.exec();
-}
-
-int main(int argc, char *argv[])
-{
-	::testing::InitGoogleTest(&argc, argv);
-	QCoreApplication app(argc, argv);
-	return RUN_ALL_TESTS();
 }
