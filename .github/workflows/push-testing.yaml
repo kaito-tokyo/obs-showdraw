@@ -31,6 +31,10 @@ jobs:
       - name: "Install OBS.app"
         run: "brew install obs"
 
+      - run: |
+          $VCPKG_INSTALLATION_ROOT/vcpkg install
+          find vcpkg_installed
+
       - name: "Checkout"
         uses: "actions/checkout@v5"
 
