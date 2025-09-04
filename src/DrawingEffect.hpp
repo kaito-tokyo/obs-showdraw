@@ -22,10 +22,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 class DrawingEffect {
 public:
-	DrawingEffect();
-	~DrawingEffect();
-
-	bool init();
+	DrawingEffect(void);
+	~DrawingEffect(void) noexcept;
 
 	gs_effect_t *effect = nullptr;
 
@@ -40,6 +38,9 @@ public:
 	gs_eparam_t *float_strength = nullptr;
 	gs_eparam_t *float_motion_threshold = nullptr;
 
+	gs_eparam_t *float_high_threshold = nullptr;
+	gs_eparam_t *float_low_threshold = nullptr;
+
 	gs_eparam_t *float_scaling_factor = nullptr;
 
 	gs_technique_t *tech_draw = nullptr;
@@ -49,7 +50,9 @@ public:
 	gs_technique_t *tech_motion_adaptive_filtering = nullptr;
 	gs_technique_t *tech_apply_sobel = nullptr;
 	gs_technique_t *tech_suppress_non_maximum = nullptr;
-	gs_technique_t *tech_detect_edge = nullptr;
+	gs_technique_t *tech_hysteresis_classify = nullptr;
+	gs_technique_t *tech_hysteresis_propagate = nullptr;
+	gs_technique_t *tech_hysteresis_finalize = nullptr;
 	gs_technique_t *tech_erosion = nullptr;
 	gs_technique_t *tech_dilation = nullptr;
 	gs_technique_t *tech_scaling = nullptr;

@@ -110,7 +110,7 @@ const char *ShowDrawFilterContext::getName(void) noexcept
 ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source)
 	: settings(settings),
 	  filter(source),
-	  drawingEffect(std::make_unique<DrawingEffect>())
+	  drawingEffect(nullptr)
 {
 	obs_log(LOG_INFO, "Creating showdraw filter context");
 
@@ -124,6 +124,7 @@ ShowDrawFilterContext::~ShowDrawFilterContext(void) noexcept
 	obs_log(LOG_INFO, "Destroying showdraw filter context");
 
 	obs_enter_graphics();
+	drawingEffect.release();
 	gs_texture_destroy(texture_source);
 	gs_texture_destroy(texture_target);
 	gs_texture_destroy(texture_motion_map);
@@ -145,6 +146,11 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 				    defaultPreset.motionAdaptiveFilteringStrength);
 	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold",
 				    defaultPreset.motionAdaptiveFilteringMotionThreshold);
+
+	obs_data_set_default_double(data, "hysteresisHighThreshold",
+				    defaultPreset.hysteresisHighThreshold);
+	obs_data_set_default_double(data, "hysteresisLowThreshold",
+				    defaultPreset.hysteresisLowThreshold);
 
 	obs_data_set_default_int(data, "morphologyOpeningErosionKernelSize",
 				 defaultPreset.morphologyOpeningErosionKernelSize);
@@ -213,6 +219,11 @@ obs_properties_t *ShowDrawFilterContext::getProperties(void) noexcept
 	obs_properties_add_float_slider(props, "motionAdaptiveFilteringMotionThreshold",
 					obs_module_text("motionAdaptiveFilteringMotionThreshold"), 0.0, 1.0, 0.01);
 
+	obs_properties_add_float_slider(props, "hysteresisHighThreshold",
+					obs_module_text("hysteresisHighThreshold"), 0.0, std::sqrt(20.0), 0.01);
+	obs_properties_add_float_slider(props, "hysteresisLowThreshold",
+					obs_module_text("hysteresisLowThreshold"), 0.0, std::sqrt(20.0), 0.01);
+
 	obs_properties_add_int_slider(props, "morphologyOpeningErosionKernelSize",
 				      obs_module_text("morphologyOpeningErosionKernelSize"), 1, 31, 2);
 	obs_properties_add_int_slider(props, "morphologyOpeningDilationKernelSize",
@@ -241,6 +252,11 @@ void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 	runningPreset.motionAdaptiveFilteringMotionThreshold =
 		obs_data_get_double(settings, "motionAdaptiveFilteringMotionThreshold");
 
+	runningPreset.hysteresisHighThreshold =
+		obs_data_get_double(settings, "hysteresisHighThreshold");
+	runningPreset.hysteresisLowThreshold =
+		obs_data_get_double(settings, "hysteresisLowThreshold");
+
 	runningPreset.morphologyOpeningErosionKernelSize =
 		obs_data_get_int(settings, "morphologyOpeningErosionKernelSize");
 	runningPreset.morphologyOpeningDilationKernelSize =
@@ -252,11 +268,6 @@ void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 
 	runningPreset.scalingFactorDb = obs_data_get_double(settings, "scalingFactorDb");
 	scaling_factor = pow(10.0, runningPreset.scalingFactorDb / 10.0);
-}
-
-bool ShowDrawFilterContext::initEffect(void) noexcept
-{
-	return drawingEffect->init();
 }
 
 void ensureTexture(gs_texture_t *&texture, uint32_t width, uint32_t height)
@@ -399,7 +410,23 @@ void ShowDrawFilterContext::applySuppressNonMaximumPass(const float texelWidth, 
 	std::swap(texture_source, texture_target);
 }
 
-void ShowDrawFilterContext::applyEdgeDetectionPass(const float texelWidth, const float texelHeight) noexcept
+void ShowDrawFilterContext::applyHysteresisClassifyPass(float texelWidth, float texelHeight, float highThreshold, float lowThreshold) noexcept
+{
+	gs_set_render_target(texture_target, nullptr);
+
+	gs_effect_set_texture(drawingEffect->texture_image, texture_source);
+
+	gs_effect_set_float(drawingEffect->float_texel_width, texelWidth);
+	gs_effect_set_float(drawingEffect->float_texel_height, texelHeight);
+	gs_effect_set_float(drawingEffect->float_high_threshold, highThreshold);
+	gs_effect_set_float(drawingEffect->float_low_threshold, lowThreshold);
+
+	applyEffectPass(drawingEffect->tech_hysteresis_classify, texture_source);
+
+	std::swap(texture_source, texture_target);
+}
+
+void ShowDrawFilterContext::applyHysteresisPropagatePass(const float texelWidth, const float texelHeight) noexcept
 {
 	gs_set_render_target(texture_target, nullptr);
 
@@ -408,7 +435,21 @@ void ShowDrawFilterContext::applyEdgeDetectionPass(const float texelWidth, const
 	gs_effect_set_float(drawingEffect->float_texel_width, texelWidth);
 	gs_effect_set_float(drawingEffect->float_texel_height, texelHeight);
 
-	applyEffectPass(drawingEffect->tech_detect_edge, texture_source);
+	applyEffectPass(drawingEffect->tech_hysteresis_classify, texture_source);
+
+	std::swap(texture_source, texture_target);
+}
+
+void ShowDrawFilterContext::applyHysteresisFinalizePass(const float texelWidth, const float texelHeight) noexcept
+{
+	gs_set_render_target(texture_target, nullptr);
+
+	gs_effect_set_texture(drawingEffect->texture_image, texture_source);
+
+	gs_effect_set_float(drawingEffect->float_texel_width, texelWidth);
+	gs_effect_set_float(drawingEffect->float_texel_height, texelHeight);
+
+	applyEffectPass(drawingEffect->tech_hysteresis_classify, texture_source);
 
 	std::swap(texture_source, texture_target);
 }
@@ -472,9 +513,11 @@ void ShowDrawFilterContext::videoRender(void) noexcept
 		return;
 	}
 
-	if (!drawingEffect->effect) {
-		if (!initEffect()) {
-			obs_log(LOG_ERROR, "Failed to initialize effect");
+	if (!drawingEffect) {
+		try {
+			drawingEffect = std::make_unique<DrawingEffect>();
+		} catch (const std::exception &e) {
+			obs_log(LOG_ERROR, "Failed to create drawing effect: %s", e.what());
 			obs_source_skip_video_filter(filter);
 			return;
 		}
@@ -539,6 +582,14 @@ void ShowDrawFilterContext::videoRender(void) noexcept
 		applySobelPass(texelWidth, texelHeight);
 
 		applySuppressNonMaximumPass(texelWidth, texelHeight);
+
+		applyHysteresisClassifyPass(texelWidth, texelHeight, runningPreset.hysteresisHighThreshold, runningPreset.hysteresisLowThreshold);
+
+		for (int i = 0; i < 8; i++) {
+			applyHysteresisPropagatePass(texelWidth, texelHeight);
+		}
+
+		applyHysteresisFinalizePass(texelWidth, texelHeight);
 
 		if (runningPreset.morphologyOpeningErosionKernelSize > 1) {
 			applyMorphologyPass(texelWidth, texelHeight, drawingEffect->tech_erosion,

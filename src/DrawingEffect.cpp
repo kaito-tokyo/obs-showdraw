@@ -26,15 +26,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 using kaitotokyo::obs::unique_bfree_t;
 
-DrawingEffect::DrawingEffect() {}
-
-DrawingEffect::~DrawingEffect()
-{
-	obs_enter_graphics();
-	gs_effect_destroy(effect);
-	obs_leave_graphics();
-}
-
 static gs_eparam_t *getEffectParam(gs_effect_t *effect, const char *name)
 {
 	gs_eparam_t *param = gs_effect_get_param_by_name(effect, name);
@@ -59,21 +50,23 @@ static gs_technique_t *getEffectTech(gs_effect_t *effect, const char *name)
 	return tech;
 }
 
-bool DrawingEffect::init()
+DrawingEffect::DrawingEffect(void)
 {
 	char *error_string = nullptr;
 
 	unique_bfree_t effect_path(obs_module_file("effects/drawing.effect"));
 	if (!effect_path) {
+		obs_leave_graphics();
 		obs_log(LOG_ERROR, "Failed to get effect path");
-		return false;
+		throw std::runtime_error("Failed to get effect path");
 	}
 
 	effect = gs_effect_create_from_file(effect_path.get(), &error_string);
 	if (!effect) {
+		obs_leave_graphics();
 		obs_log(LOG_ERROR, "Error loading effect: %s", error_string);
 		bfree(error_string);
-		return false;
+		throw std::runtime_error("Error loading effect");
 	}
 
 	try {
@@ -88,6 +81,9 @@ bool DrawingEffect::init()
 		float_strength = getEffectParam(effect, "strength");
 		float_motion_threshold = getEffectParam(effect, "motionThreshold");
 
+		float_high_threshold = getEffectParam(effect, "highThreshold");
+		float_low_threshold = getEffectParam(effect, "lowThreshold");
+
 		float_scaling_factor = getEffectParam(effect, "scalingFactor");
 
 		tech_draw = getEffectTech(effect, "Draw");
@@ -97,7 +93,9 @@ bool DrawingEffect::init()
 		tech_motion_adaptive_filtering = getEffectTech(effect, "MotionAdaptiveFiltering");
 		tech_apply_sobel = getEffectTech(effect, "ApplySobel");
 		tech_suppress_non_maximum = getEffectTech(effect, "SuppressNonMaximum");
-		tech_detect_edge = getEffectTech(effect, "DetectEdge");
+		tech_hysteresis_classify = getEffectTech(effect, "HysteresisClassify");
+		tech_hysteresis_propagate = getEffectTech(effect, "HysteresisPropagate");
+		tech_hysteresis_finalize = getEffectTech(effect, "HysteresisFinalize");
 		tech_erosion = getEffectTech(effect, "Erosion");
 		tech_dilation = getEffectTech(effect, "Dilation");
 		tech_scaling = getEffectTech(effect, "Scaling");
@@ -105,8 +103,11 @@ bool DrawingEffect::init()
 		gs_effect_destroy(effect);
 		effect = nullptr;
 		obs_log(LOG_ERROR, "Error initializing effect: %s", e.what());
-		return false;
+		throw; // Re-throw the exception
 	}
+}
 
-	return true;
+DrawingEffect::~DrawingEffect(void) noexcept
+{
+	gs_effect_destroy(effect);
 }

@@ -46,6 +46,9 @@ public:
 	double motionAdaptiveFilteringStrength;
 	double motionAdaptiveFilteringMotionThreshold;
 
+	double hysteresisHighThreshold;
+	double hysteresisLowThreshold;
+
 	std::int64_t morphologyOpeningErosionKernelSize;
 	std::int64_t morphologyOpeningDilationKernelSize;
 
