@@ -23,27 +23,25 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 UpdateChecker::UpdateChecker(QObject *parent) : QObject(parent)
 {
-    manager = new QNetworkAccessManager();
+	manager = new QNetworkAccessManager();
 }
 
 void UpdateChecker::fetch(void)
 {
-    QNetworkRequest request(QUrl("https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest"));
-    QNetworkReply *reply = manager->get(request);
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        if (reply->error() != QNetworkReply::NoError) {
-            // Handle error
-            reply->deleteLater();
-            return;
-        }
+	QNetworkRequest request(QUrl("https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest"));
+	QNetworkReply *reply = manager->get(request);
+	connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+		if (reply->error() != QNetworkReply::NoError) {
+			// Handle error
+			reply->deleteLater();
+			return;
+		}
 
-        QByteArray responseData = reply->readAll();
-        qDebug() << "Response Data:" << responseData;
+		QByteArray responseData = reply->readAll();
+		qDebug() << "Response Data:" << responseData;
 
-        reply->deleteLater();
-    });
+		reply->deleteLater();
+	});
 }
 
-void UpdateChecker::isUpdateAvailable(void) const noexcept
-{
-}
+void UpdateChecker::isUpdateAvailable(void) const noexcept {}

@@ -21,13 +21,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <QNetworkAccessManager>
 
 class UpdateChecker : public QObject {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    explicit UpdateChecker(QObject *parent = nullptr);
-    void fetch(void);
-    void isUpdateAvailable(void) const noexcept;
+	explicit UpdateChecker(QObject *parent = nullptr);
+	void fetch(void);
+	void isUpdateAvailable(void) const noexcept;
 
 private:
-    QNetworkAccessManager *manager;
+	QNetworkAccessManager *manager;
 };
