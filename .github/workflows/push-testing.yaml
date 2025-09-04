@@ -41,7 +41,7 @@ jobs:
         run: "cmake --build --preset macos-testing-ci"
 
       - name: "Run tests"
-        run: "ctest --preset macos-testing-ci"
+        run: "ctest --preset macos-testing-ci --rerun-failed --output-on-failure"
 
   RunTestsOnWindows:
     name: "Run Tests on Windows"
@@ -67,7 +67,7 @@ jobs:
         run: "cmake --build --preset windows-testing-ci-x64"
 
       - name: "Run tests"
-        run: "ctest --preset windows-testing-ci-x64"
+        run: "ctest --preset windows-testing-ci-x64 --rerun-failed --output-on-failure"
 
   RunTestsOnUbuntu:
     name: "Run Tests on Ubuntu"
@@ -109,4 +109,4 @@ jobs:
         run: "cmake --build --preset ubuntu-testing-ci-x86_64"
 
       - name: "Run tests"
-        run: "ctest --preset ubuntu-testing-ci-x86_64"
+        run: "ctest --preset ubuntu-testing-ci-x86_64 --rerun-failed --output-on-failure"
