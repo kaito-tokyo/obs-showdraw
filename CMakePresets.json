@@ -188,6 +188,20 @@
       "configuration": "RelWithDebInfo"
     },
     {
+      "name": "windows-testing-x64",
+      "configurePreset": "windows-x64",
+      "displayName": "Windows x64 Testing",
+      "description": "Windows testing build for x64",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windows-testing-ci-x64",
+      "configurePreset": "windows-testing-ci-x64",
+      "displayName": "Windows x64 CI Testing",
+      "description": "Windows CI testing build for x64 (RelWithDebInfo configuration)",
+      "configuration": "RelWithDebInfo"
+    },
+    {
       "name": "ubuntu-x86_64",
       "configurePreset": "ubuntu-x86_64",
       "displayName": "Ubuntu x86_64",
