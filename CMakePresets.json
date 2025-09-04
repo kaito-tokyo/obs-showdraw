@@ -84,7 +84,7 @@
       "warnings": {"dev": true, "deprecated": true}
     },
     {
-      "name": "windows-x64-ci",
+      "name": "windows-ci-x64",
       "inherits": ["windows-x64"],
       "displayName": "Windows x64 CI build",
       "description": "Build for Windows x64 on CI",
@@ -93,7 +93,7 @@
       }
     },
     {
-      "name": "windows-x64-testing",
+      "name": "windows-testing-x64",
       "inherits": ["windows-x64"],
       "displayName": "Windows x64 Testing build",
       "description": "Build for Windows x64 for Testing",
@@ -104,8 +104,8 @@
       }
     },
     {
-      "name": "windows-x64-testing-ci",
-      "inherits": ["windows-x64-testing"],
+      "name": "windows-testing-ci-x64",
+      "inherits": ["windows-testing-x64"],
       "displayName": "Windows x64 Testing CI build",
       "description": "Build for Windows x64 for CI Testing",
       "generator": "Visual Studio 17 2022",
@@ -214,13 +214,13 @@
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "windows-x64-testing",
-      "configurePreset": "windows-x64-testing",
+      "name": "windows-testing-x64",
+      "configurePreset": "windows-testing-x64",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "windows-x64-testing-ci",
-      "configurePreset": "windows-x64-testing-ci",
+      "name": "windows-testing-ci-x64",
+      "configurePreset": "windows-testing-ci-x64",
       "configuration": "RelWithDebInfo"
     }
   ]
