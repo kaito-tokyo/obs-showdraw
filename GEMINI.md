@@ -2,6 +2,8 @@
 
 - This project must be developed in C++17.
 - Implementation related to unique_ptr should be placed under bridge.hpp.
+- C and C++ files must be formatted using clang-format-19 after any modification.
+- CMake files must ve formatted using gersemi after any modification.
 
 ## How to build on macOS
 
