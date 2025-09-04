@@ -60,7 +60,11 @@ if(NOT _vcpkg_result EQUAL 0)
 endif()
 
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+message(STATUS "VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
 find_package(CURL REQUIRED)
+if(NOT TARGET CURL::libcurl_static)
+  add_library(CURL::libcurl ALIAS CURL::libcurl_static)
+endif()
 find_package(unofficial-curlpp CONFIG REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs CURL::libcurl_static unofficial::curlpp::curlpp)
 
