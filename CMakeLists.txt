@@ -43,6 +43,10 @@ endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE plugin-support)
 
+if(APPLE)
+  target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE "-framework Network")
+endif()
+
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl
   PRIVATE src/Preset.cpp src/UpdateChecker.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp
