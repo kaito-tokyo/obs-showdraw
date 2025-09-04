@@ -93,6 +93,28 @@
       }
     },
     {
+      "name": "windows-x64-testing",
+      "inherits": ["windows-x64"],
+      "displayName": "Windows x64 Testing build",
+      "description": "Build for Windows x64 for Testing",
+      "binaryDir": "${sourceDir}/build_x64_testing",
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "BUILD_TESTING": true
+      }
+    },
+    {
+      "name": "windows-x64-testing-ci",
+      "inherits": ["windows-x64-testing"],
+      "displayName": "Windows x64 Testing CI build",
+      "description": "Build for Windows x64 for CI Testing",
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "CMAKE_COMPILE_WARNING_AS_ERROR": true,
+        "ENABLE_CCACHE": true
+      }
+    },
+    {
       "name": "ubuntu-x86_64",
       "displayName": "Ubuntu x86_64",
       "description": "Build for Ubuntu x86_64",
@@ -189,6 +211,16 @@
     {
       "name": "macos-testing-ci",
       "configurePreset": "macos-testing-ci",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windows-x64-testing",
+      "configurePreset": "windows-x64-testing",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windows-x64-testing-ci",
+      "configurePreset": "windows-x64-testing-ci",
       "configuration": "RelWithDebInfo"
     }
   ]
