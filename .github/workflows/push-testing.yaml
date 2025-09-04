@@ -1,0 +1,26 @@
+name: "Run Tests"
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  RunTestsOnMacOS:
+    runs-on: "macos-14"
+
+    steps:
+    - name: "Checkout"
+      uses: "actions/checkout@v4"
+
+    - name: "Configure for CI Testing"
+      run: "cmake --preset macos-testing-ci"
+
+    - name: "Build for CI Testing"
+      run: "cmake --build --preset macos-testing-ci"
+
+    - name: "Run tests"
+      run: "ctest --preset macos-testing-ci"
