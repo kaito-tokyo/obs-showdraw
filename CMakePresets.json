@@ -110,8 +110,7 @@
       "description": "Build for Windows x64 for CI Testing",
       "generator": "Visual Studio 17 2022",
       "cacheVariables": {
-        "CMAKE_COMPILE_WARNING_AS_ERROR": true,
-        "ENABLE_CCACHE": true
+        "CMAKE_COMPILE_WARNING_AS_ERROR": true
       }
     },
     {
