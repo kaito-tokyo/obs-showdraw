@@ -93,6 +93,28 @@
       }
     },
     {
+      "name": "windows-testing-x64",
+      "inherits": ["windows-x64"],
+      "displayName": "Windows x64 Testing build",
+      "description": "Build for Windows x64 for Testing",
+      "binaryDir": "${sourceDir}/build_x64_testing",
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "BUILD_TESTING": true
+      }
+    },
+    {
+      "name": "windows-testing-ci-x64",
+      "inherits": ["windows-testing-x64"],
+      "displayName": "Windows x64 Testing CI build",
+      "description": "Build for Windows x64 for CI Testing",
+      "generator": "Visual Studio 17 2022",
+      "cacheVariables": {
+        "CMAKE_COMPILE_WARNING_AS_ERROR": true,
+        "ENABLE_CCACHE": true
+      }
+    },
+    {
       "name": "ubuntu-x86_64",
       "displayName": "Ubuntu x86_64",
       "description": "Build for Ubuntu x86_64",
@@ -166,6 +188,20 @@
       "configuration": "RelWithDebInfo"
     },
     {
+      "name": "windows-testing-x64",
+      "configurePreset": "windows-x64",
+      "displayName": "Windows x64 Testing",
+      "description": "Windows testing build for x64",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windows-testing-ci-x64",
+      "configurePreset": "windows-testing-ci-x64",
+      "displayName": "Windows x64 CI Testing",
+      "description": "Windows CI testing build for x64 (RelWithDebInfo configuration)",
+      "configuration": "RelWithDebInfo"
+    },
+    {
       "name": "ubuntu-x86_64",
       "configurePreset": "ubuntu-x86_64",
       "displayName": "Ubuntu x86_64",
@@ -189,6 +225,16 @@
     {
       "name": "macos-testing-ci",
       "configurePreset": "macos-testing-ci",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windows-testing-x64",
+      "configurePreset": "windows-testing-x64",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windows-testing-ci-x64",
+      "configurePreset": "windows-testing-ci-x64",
       "configuration": "RelWithDebInfo"
     }
   ]

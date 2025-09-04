@@ -1,4 +1,4 @@
-add_executable(preset_test test_mock.cpp test_preset.cpp obs_test_environment.cpp)
+add_executable(preset_test test_preset.cpp obs_test_environment.cpp)
 
 if(APPLE)
   set_target_properties(
