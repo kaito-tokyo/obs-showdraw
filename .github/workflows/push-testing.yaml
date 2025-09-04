@@ -61,7 +61,7 @@ jobs:
         uses: "actions/checkout@v5"
 
       - run: |
-          $VCPKG_INSTALLATION_ROOT/vcpkg install
+          $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet x64-windows-static
           find vcpkg_installed
 
       - name: "Configure for CI Testing"
