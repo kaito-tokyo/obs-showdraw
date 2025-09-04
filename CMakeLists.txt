@@ -43,7 +43,7 @@ endif()
 target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE plugin-support)
 
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -E env vcpkg install --triplet=${VCPKG_TARGET_TRIPLET}
+  COMMAND $ENV{VCPKG_ROOT}/vcpkg install --triplet=${VCPKG_TARGET_TRIPLET}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   RESULT_VARIABLE _vcpkg_result
 )
