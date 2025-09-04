@@ -34,6 +34,7 @@ void UpdateChecker::fetch(void)
 		if (reply->error() != QNetworkReply::NoError) {
 			// Handle error
 			reply->deleteLater();
+            throw std::runtime_error("Network error occurred while fetching update information.");
 			return;
 		}
 

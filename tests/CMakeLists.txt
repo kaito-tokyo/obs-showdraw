@@ -7,9 +7,15 @@ target_link_libraries(preset_test PRIVATE GTest::gtest_main OBS::libobs ${CMAKE_
 gtest_discover_tests(preset_test DISCOVERY_MODE PRE_TEST)
 
 add_executable(UpdateChecker_test obs_test_environment.cpp UpdateChecker_test.cpp)
-target_link_libraries(UpdateChecker_test PRIVATE GTest::gtest OBS::libobs Qt6::Core Qt6::Network ${CMAKE_PROJECT_NAME}_impl)
+target_link_libraries(
+  UpdateChecker_test
+  PRIVATE GTest::gtest OBS::libobs Qt6::Core Qt6::Network ${CMAKE_PROJECT_NAME}_impl
+)
 gtest_discover_tests(UpdateChecker_test DISCOVERY_MODE PRE_TEST)
 
+if(APPLE)
+  target_link_libraries(UpdateChecker_test PRIVATE "-framework CFNetwork -framework Network -framework Security")
+endif()
 
 set_target_properties(
   preset_test
