@@ -18,7 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "UpdateChecker.hpp"
 
-#include "plugin-support.hpp"
+#include "plugin-support.h"
 
 #include <curlpp/Easy.hpp>
 #include <curlpp/Options.hpp>
