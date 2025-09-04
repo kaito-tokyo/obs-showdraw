@@ -41,7 +41,7 @@ jobs:
         run: "cmake --build --preset macos-testing-ci"
 
       - name: "Run tests"
-        run: "ctest --preset macos-testing-ci"
+        run: "ctest --preset macos-testing-ci --rerun-failed --output-on-failure"
 
   RunTestsOnWindows:
     name: "Run Tests on Windows"
@@ -67,4 +67,53 @@ jobs:
         run: "cmake --build --preset windows-testing-ci-x64"
 
       - name: "Run tests"
-        run: "ctest --preset windows-testing-ci-x64"
+        run: "ctest --preset windows-testing-ci-x64 --rerun-failed --output-on-failure"
+
+  RunTestsOnUbuntu:
+    name: "Run Tests on Ubuntu"
+
+    runs-on: "ubuntu-24.04"
+
+    timeout-minutes: 30
+
+    env:
+      DISPLAY: ":99.0"
+
+    steps:
+      - name: "Disable man-db update"
+        run: |
+          echo "man-db man-db/auto-update boolean false" | sudo debconf-set-selections
+          sudo apt-get remove --purge -y man-db
+
+      - name: "Install dependencies"
+        run: |
+          sudo add-apt-repository -y ppa:obsproject/obs-studio
+          sudo apt update
+          sudo apt-get install -y --no-install-recommends \
+            libgles2-mesa-dev \
+            obs-studio \
+            qt6-base-dev \
+            libqt6svg6-dev \
+            qt6-base-private-dev \
+            cmake \
+            ccache \
+            git \
+            jq \
+            ninja-build \
+            pkg-config \
+            xvfb
+
+      - name: "Start Xvfb"
+        run: "sudo Xvfb $DISPLAY -screen 0 1920x1080x24 +extension Composite &"
+
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+
+      - name: "Configure for CI Testing"
+        run: "cmake --preset ubuntu-testing-ci-x86_64"
+
+      - name: "Build for CI Testing"
+        run: "cmake --build --preset ubuntu-testing-ci-x86_64"
+
+      - name: "Run tests"
+        run: "ctest --preset ubuntu-testing-ci-x86_64 --rerun-failed --output-on-failure"
