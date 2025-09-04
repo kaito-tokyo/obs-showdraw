@@ -20,7 +20,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <stdexcept>
 
 #include <obs-frontend-api.h>
-#include <plugin-support.h>
+#include "plugin-support.h"
 
 #include "ShowDrawFilterContext.hpp"
 #include "DrawingEffect.hpp"
