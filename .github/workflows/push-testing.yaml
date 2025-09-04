@@ -52,7 +52,7 @@ jobs:
 
     steps:
       - name: "Install OBS.app"
-        run: "winget install obs-studio"
+        run: "choco install obs-studio.install"
 
       - name: "Checkout"
         uses: "actions/checkout@v4"
