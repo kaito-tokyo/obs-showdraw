@@ -31,12 +31,12 @@ jobs:
       - name: "Install OBS.app"
         run: "brew install obs"
 
+      - name: "Checkout"
+        uses: "actions/checkout@v5"
+
       - run: |
           $VCPKG_INSTALLATION_ROOT/vcpkg install
           find vcpkg_installed
-
-      - name: "Checkout"
-        uses: "actions/checkout@v5"
 
       - name: "Configure for CI Testing"
         run: "cmake --preset macos-testing-ci"
