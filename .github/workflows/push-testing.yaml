@@ -86,9 +86,6 @@ jobs:
       - name: "Checkout"
         uses: "actions/checkout@v4"
 
-      - name: "Install deps"
-        run: ".github/scripts/build-ubuntu --skip-build"
-
       - name: "Configure for CI Testing"
         run: "cmake --preset ubuntu-testing-ci-x86_64"
 
