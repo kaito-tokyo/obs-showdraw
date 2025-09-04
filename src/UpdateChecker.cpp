@@ -18,31 +18,27 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "UpdateChecker.hpp"
 
-#include <QNetworkReply>
-#include <QDebug>
+#include <curlpp/Easy.hpp>
+#include <curlpp/Options.hpp>
+#include <curlpp/cURLpp.hpp>
 
-UpdateChecker::UpdateChecker(QObject *parent) : QObject(parent)
-{
-	manager = new QNetworkAccessManager();
-}
+#include <sstream>
+
+UpdateChecker::UpdateChecker(void) {}
 
 void UpdateChecker::fetch(void)
 {
-	QNetworkRequest request(QUrl("https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest"));
-	QNetworkReply *reply = manager->get(request);
-	connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-		if (reply->error() != QNetworkReply::NoError) {
-			// Handle error
-			reply->deleteLater();
-			throw std::runtime_error("Network error occurred while fetching update information.");
-			return;
-		}
+	try {
+		cURLpp::Cleanup myCleanup;
 
-		QByteArray responseData = reply->readAll();
-		qDebug() << "Response Data:" << responseData;
+		std::ostringstream os;
+		os << curlpp::options::Url("https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest");
 
-		reply->deleteLater();
-	});
+	} catch (curlpp::LogicError &e) {
+		// TODO: logging
+	} catch (curlpp::RuntimeError &e) {
+		// TODO: logging
+	}
 }
 
 void UpdateChecker::isUpdateAvailable(void) const noexcept {}

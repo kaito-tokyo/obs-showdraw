@@ -21,7 +21,6 @@ endif(BUILD_TESTING)
 add_library(${CMAKE_PROJECT_NAME}_impl STATIC)
 
 find_package(libobs REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs)
 
 if(ENABLE_FRONTEND_API)
   find_package(obs-frontend-api REQUIRED)
@@ -30,7 +29,7 @@ endif()
 
 if(ENABLE_QT)
   find_package(Qt6 COMPONENTS Network Widgets Core)
-  target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE Qt6::Core Qt6::Widgets Qt6::Network)
+  target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE Qt6::Core Qt6::Widgets)
   target_compile_options(
     ${CMAKE_PROJECT_NAME}_impl
     PRIVATE $<$<C_COMPILER_ID:Clang,AppleClang>:-Wno-quoted-include-in-framework-header -Wno-comma>
@@ -43,9 +42,19 @@ endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE plugin-support)
 
-if(APPLE)
-  target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE "-framework Network")
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E env vcpkg install --triplet=${VCPKG_TARGET_TRIPLET}
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  RESULT_VARIABLE _vcpkg_result
+)
+if(NOT _vcpkg_result EQUAL 0)
+  message(FATAL_ERROR "vcpkg install failed")
 endif()
+
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/universal-osx")
+find_package(CURL REQUIRED)
+find_package(unofficial-curlpp CONFIG REQUIRED)
+target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs CURL::libcurl unofficial::curlpp::curlpp)
 
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl

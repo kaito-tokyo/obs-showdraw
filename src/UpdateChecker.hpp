@@ -18,16 +18,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <QNetworkAccessManager>
-
-class UpdateChecker : public QObject {
-	Q_OBJECT
-
+class UpdateChecker {
 public:
-	explicit UpdateChecker(QObject *parent = nullptr);
+	UpdateChecker(void);
 	void fetch(void);
 	void isUpdateAvailable(void) const noexcept;
-
-private:
-	QNetworkAccessManager *manager;
 };

@@ -10,6 +10,7 @@
 !/data
 !/src
 !/tests
+!/vcpkg-triplets
 !.clang-format
 !.gersemirc
 !.gitignore
@@ -19,6 +20,8 @@
 !GEMINI.md
 !LICENSE
 !README.md
+!vcpkg.json
+!vcpkg-configuration.json
 
 # Exclude lock files
 *.lock.json
