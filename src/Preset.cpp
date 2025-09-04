@@ -17,6 +17,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include <chrono>
+#include <cmath>
 #include <ctime>
 #include <filesystem>
 #include <iomanip>
@@ -54,6 +55,8 @@ obs_data_t *Preset::loadIntoObsData(obs_data_t *data) const noexcept
 	obs_data_set_int(data, "motionMapKernelSize", motionMapKernelSize);
 	obs_data_set_double(data, "motionAdaptiveFilteringStrength", motionAdaptiveFilteringStrength);
 	obs_data_set_double(data, "motionAdaptiveFilteringMotionThreshold", motionAdaptiveFilteringMotionThreshold);
+	obs_data_set_double(data, "hysteresisHighThreshold", hysteresisHighThreshold);
+	obs_data_set_double(data, "hysteresisLowThreshold", hysteresisLowThreshold);
 	obs_data_set_int(data, "morphologyOpeningErosionKernelSize", morphologyOpeningErosionKernelSize);
 	obs_data_set_int(data, "morphologyOpeningDilationKernelSize", morphologyOpeningDilationKernelSize);
 	obs_data_set_int(data, "morphologyClosingErosionKernelSize", morphologyClosingErosionKernelSize);
@@ -105,6 +108,14 @@ std::optional<std::string> Preset::validate(void) const noexcept
 		return obs_module_text("configHelperInvalidMotionAdaptiveFilteringMotionThreshold");
 	}
 
+	if (hysteresisHighThreshold < 0.0 || hysteresisHighThreshold > std::sqrt(20.0)) {
+		return obs_module_text("configHelperInvalidHysteresisHighThreshold");
+	}
+
+	if (hysteresisLowThreshold < 0.0 || hysteresisLowThreshold > std::sqrt(20.0)) {
+		return obs_module_text("configHelperInvalidHysteresisLowThreshold");
+	}
+
 	if (morphologyOpeningErosionKernelSize < 1 || morphologyOpeningErosionKernelSize > 31 ||
 	    morphologyOpeningErosionKernelSize % 2 == 0) {
 		return obs_module_text("configHelperInvalidMorphologyOpeningErosionKernelSize");
@@ -141,6 +152,8 @@ Preset Preset::fromObsData(obs_data_t *data) noexcept
 		obs_data_get_int(data, "motionMapKernelSize"),
 		obs_data_get_double(data, "motionAdaptiveFilteringStrength"),
 		obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold"),
+		obs_data_get_double(data, "hysteresisHighThreshold"),
+		obs_data_get_double(data, "hysteresisLowThreshold"),
 		obs_data_get_int(data, "morphologyOpeningErosionKernelSize"),
 		obs_data_get_int(data, "morphologyOpeningDilationKernelSize"),
 		obs_data_get_int(data, "morphologyClosingDilationKernelSize"),
@@ -226,6 +239,8 @@ Preset Preset::getStrongDefault(void) noexcept
 		3,                       // motionMapKernelSize
 		0.5,                     // motionAdaptiveFilteringStrength
 		0.3,                     // motionAdaptiveFilteringMotionThreshold
+		0.2,                     // hysteresisHighThreshold
+		0.1,                     // hysteresisLowThreshold
 		1,                       // morphologyOpeningErosionKernelSize
 		1,                       // morphologyOpeningDilationKernelSize
 		7,                       // morphologyClosingDilationKernelSize

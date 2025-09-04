@@ -12,6 +12,10 @@ uniform texture2d motionMap;
 uniform float strength;
 uniform float motionThreshold;
 
+// Canny edge detection parameters
+uniform float highThreshold;
+uniform float lowThreshold;
+
 // Scaling parameters
 uniform float scalingFactor;
 
@@ -241,28 +245,52 @@ float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
 	return float4(encoded_magnitude, encoded_magnitude, encoded_magnitude, 1.0f);
 }
 
-float4 PSDetectEdge(VertInOut vert_in) : TARGET
+float4 PSHysteresisClassify(VertInOut vert_in) : TARGET
+{
+	float encoded_magnitude = image.Sample(def_sampler, vert_in.uv).r;
+
+	if (encoded_magnitude >= highThreshold / SQRT_20) {
+		return float4(1.0, 1.0, 1.0, 1.0);
+	} else if (encoded_magnitude >= lowThreshold / SQRT_20) {
+		return float4(0.5, 0.5, 0.5, 1.0);
+	} else {
+		return float4(0.0, 0.0, 0.0, 1.0);
+	}
+}
+
+float4 PSHysteresisPropagate(VertInOut vert_in) : TARGET
 {
 	float2 texel_size = float2(texelWidth, texelHeight);
 	float2 uv = vert_in.uv;
 
-	float lum[9];
-	lum[0] = image.Sample(def_sampler, uv + texel_size * float2(-1.0, -1.0)).r;
-	lum[1] = image.Sample(def_sampler, uv + texel_size * float2( 0.0, -1.0)).r;
-	lum[2] = image.Sample(def_sampler, uv + texel_size * float2( 1.0, -1.0)).r;
-	lum[3] = image.Sample(def_sampler, uv + texel_size * float2(-1.0,  0.0)).r;
-	lum[4] = image.Sample(def_sampler, uv).r;
-	lum[5] = image.Sample(def_sampler, uv + texel_size * float2( 1.0,  0.0)).r;
-	lum[6] = image.Sample(def_sampler, uv + texel_size * float2(-1.0,  1.0)).r;
-	lum[7] = image.Sample(def_sampler, uv + texel_size * float2( 0.0,  1.0)).r;
-	lum[8] = image.Sample(def_sampler, uv + texel_size * float2( 1.0,  1.0)).r;
+	float center_val = image.Sample(def_sampler, uv).r;
 
-	float sobel_x = -lum[0] - 2.0 * lum[3] - lum[6] + lum[2] + 2.0 * lum[5] + lum[8];
-	float sobel_y = -lum[0] - 2.0 * lum[1] - lum[2] + lum[6] + 2.0 * lum[7] + lum[8];
+	if (center_val < 0.5f || center_val == 1.0f) {
+		return float4(center_val, center_val, center_val, 1.0f);
+	}
 
-	float edge = sqrt(sobel_x * sobel_x + sobel_y * sobel_y);
+	for (int y = -1; y <= 1; y++) {
+		for (int x = -1; x <= 1; x++) {
+			if (x == 0 && y == 0) continue;
+			float neighbor_val = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+		        if (neighbor_val == 1.0f) {
+        			return float4(1.0, 1.0, 1.0, 1.0);
+        		}
+		}
+	}
+    
+	return float4(center_val, center_val, center_val, 1.0f);
+}
 
-	return float4(edge, edge, edge, 1.0);
+float4 PSHysteresisFinalize(VertInOut vert_in) : TARGET
+{
+	float val = image.Sample(def_sampler, vert_in.uv).r;
+    
+	if (val < 1.0f) {
+		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+	}
+
+	return float4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 float4 PSErosion(VertInOut vert_in) : TARGET
@@ -373,12 +401,30 @@ technique SuppressNonMaximum
 	}
 }
 
-technique DetectEdge
+technique HysteresisClassify
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSDetectEdge(vert_in);
+		pixel_shader  = PSHysteresisClassify(vert_in);
+	}
+}
+
+technique HysteresisPropagate
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSHysteresisPropagate(vert_in);
+	}
+}
+
+technique HysteresisFinalize
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSHysteresisFinalize(vert_in);
 	}
 }
 

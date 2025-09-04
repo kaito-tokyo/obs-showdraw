@@ -56,7 +56,6 @@ public:
 	void videoRender(void) noexcept;
 
 private:
-	bool initEffect(void) noexcept;
 	bool ensureTextures(uint32_t width, uint32_t height) noexcept;
 
 	void applyLuminanceExtractionPass(void) noexcept;
@@ -64,7 +63,10 @@ private:
 	void applyMotionAdaptiveFilteringPass(const float texelWidth, const float texelHeight) noexcept;
 	void applySobelPass(const float texelWidth, const float texelHeight) noexcept;
 	void applySuppressNonMaximumPass(const float texelWidth, const float texelHeight) noexcept;
-	void applyEdgeDetectionPass(const float texelWidth, const float texelHeight) noexcept;
+	void applyHysteresisClassifyPass(const float texelWidth, const float texelHeight, const float highThreshold,
+					 const float lowThreshold) noexcept;
+	void applyHysteresisPropagatePass(const float texelWidth, const float texelHeight) noexcept;
+	void applyHysteresisFinalizePass(const float texelWidth, const float texelHeight) noexcept;
 	void applyMorphologyPass(const float texelWidth, const float texelHeight, gs_technique_t *technique,
 				 int kernelSize) noexcept;
 	void applyScalingPass(void) noexcept;
@@ -72,6 +74,7 @@ private:
 
 	obs_data_t *settings;
 	obs_source_t *filter;
+	std::unique_ptr<DrawingEffect> drawingEffect;
 	Preset runningPreset;
 
 	double scaling_factor;
@@ -80,8 +83,6 @@ private:
 	gs_texture_t *texture_target;
 	gs_texture_t *texture_motion_map;
 	gs_texture_t *texture_previous_luminance;
-
-	std::unique_ptr<DrawingEffect> drawingEffect;
 };
 
 #endif
