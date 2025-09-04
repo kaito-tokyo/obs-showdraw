@@ -62,7 +62,7 @@ endif()
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
 find_package(CURL REQUIRED)
 find_package(unofficial-curlpp CONFIG REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs CURL::libcurl unofficial::curlpp::curlpp)
+target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs CURL::libcurl_static unofficial::curlpp::curlpp)
 
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl
