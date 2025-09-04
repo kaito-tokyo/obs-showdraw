@@ -142,7 +142,29 @@
         "CMAKE_COMPILE_WARNING_AS_ERROR": true,
         "ENABLE_CCACHE": true
       }
-    }
+    },
+    {
+      "name": "ubuntu-testing-x86_64",
+      "inherits": ["ubuntu-x86_64"],
+      "displayName": "Ubuntu x86_64 testing build",
+      "description": "Build for Ubuntu x86_64 for Testing",
+      "binaryDir": "${sourceDir}/build_testing_x86_64",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "BUILD_TESTING": true
+      }
+    },
+    {
+      "name": "ubuntu-testing-ci-x86_64",
+      "inherits": ["ubuntu-testing-x86_64"],
+      "displayName": "Ubuntu x86_64 CI Testing build",
+      "description": "Build for Ubuntu x86_64 for CI Testing",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_COMPILE_WARNING_AS_ERROR": true,
+        "ENABLE_CCACHE": true
+      }
+    },
   ],
   "buildPresets": [
     {
@@ -214,6 +236,20 @@
       "displayName": "Ubuntu x86_64 CI",
       "description": "Ubuntu CI build for x86_64",
       "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "ubuntu-testing-x86_64",
+      "configurePreset": "ubuntu-x86_64",
+      "displayName": "Ubuntu x86_64 Testing",
+      "description": "Ubuntu testing build for x86_64",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "ubuntu-testing-ci-x86_64",
+      "configurePreset": "ubuntu-testing-ci-x86_64",
+      "displayName": "Ubuntu x86_64 CI Testing",
+      "description": "Ubuntu CI testing build for x86_64",
+      "configuration": "RelWithDebInfo"
     }
   ],
   "testPresets": [
@@ -235,6 +271,16 @@
     {
       "name": "windows-testing-ci-x64",
       "configurePreset": "windows-testing-ci-x64",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "ubuntu-testing-x86_64",
+      "configurePreset": "ubuntu-testing-x86_64",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "ubuntu-testing-ci-x86_64",
+      "configurePreset": "ubuntu-testing-ci-x86_64",
       "configuration": "RelWithDebInfo"
     }
   ]
