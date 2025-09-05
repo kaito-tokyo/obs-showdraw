@@ -53,15 +53,12 @@ Gemini: `はい、新しいリリースを開始します。現在のバージ�
 User: `1.2.3`
 Gemini: `buildspec.json のバージョンを 1.2.3 に更新します。よろしいですか？`
 User: `はい`
-Gemini: `mainブランチにいることを確認します。`
-Gemini: `ブランチ 'bump-1.2.3' を作成します。`
-Gemini: `buildspec.json を更新しました。プルリクエストを作成します。`
+Gemini: `mainブランチにいることを確認し、ブランチ 'bump-1.2.3' を作成し、buildspec.json を更新しました。プルリクエストを作成します。`
 Gemini: `プルリクエストのURL: https://github.com/kaito-tokyo/obs-showdraw/pull/123`
-Gemini: `このプルリクエストをマージし、完了したら私に報告してください。`
-User: `マージしました`
-User: `タグをプッシュして`
+Gemini: `このプルリクエストをマージし、完了したら「マージしたのでタグをプッシュして」と私に報告してください。`
+User: `マージしたのでタグをプッシュして`
 Gemini: `バージョン 1.2.3 の Git タグをプッシュします。よろしいですか？`
 User: `はい`
-Gemini: `Git タグ '1.2.3' をプッシュしました。GitHub Actions でリリースワークフローが開始されます。`
+Gemini: `mainブランチに切り替え、リモートと同期し、buildspec.jsonのバージョンを確認しました。Git タグ '1.2.3' をプッシュしました。GitHub Actions でリリースワークフローが開始されます。`
 Gemini: `GitHub リリースドラフトのURL: https://github.com/kaito-tokyo/obs-showdraw/releases/tag/1.2.3`
 Gemini: `GitHub上でリリースを完了してください。`
