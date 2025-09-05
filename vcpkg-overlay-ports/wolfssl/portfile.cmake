@@ -14,9 +14,9 @@ set(LOCAL_C_FLAGS_RELEASE "${VCPKG_COMBINED_C_FLAGS_RELEASE}")
 set(LOCAL_C_FLAGS_DEBUG "${VCPKG_COMBINED_C_FLAGS_DEBUG}")
 
 if(VCPKG_TARGET_IS_LINUX)
-    message(STATUS "Applying workaround for wolfSSL stringop-overflow warning on Linux.")
-    set(LOCAL_C_FLAGS_RELEASE "${LOCAL_C_FLAGS_RELEASE} -Wno-error=stringop-overflow")
-    set(LOCAL_C_FLAGS_DEBUG "${LOCAL_C_FLAGS_DEBUG} -Wno-error=stringop-overflow")
+  message(STATUS "Applying workaround for wolfSSL stringop-overflow warning on Linux.")
+  set(LOCAL_C_FLAGS_RELEASE "${LOCAL_C_FLAGS_RELEASE} -Wno-error=stringop-overflow")
+  set(LOCAL_C_FLAGS_DEBUG "${LOCAL_C_FLAGS_DEBUG} -Wno-error=stringop-overflow")
 endif()
 
 vcpkg_cmake_configure(
