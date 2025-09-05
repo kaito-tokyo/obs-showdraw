@@ -51,8 +51,8 @@ namespace obs_showdraw {
 
 PresetWindow::PresetWindow(std::shared_ptr<ShowDrawFilterContext> context, QWidget *parent = nullptr)
 	: QDialog(parent),
-	  context(std::move(context)),
 	  presets(Preset::loadUserPresets(context->getRunningPreset())),
+	  context(std::move(context)),
 	  presetSelector(new QComboBox()),
 	  addButton(new QToolButton()),
 	  removeButton(new QToolButton()),

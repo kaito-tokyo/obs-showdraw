@@ -54,8 +54,8 @@ private slots:
 	void onApplyButtonClicked();
 
 private:
-	std::shared_ptr<ShowDrawFilterContext> context;
 	std::vector<Preset> presets;
+	std::shared_ptr<ShowDrawFilterContext> context;
 
 	QComboBox *const presetSelector;
 	QToolButton *const addButton;
