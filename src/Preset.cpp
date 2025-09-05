@@ -235,21 +235,23 @@ std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcep
 
 Preset Preset::getStrongDefault() noexcept
 {
-	return {
-		"strong default",        // presetName
-		ExtractionMode::Default, // extractionMode
-		3,                       // medianFilteringKernelSize
-		3,                       // motionMapKernelSize
-		0.5,                     // motionAdaptiveFilteringStrength
-		0.3,                     // motionAdaptiveFilteringMotionThreshold
-		0.2,                     // hysteresisHighThreshold
-		0.1,                     // hysteresisLowThreshold
-		1,                       // morphologyOpeningErosionKernelSize
-		1,                       // morphologyOpeningDilationKernelSize
-		7,                       // morphologyClosingDilationKernelSize
-		5,                       // morphologyClosingErosionKernelSize
-		6.0,                     // scalingFactorDb
-	};
+	Preset preset;
+
+	preset.presetName = " strong default";
+	preset.extractionMode = ExtractionMode::Default;
+	preset.medianFilteringKernelSize = 3;
+	preset.motionMapKernelSize = 3;
+	preset.motionAdaptiveFilteringStrength = 0.5;
+	preset.motionAdaptiveFilteringMotionThreshold = 0.3;
+	preset.hysteresisHighThreshold = 0.2;
+	preset.hysteresisLowThreshold = 0.1;
+	preset.morphologyOpeningErosionKernelSize = 1;
+	preset.morphologyOpeningDilationKernelSize = 1;
+	preset.morphologyClosingDilationKernelSize = 7;
+	preset.morphologyClosingErosionKernelSize = 5;
+	preset.scalingFactorDb = 6.0;
+
+	return preset;
 }
 
 } // namespace obs_showdraw
