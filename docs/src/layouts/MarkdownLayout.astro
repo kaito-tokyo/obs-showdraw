@@ -3,12 +3,12 @@ interface Props {
   frontmatter: {
     title: string;
     lang: string;
-  }
+  };
 }
 
 const { title, lang } = Astro.props.frontmatter;
 
-const backToTopText = lang === 'ja' ? 'トップページへ戻る' : 'Back to Top';
+const backToTopText = lang === "ja" ? "トップページへ戻る" : "Back to Top";
 ---
 
 <!doctype html>

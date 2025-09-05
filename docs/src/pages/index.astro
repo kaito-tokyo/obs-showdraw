@@ -1,22 +1,32 @@
 ---
 import Layout from "../layouts/Layout.astro";
+
+const response = await fetch(
+  "https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest",
+);
+const data = await response.json();
+const tagName = data.tag_name;
 ---
 
-<Layout title="OBS線画強調プラグイン" lang="ja">
-  <h1>線画強調プラグイン</h1>
+<Layout title="ShowDraw - OBS線画強調プラグイン" lang="ja">
+  <h1>手元の線画、もっとクリアに視聴者へ。</h1>
   <p>
-    線画強調（ShowDraw）は、アナログイラストレーターのためのOBS
-    Studio用のプラグインです。
-    スケッチブックに描かれた線画をリアルタイムで強調表示し、視聴者の皆さんと一緒に楽しむことができます。
+    ShowDrawは、アナログイラスト配信のためのOBS
+    Studioプラグインです。カメラに映る繊細な線をリアルタイムでくっきりと強調し、あなたの創作過程を視聴者と鮮明に共有できます。
   </p>
   <p lang="en">
-    Line Art Emphasis (ShowDraw) is an OBS Studio plugin for analog
-    illustrators. It allows you to emphasize line art drawn on a sketchbook in
-    real-time, so you can enjoy it together with your viewers.
+    Showcase your analog line art, clearer than ever. ShowDraw is an OBS Studio
+    plugin for illustrators that enhances your hand-drawn lines in real-time,
+    allowing you to share every delicate stroke with your viewers.
   </p>
   <div class="links">
     <a href="/plugin-description/ja/">日本語で詳しく見る</a>
     <a href="/plugin-description/en/">Learn more in English</a>
+  </div>
+  <div class="links">
+    <a href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-windows-x64.zip`>Windows</a>
+    <a href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-macos-universal.pkg`>Mac</a>
+    <a href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-x86_64-linux-gnu.deb`>Ubuntu</a>
   </div>
 </Layout>
 
