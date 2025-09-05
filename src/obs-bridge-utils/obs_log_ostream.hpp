@@ -29,7 +29,7 @@ namespace obs_bridge_utils {
 
 class obs_log_streambuf : public std::streambuf {
 public:
-	obs_log_streambuf(int level) noexcept : level(level) { buffer.reserve(1024); }
+	explicit obs_log_streambuf(int level) noexcept : level(level) { buffer.reserve(1024); }
 
 	~obs_log_streambuf() noexcept override { sync(); }
 
@@ -73,7 +73,14 @@ private:
 
 class obs_log_ostream : public std::ostream {
 public:
-	obs_log_ostream(int level) noexcept : streambuf(level), std::ostream(&streambuf) {}
+	explicit obs_log_ostream(int level) noexcept : streambuf(level), std::ostream(nullptr) {
+		rdbuf(&streambuf);
+	}
+
+    obs_log_ostream(const obs_log_ostream &) = delete;
+    obs_log_ostream &operator=(const obs_log_ostream &) = delete;
+    obs_log_ostream(obs_log_ostream &&) = delete;
+    obs_log_ostream &operator=(obs_log_ostream &&) = delete;
 
 private:
 	obs_log_streambuf streambuf;
