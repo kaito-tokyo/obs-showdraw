@@ -19,7 +19,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #pragma once
 
 #include <memory>
-#include <bmem.h>
+#include <util/bmem.h>
 
 namespace kaito_tokyo {
 namespace obs_bridge_utils {
@@ -30,5 +30,5 @@ struct bfree_deleter {
 
 using unique_bfree_t = std::unique_ptr<char, bfree_deleter>;
 
-}
-}
+} // namespace obs_bridge_utils
+} // namespace kaito_tokyo

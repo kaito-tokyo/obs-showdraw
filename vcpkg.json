@@ -1,6 +1,9 @@
 {
   "dependencies": [
-    "wolfssl",
+    {
+      "name": "cpr",
+      "default-features": false
+    },
     {
       "name": "curl",
       "default-features": false,
@@ -8,10 +11,8 @@
         "wolfssl"
       ]
     },
-    {
-      "name": "cpr",
-      "default-features": false
-    },
-    "nlohmann-json"
+    "nlohmann-json",
+    "wolfssl",
+    "neargye-semver"
   ]
 }

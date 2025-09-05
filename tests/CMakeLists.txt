@@ -10,8 +10,7 @@ target_link_libraries(
   UpdateChecker_test
   PRIVATE
     GTest::gtest_main
-    wolfssl::wolfssl
-    CURL::libcurl
+    semver::semver
     cpr::cpr
     nlohmann_json::nlohmann_json
     OBS::libobs

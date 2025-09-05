@@ -18,28 +18,71 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <sstream>
+#include <streambuf>
+#include <ostream>
+#include <string>
 
 #include "plugin-support.h"
 
 namespace kaito_tokyo {
 namespace obs_bridge_utils {
 
-class obs_log_ostream {
+class obs_log_streambuf : public std::streambuf {
 public:
-	obs_log_ostream(int level) : level(level) {}
-	~obs_log_ostream() { blog(level, "%s", buffer.str().c_str()); }
+	obs_log_streambuf(int level) noexcept : level(level) { buffer.reserve(1024); }
 
-	template<typename T> obs_log_ostream &operator<<(const T &value)
+	~obs_log_streambuf() noexcept override { sync(); }
+
+	obs_log_streambuf(const obs_log_streambuf &) = delete;
+	obs_log_streambuf &operator=(const obs_log_streambuf &) = delete;
+	obs_log_streambuf(obs_log_streambuf &&) = delete;
+	obs_log_streambuf &operator=(obs_log_streambuf &&) = delete;
+
+protected:
+	int_type overflow(int_type c = traits_type::eof()) override
 	{
-		buffer << value;
-		return *this;
+		if (c != traits_type::eof()) {
+			buffer += static_cast<char>(c);
+			if (c == '\n') {
+				sync();
+			}
+		}
+		return c;
+	}
+
+	int sync() override
+	{
+		if (!buffer.empty()) {
+			if (buffer.back() == '\n') {
+				buffer.pop_back();
+			}
+
+			if (!buffer.empty()) {
+				obs_log(level, "%s", buffer.c_str());
+			}
+
+			buffer.clear();
+		}
+		return 0;
 	}
 
 private:
-	int level;
-	std::ostringstream buffer;
+	const int level;
+	std::string buffer;
 };
 
+class obs_log_ostream : public std::ostream {
+public:
+	obs_log_ostream(int level) noexcept : streambuf(level), std::ostream(&streambuf) {}
+
+private:
+	obs_log_streambuf streambuf;
+};
+
+obs_log_ostream log(int level) noexcept
+{
+	return obs_log_ostream(level);
 }
-}
+
+} // namespace obs_bridge_utils
+} // namespace kaito_tokyo

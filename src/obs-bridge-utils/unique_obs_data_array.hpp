@@ -30,5 +30,5 @@ struct obs_data_array_deleter {
 
 using unique_obs_data_array_t = std::unique_ptr<obs_data_array_t, obs_data_array_deleter>;
 
-}
-}
+} // namespace obs_bridge_utils
+} // namespace kaito_tokyo
