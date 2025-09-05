@@ -16,4 +16,7 @@ set_target_properties(
     XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-"
     XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME "YES"
     XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/preset_test.entitlements"
+    XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "/Applications/OBS.app/Contents/Frameworks"
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH "/Applications/OBS.app/Contents/Frameworks"
 )
