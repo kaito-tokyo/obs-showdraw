@@ -195,6 +195,14 @@ obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 {
 	obs_properties_t *props = obs_properties_create();
 
+	const char *updateAvailableText = obs_module_text("updateCheckerPluginIsLatest");
+	std::optional<LatestVersion> latestVersion = getLatestVersion();
+	if (latestVersion.has_value() && latestVersion->isUpdateAvailable(PLUGIN_VERSION)) {
+		updateAvailableText = obs_module_text("updateCheckerUpdateAvailable");
+	}
+
+	obs_properties_add_text(props, "isUpdateAvailable", updateAvailableText, OBS_TEXT_INFO);
+
 	obs_properties_add_button2(
 		props, "openPresetWindow", obs_module_text("openPresetWindow"),
 		[](obs_properties_t *props, obs_property_t *property, void *data) {
