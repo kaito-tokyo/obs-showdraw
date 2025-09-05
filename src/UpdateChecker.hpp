@@ -18,7 +18,18 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
+#include <optional>
 #include <string>
+
+class LatestVersion {
+public:
+	explicit LatestVersion(const std::string &version);
+	bool isUpdateAvailable(const std::string &currentVersion) const noexcept;
+	const std::string &toString() const noexcept;
+
+private:
+	std::string version;
+};
 
 /**
  * @brief Performs a synchronous check for software updates.
@@ -29,10 +40,5 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 class UpdateChecker {
 public:
 	UpdateChecker(void);
-	void fetch(void);
-	bool isUpdateAvailable(const std::string &currentVersion) const noexcept;
-	const std::string &getLatestVersion() const { return latestVersion; }
-
-private:
-	std::string latestVersion;
+	std::optional<LatestVersion> fetch(void);
 };

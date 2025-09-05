@@ -28,31 +28,19 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 using kaito_tokyo::obs_bridge_utils::slog;
 
-UpdateChecker::UpdateChecker(void) {}
+LatestVersion::LatestVersion(const std::string &version) : version(version) {}
 
-void UpdateChecker::fetch(void)
+bool LatestVersion::isUpdateAvailable(const std::string &currentVersion) const noexcept
 {
-	cpr::Response r = cpr::Get(cpr::Url{"https://obs-showdraw.kaito.tokyo/metadata/latest-version.txt"});
-
-	if (r.status_code == 200) {
-		latestVersion = r.text;
-	} else {
-		slog(LOG_WARNING) << "Failed to fetch latest version information: HTTP " << r.status_code;
-		latestVersion = "";
-	}
-}
-
-bool UpdateChecker::isUpdateAvailable(const std::string &currentVersion) const noexcept
-{
-	if (latestVersion.empty()) {
+	if (version.empty()) {
 		slog(LOG_INFO) << "Latest version information is not available.";
 		return false;
 	}
 
 	semver::version latest, current;
 
-	if (!semver::parse(latestVersion, latest)) {
-		slog(LOG_WARNING) << "Failed to parse latest version: " << latestVersion;
+	if (!semver::parse(version, latest)) {
+		slog(LOG_WARNING) << "Failed to parse latest version: " << version;
 		return false;
 	}
 
@@ -62,4 +50,23 @@ bool UpdateChecker::isUpdateAvailable(const std::string &currentVersion) const n
 	}
 
 	return latest > current;
+}
+
+const std::string &LatestVersion::toString() const noexcept
+{
+	return version;
+}
+
+UpdateChecker::UpdateChecker(void) {}
+
+std::optional<LatestVersion> UpdateChecker::fetch(void)
+{
+	cpr::Response r = cpr::Get(cpr::Url{"https://obs-showdraw.kaito.tokyo/metadata/latest-version.txt"});
+
+	if (r.status_code == 200) {
+		return LatestVersion(r.text);
+	} else {
+		slog(LOG_WARNING) << "Failed to fetch latest version information: HTTP " << r.status_code;
+		return std::nullopt;
+	}
 }
