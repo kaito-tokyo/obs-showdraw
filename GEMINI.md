@@ -12,7 +12,6 @@
 2. Run `cmake --build --preset macos`.
 3. Run `ctest --preset macos --rerun-failed --output-on-failure`.
 
-
 ## Release Automation with Gemini
 
 To initiate a new release, follow these steps, and Gemini can assist you:
