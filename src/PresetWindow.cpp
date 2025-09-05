@@ -121,7 +121,7 @@ void PresetWindow::onPresetSelectionChanged(int index)
 	removeButton->setEnabled(selectedPreset.isUser());
 }
 
-void PresetWindow::onAddButtonClicked(void)
+void PresetWindow::onAddButtonClicked()
 {
 	size_t userPresetCount =
 		std::count_if(presets.begin(), presets.end(), std::function<bool(const Preset &)>(&Preset::isUser));
@@ -167,7 +167,7 @@ void PresetWindow::onAddButtonClicked(void)
 	Preset::saveUserPresets(presets);
 }
 
-void PresetWindow::onRemoveButtonClicked(void)
+void PresetWindow::onRemoveButtonClicked()
 {
 	int presetIndex = presetSelector->currentIndex();
 	if (presetIndex < 0 || presetIndex >= static_cast<int>(presets.size())) {
@@ -195,7 +195,7 @@ void PresetWindow::onRemoveButtonClicked(void)
 	Preset::saveUserPresets(presets);
 }
 
-void PresetWindow::onSettingsJsonTextEditChanged(void)
+void PresetWindow::onSettingsJsonTextEditChanged()
 {
 	{
 		QSignalBlocker blocker(presetSelector);
@@ -206,7 +206,7 @@ void PresetWindow::onSettingsJsonTextEditChanged(void)
 	validateSettingsJsonTextEdit();
 }
 
-void PresetWindow::onApplyButtonClicked(void)
+void PresetWindow::onApplyButtonClicked()
 {
 	// obs_data_t *settings = obs_source_get_settings(filter);
 
@@ -219,7 +219,7 @@ void PresetWindow::onApplyButtonClicked(void)
 	close();
 }
 
-bool PresetWindow::validateSettingsJsonTextEdit(void)
+bool PresetWindow::validateSettingsJsonTextEdit()
 {
 	std::string newPresetJson = settingsJsonTextEdit->toPlainText().toStdString();
 

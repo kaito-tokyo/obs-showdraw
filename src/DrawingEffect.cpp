@@ -50,7 +50,7 @@ static gs_technique_t *getEffectTech(gs_effect_t *effect, const char *name)
 	return tech;
 }
 
-DrawingEffect::DrawingEffect(void)
+DrawingEffect::DrawingEffect()
 {
 	char *error_string = nullptr;
 
@@ -107,7 +107,7 @@ DrawingEffect::DrawingEffect(void)
 	}
 }
 
-DrawingEffect::~DrawingEffect(void) noexcept
+DrawingEffect::~DrawingEffect() noexcept
 {
 	gs_effect_destroy(effect);
 }

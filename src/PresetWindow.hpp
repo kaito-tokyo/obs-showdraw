@@ -56,10 +56,10 @@ public:
 
 private slots:
 	void onPresetSelectionChanged(int index);
-	void onAddButtonClicked(void);
-	void onRemoveButtonClicked(void);
-	void onSettingsJsonTextEditChanged(void);
-	void onApplyButtonClicked(void);
+	void onAddButtonClicked();
+	void onRemoveButtonClicked();
+	void onSettingsJsonTextEditChanged();
+	void onApplyButtonClicked();
 
 private:
 	obs_source_t *filter;
@@ -75,7 +75,7 @@ private:
 	QPushButton *const applyButton;
 	QVBoxLayout *const layout;
 
-	bool validateSettingsJsonTextEdit(void);
+	bool validateSettingsJsonTextEdit();
 };
 
 #endif

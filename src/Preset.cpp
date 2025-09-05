@@ -38,12 +38,12 @@ using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
 const char *UserPresetsJson = "UserPresets.json";
 const char *UserPresetsVersion = "2025-09-03";
 
-bool Preset::isSystem(void) const noexcept
+bool Preset::isSystem() const noexcept
 {
 	return presetName.size() >= 1 && presetName[0] == ' ';
 }
 
-bool Preset::isUser(void) const noexcept
+bool Preset::isUser() const noexcept
 {
 	return presetName.size() >= 1 && presetName[0] != ' ';
 }
@@ -66,7 +66,7 @@ obs_data_t *Preset::loadIntoObsData(obs_data_t *data) const noexcept
 	return data;
 }
 
-std::optional<std::string> Preset::validate(void) const noexcept
+std::optional<std::string> Preset::validate() const noexcept
 {
 	switch (extractionMode) {
 	case ExtractionMode::Default:
@@ -231,7 +231,7 @@ std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcep
 	return presets;
 }
 
-Preset Preset::getStrongDefault(void) noexcept
+Preset Preset::getStrongDefault() noexcept
 {
 	return {
 		"strong default",        // presetName

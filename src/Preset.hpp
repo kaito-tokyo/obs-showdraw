@@ -57,16 +57,16 @@ public:
 
 	double scalingFactorDb;
 
-	bool isSystem(void) const noexcept;
-	bool isUser(void) const noexcept;
+	bool isSystem() const noexcept;
+	bool isUser() const noexcept;
 
 	obs_data_t *loadIntoObsData(obs_data_t *data) const noexcept;
-	std::optional<std::string> validate(void) const noexcept;
+	std::optional<std::string> validate() const noexcept;
 
 	static Preset fromObsData(obs_data_t *data) noexcept;
 
 	static void saveUserPresets(const std::vector<Preset> &presets) noexcept;
 	static std::vector<Preset> loadUserPresets(const Preset &runningPreset) noexcept;
 
-	static Preset getStrongDefault(void) noexcept;
+	static Preset getStrongDefault() noexcept;
 };

@@ -22,8 +22,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 class DrawingEffect {
 public:
-	DrawingEffect(void);
-	~DrawingEffect(void) noexcept;
+	DrawingEffect();
+	~DrawingEffect() noexcept;
 
 	gs_effect_t *effect = nullptr;
 

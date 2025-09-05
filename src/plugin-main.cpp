@@ -47,14 +47,14 @@ struct obs_source_info showdraw_filter = {
 				 // The rest of the fields will be zero-initialized
 };
 
-bool obs_module_load(void)
+bool obs_module_load()
 {
 	obs_register_source(&showdraw_filter);
 	obs_log(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
 	return true;
 }
 
-void obs_module_unload(void)
+void obs_module_unload()
 {
 	obs_log(LOG_INFO, "plugin unloaded");
 }

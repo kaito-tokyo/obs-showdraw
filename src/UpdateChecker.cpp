@@ -57,9 +57,9 @@ const std::string &LatestVersion::toString() const noexcept
 	return version;
 }
 
-UpdateChecker::UpdateChecker(void) {}
+UpdateChecker::UpdateChecker() {}
 
-std::optional<LatestVersion> UpdateChecker::fetch(void)
+std::optional<LatestVersion> UpdateChecker::fetch()
 {
 	cpr::Response r = cpr::Get(cpr::Url{"https://obs-showdraw.kaito.tokyo/metadata/latest-version.txt"});
 

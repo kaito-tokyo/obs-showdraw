@@ -39,6 +39,6 @@ private:
  */
 class UpdateChecker {
 public:
-	UpdateChecker(void);
-	std::optional<LatestVersion> fetch(void);
+	UpdateChecker();
+	std::optional<LatestVersion> fetch();
 };

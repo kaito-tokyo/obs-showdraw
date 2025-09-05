@@ -102,7 +102,7 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	context->videoRender();
 }
 
-const char *ShowDrawFilterContext::getName(void) noexcept
+const char *ShowDrawFilterContext::getName() noexcept
 {
 	return obs_module_text("pluginName");
 }
@@ -119,7 +119,7 @@ ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t 
 	update(settings);
 }
 
-ShowDrawFilterContext::~ShowDrawFilterContext(void) noexcept
+ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 {
 	obs_log(LOG_INFO, "Destroying showdraw filter context");
 
@@ -162,7 +162,7 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 	obs_data_set_default_double(data, "scalingFactorDb", defaultPreset.scalingFactorDb);
 }
 
-obs_properties_t *ShowDrawFilterContext::getProperties(void) noexcept
+obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 {
 	obs_properties_t *props = obs_properties_create();
 
@@ -324,7 +324,7 @@ static void applyEffectPass(gs_technique_t *technique, gs_texture_t *texture) no
 	gs_technique_end(technique);
 }
 
-void ShowDrawFilterContext::applyLuminanceExtractionPass(void) noexcept
+void ShowDrawFilterContext::applyLuminanceExtractionPass() noexcept
 {
 	gs_set_render_target(texture_target, nullptr);
 
@@ -467,7 +467,7 @@ void ShowDrawFilterContext::applyMorphologyPass(const float texelWidth, const fl
 	std::swap(texture_source, texture_target);
 }
 
-void ShowDrawFilterContext::applyScalingPass(void) noexcept
+void ShowDrawFilterContext::applyScalingPass() noexcept
 {
 	gs_set_render_target(texture_target, nullptr);
 
@@ -480,7 +480,7 @@ void ShowDrawFilterContext::applyScalingPass(void) noexcept
 	std::swap(texture_source, texture_target);
 }
 
-void ShowDrawFilterContext::drawFinalImage(void) noexcept
+void ShowDrawFilterContext::drawFinalImage() noexcept
 {
 	gs_effect_set_texture(drawingEffect->texture_image, texture_source);
 
@@ -495,7 +495,7 @@ void ShowDrawFilterContext::drawFinalImage(void) noexcept
 	gs_technique_end(drawingEffect->tech_draw);
 }
 
-void ShowDrawFilterContext::videoRender(void) noexcept
+void ShowDrawFilterContext::videoRender() noexcept
 {
 	if (!filter) {
 		obs_log(LOG_ERROR, "Filter source not found");
