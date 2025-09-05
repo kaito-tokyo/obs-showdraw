@@ -3,9 +3,11 @@
     {
       "name": "curl",
       "default-features": false,
-      "features": ["wolfssl"]
+      "features": [
+        "wolfssl"
+      ]
     },
-    "curlpp",
-    "nlohmann-json"
+    "nlohmann-json",
+    "cpr"
   ]
 }
