@@ -18,12 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <memory>
-
-#include <obs-module.h>
-
-#include "DrawingEffect.hpp"
-#include "Preset.hpp"
+#include <obs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,26 +34,35 @@ void showdraw_video_render(void *data, gs_effect_t *effect);
 
 #ifdef __cplusplus
 }
-#endif
 
-#ifdef __cplusplus
+#include <memory>
 
-class ShowDrawFilterContext {
+#include "DrawingEffect.hpp"
+#include "Preset.hpp"
+
+namespace kaito_tokyo {
+namespace obs_showdraw {
+
+class ShowDrawFilterContext : public std::enable_shared_from_this<ShowDrawFilterContext> {
 public:
-	static const char *getName(void) noexcept;
+	static const char *getName() noexcept;
 
 	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source);
-	~ShowDrawFilterContext(void) noexcept;
+	~ShowDrawFilterContext() noexcept;
 
 	static void getDefaults(obs_data_t *data) noexcept;
-	obs_properties_t *getProperties(void) noexcept;
+
+	obs_properties_t *getProperties() noexcept;
 	void update(obs_data_t *settings) noexcept;
-	void videoRender(void) noexcept;
+	void videoRender() noexcept;
+
+	obs_source_t *getFilter() const noexcept;
+	Preset getRunningPreset() const noexcept;
 
 private:
 	bool ensureTextures(uint32_t width, uint32_t height) noexcept;
 
-	void applyLuminanceExtractionPass(void) noexcept;
+	void applyLuminanceExtractionPass() noexcept;
 	void applyMedianFilteringPass(const float texelWidth, const float texelHeight) noexcept;
 	void applyMotionAdaptiveFilteringPass(const float texelWidth, const float texelHeight) noexcept;
 	void applySobelPass(const float texelWidth, const float texelHeight) noexcept;
@@ -69,8 +73,8 @@ private:
 	void applyHysteresisFinalizePass(const float texelWidth, const float texelHeight) noexcept;
 	void applyMorphologyPass(const float texelWidth, const float texelHeight, gs_technique_t *technique,
 				 int kernelSize) noexcept;
-	void applyScalingPass(void) noexcept;
-	void drawFinalImage(void) noexcept;
+	void applyScalingPass() noexcept;
+	void drawFinalImage() noexcept;
 
 	obs_data_t *settings;
 	obs_source_t *filter;
@@ -85,4 +89,7 @@ private:
 	gs_texture_t *texture_previous_luminance;
 };
 
-#endif
+} // namespace obs_showdraw
+} // namespace kaito_tokyo
+
+#endif // __cplusplus

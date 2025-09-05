@@ -17,7 +17,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include "PresetWindow.hpp"
-#include "obs-bridge-utils/obs-bridge-utils.hpp"
 
 #include <functional>
 #include <sstream>
@@ -33,19 +32,27 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <QSignalBlocker>
 #include <QToolButton>
 
-#include <obs-module.h>
-#include <obs-frontend-api.h>
 #include "plugin-support.h"
 #include <util/platform.h>
 #include <util/dstr.h>
+#include <obs-module.h>
 
+#include "obs-bridge-utils/obs-bridge-utils.hpp"
+
+#include "ShowDrawFilterContext.h"
+
+using kaito_tokyo::obs_bridge_utils::slog;
 using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
 
-PresetWindow::PresetWindow(obs_source_t *filter, const Preset &runningPreset, QWidget *parent)
+using kaito_tokyo::obs_showdraw::Preset;
+
+namespace kaito_tokyo {
+namespace obs_showdraw {
+
+PresetWindow::PresetWindow(std::shared_ptr<ShowDrawFilterContext> context, QWidget *parent = nullptr)
 	: QDialog(parent),
-	  filter(filter),
-	  runningPreset(runningPreset),
-	  presets(Preset::loadUserPresets(runningPreset)),
+	  presets(Preset::loadUserPresets(context->getRunningPreset())),
+	  context(std::move(context)),
 	  presetSelector(new QComboBox()),
 	  addButton(new QToolButton()),
 	  removeButton(new QToolButton()),
@@ -84,7 +91,7 @@ PresetWindow::PresetWindow(obs_source_t *filter, const Preset &runningPreset, QW
 	connect(settingsJsonTextEdit, &QTextEdit::textChanged, this, &PresetWindow::onSettingsJsonTextEditChanged);
 
 	unique_obs_data_t settingsData(obs_data_create());
-	runningPreset.loadIntoObsData(settingsData.get());
+	context->getRunningPreset().loadIntoObsData(settingsData.get());
 	const char *settingsJson = obs_data_get_json_pretty(settingsData.get());
 	settingsJsonTextEdit->setPlainText(QString::fromUtf8(settingsJson));
 
@@ -121,7 +128,7 @@ void PresetWindow::onPresetSelectionChanged(int index)
 	removeButton->setEnabled(selectedPreset.isUser());
 }
 
-void PresetWindow::onAddButtonClicked(void)
+void PresetWindow::onAddButtonClicked()
 {
 	size_t userPresetCount =
 		std::count_if(presets.begin(), presets.end(), std::function<bool(const Preset &)>(&Preset::isUser));
@@ -167,7 +174,7 @@ void PresetWindow::onAddButtonClicked(void)
 	Preset::saveUserPresets(presets);
 }
 
-void PresetWindow::onRemoveButtonClicked(void)
+void PresetWindow::onRemoveButtonClicked()
 {
 	int presetIndex = presetSelector->currentIndex();
 	if (presetIndex < 0 || presetIndex >= static_cast<int>(presets.size())) {
@@ -195,7 +202,7 @@ void PresetWindow::onRemoveButtonClicked(void)
 	Preset::saveUserPresets(presets);
 }
 
-void PresetWindow::onSettingsJsonTextEditChanged(void)
+void PresetWindow::onSettingsJsonTextEditChanged()
 {
 	{
 		QSignalBlocker blocker(presetSelector);
@@ -206,7 +213,7 @@ void PresetWindow::onSettingsJsonTextEditChanged(void)
 	validateSettingsJsonTextEdit();
 }
 
-void PresetWindow::onApplyButtonClicked(void)
+void PresetWindow::onApplyButtonClicked()
 {
 	// obs_data_t *settings = obs_source_get_settings(filter);
 
@@ -219,7 +226,7 @@ void PresetWindow::onApplyButtonClicked(void)
 	close();
 }
 
-bool PresetWindow::validateSettingsJsonTextEdit(void)
+bool PresetWindow::validateSettingsJsonTextEdit()
 {
 	std::string newPresetJson = settingsJsonTextEdit->toPlainText().toStdString();
 
@@ -249,3 +256,6 @@ bool PresetWindow::validateSettingsJsonTextEdit(void)
 
 	return true;
 }
+
+} // namespace obs_showdraw
+} // namespace kaito_tokyo

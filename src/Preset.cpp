@@ -23,27 +23,29 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <iomanip>
 #include <sstream>
 
+#include "plugin-support.h"
 #include <obs-module.h>
 
-#include "plugin-support.h"
+#include "obs-bridge-utils/obs-bridge-utils.hpp"
 
 #include "Preset.hpp"
-
-#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
 using kaito_tokyo::obs_bridge_utils::unique_bfree_t;
 using kaito_tokyo::obs_bridge_utils::unique_obs_data_array_t;
 using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
 
+namespace kaito_tokyo {
+namespace obs_showdraw {
+
 const char *UserPresetsJson = "UserPresets.json";
 const char *UserPresetsVersion = "2025-09-03";
 
-bool Preset::isSystem(void) const noexcept
+bool Preset::isSystem() const noexcept
 {
 	return presetName.size() >= 1 && presetName[0] == ' ';
 }
 
-bool Preset::isUser(void) const noexcept
+bool Preset::isUser() const noexcept
 {
 	return presetName.size() >= 1 && presetName[0] != ' ';
 }
@@ -66,7 +68,7 @@ obs_data_t *Preset::loadIntoObsData(obs_data_t *data) const noexcept
 	return data;
 }
 
-std::optional<std::string> Preset::validate(void) const noexcept
+std::optional<std::string> Preset::validate() const noexcept
 {
 	switch (extractionMode) {
 	case ExtractionMode::Default:
@@ -231,21 +233,26 @@ std::vector<Preset> Preset::loadUserPresets(const Preset &runningPreset) noexcep
 	return presets;
 }
 
-Preset Preset::getStrongDefault(void) noexcept
+Preset Preset::getStrongDefault() noexcept
 {
-	return {
-		"strong default",        // presetName
-		ExtractionMode::Default, // extractionMode
-		3,                       // medianFilteringKernelSize
-		3,                       // motionMapKernelSize
-		0.5,                     // motionAdaptiveFilteringStrength
-		0.3,                     // motionAdaptiveFilteringMotionThreshold
-		0.2,                     // hysteresisHighThreshold
-		0.1,                     // hysteresisLowThreshold
-		1,                       // morphologyOpeningErosionKernelSize
-		1,                       // morphologyOpeningDilationKernelSize
-		7,                       // morphologyClosingDilationKernelSize
-		5,                       // morphologyClosingErosionKernelSize
-		6.0,                     // scalingFactorDb
-	};
+	Preset preset;
+
+	preset.presetName = " strong default";
+	preset.extractionMode = ExtractionMode::Default;
+	preset.medianFilteringKernelSize = 3;
+	preset.motionMapKernelSize = 3;
+	preset.motionAdaptiveFilteringStrength = 0.5;
+	preset.motionAdaptiveFilteringMotionThreshold = 0.3;
+	preset.hysteresisHighThreshold = 0.2;
+	preset.hysteresisLowThreshold = 0.1;
+	preset.morphologyOpeningErosionKernelSize = 1;
+	preset.morphologyOpeningDilationKernelSize = 1;
+	preset.morphologyClosingDilationKernelSize = 7;
+	preset.morphologyClosingErosionKernelSize = 5;
+	preset.scalingFactorDb = 6.0;
+
+	return preset;
 }
+
+} // namespace obs_showdraw
+} // namespace kaito_tokyo

@@ -18,32 +18,32 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <gtest/gtest.h>
 
-#define private public
 #include "UpdateChecker.hpp"
-#undef private
+
+using kaito_tokyo::obs_showdraw::LatestVersion;
+using kaito_tokyo::obs_showdraw::UpdateChecker;
 
 TEST(UpdateCheckerTest, Fetch)
 {
 	UpdateChecker checker;
-	checker.fetch();
-	EXPECT_FALSE(checker.getLatestVersion().empty());
+	auto latestVersion = checker.fetch();
+	ASSERT_TRUE(latestVersion.has_value());
+	EXPECT_FALSE(latestVersion->toString().empty());
 }
 
-TEST(UpdateCheckerTest, IsUpdateAvailable)
+TEST(LatestVersionTest, IsUpdateAvailable)
 {
-	UpdateChecker checker;
+	LatestVersion v100("1.0.0");
+	EXPECT_TRUE(v100.isUpdateAvailable("0.9.0"));
+	EXPECT_FALSE(v100.isUpdateAvailable("1.0.0"));
+	EXPECT_FALSE(v100.isUpdateAvailable("1.1.0"));
 
-	checker.latestVersion = "1.0.0";
-	EXPECT_TRUE(checker.isUpdateAvailable("0.9.0"));
-	EXPECT_FALSE(checker.isUpdateAvailable("1.0.0"));
-	EXPECT_FALSE(checker.isUpdateAvailable("1.1.0"));
+	LatestVersion v200b("2.0.0-beta");
+	EXPECT_TRUE(v200b.isUpdateAvailable("1.0.0"));
+	EXPECT_TRUE(v200b.isUpdateAvailable("2.0.0-alpha"));
+	EXPECT_FALSE(v200b.isUpdateAvailable("2.0.0-beta"));
+	EXPECT_FALSE(v200b.isUpdateAvailable("2.0.0"));
 
-	checker.latestVersion = "2.0.0-beta";
-	EXPECT_TRUE(checker.isUpdateAvailable("1.0.0"));
-	EXPECT_TRUE(checker.isUpdateAvailable("2.0.0-alpha"));
-	EXPECT_FALSE(checker.isUpdateAvailable("2.0.0-beta"));
-	EXPECT_FALSE(checker.isUpdateAvailable("2.0.0"));
-
-	checker.latestVersion = "";
-	EXPECT_FALSE(checker.isUpdateAvailable("1.0.0"));
+	LatestVersion vempty("");
+	EXPECT_FALSE(vempty.isUpdateAvailable("1.0.0"));
 }

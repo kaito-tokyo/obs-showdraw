@@ -18,15 +18,33 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
+#include <optional>
 #include <string>
 
-class UpdateChecker {
+namespace kaito_tokyo {
+namespace obs_showdraw {
+
+class LatestVersion {
 public:
-	UpdateChecker(void);
-	void fetch(void);
+	explicit LatestVersion(const std::string &version);
 	bool isUpdateAvailable(const std::string &currentVersion) const noexcept;
-	const std::string &getLatestVersion() const { return latestVersion; }
+	const std::string &toString() const noexcept;
 
 private:
-	std::string latestVersion;
+	std::string version;
 };
+
+/**
+ * @brief Performs a synchronous check for software updates.
+ *
+ * @note The calling context is expected to handle any desired asynchronous
+ * execution.
+ */
+class UpdateChecker {
+public:
+	UpdateChecker();
+	std::optional<LatestVersion> fetch();
+};
+
+} // namespace obs_showdraw
+} // namespace kaito_tokyo

@@ -18,12 +18,15 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <obs-module.h>
+#include <obs.h>
+
+namespace kaito_tokyo {
+namespace obs_showdraw {
 
 class DrawingEffect {
 public:
-	DrawingEffect(void);
-	~DrawingEffect(void) noexcept;
+	DrawingEffect();
+	~DrawingEffect() noexcept;
 
 	gs_effect_t *effect = nullptr;
 
@@ -57,3 +60,6 @@ public:
 	gs_technique_t *tech_dilation = nullptr;
 	gs_technique_t *tech_scaling = nullptr;
 };
+
+} // namespace obs_showdraw
+} // namespace kaito_tokyo
