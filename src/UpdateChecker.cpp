@@ -18,37 +18,48 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "UpdateChecker.hpp"
 
-#include <sstream>
-#include <iostream> // For std::cout
-
-#include <nlohmann/json.hpp>
-#include <cpr/cpr.h> // Add this include
+#include <cpr/cpr.h>
+#include <semver.hpp>
 
 #include <obs.h>
 #include "plugin-support.h"
+
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
+
+using kaito_tokyo::obs_bridge_utils::slog;
 
 UpdateChecker::UpdateChecker(void) {}
 
 void UpdateChecker::fetch(void)
 {
-	cpr::Response r = cpr::Get(cpr::Url{"https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest"});
+	cpr::Response r = cpr::Get(cpr::Url{"https://obs-showdraw.kaito.tokyo/metadata/latest-version.txt"});
 
 	if (r.status_code == 200) {
-		try {
-			auto json_response = nlohmann::json::parse(r.text);
-			if (json_response.contains("tag_name")) {
-				latestVersion = json_response["tag_name"].get<std::string>();
-				std::cout << "Latest version: " << latestVersion << std::endl; // For debugging
-			} else {
-				std::cerr << "Error: 'tag_name' not found in the response." << std::endl;
-			}
-		} catch (const nlohmann::json::exception &e) {
-			std::cerr << "JSON parsing error: " << e.what() << std::endl;
-		}
+		latestVersion = r.text;
 	} else {
-		std::cerr << "Failed to fetch latest version. Status code: " << r.status_code << std::endl;
-		std::cerr << "Error message: " << r.error.message << std::endl;
+		slog(LOG_WARNING) << "Failed to fetch latest version information: HTTP " << r.status_code;
+		latestVersion = "";
 	}
 }
 
-void UpdateChecker::isUpdateAvailable(void) const noexcept {}
+bool UpdateChecker::isUpdateAvailable(const std::string &currentVersion) const noexcept
+{
+	if (latestVersion.empty()) {
+		slog(LOG_INFO) << "Latest version information is not available.";
+		return false;
+	}
+
+	semver::version latest, current;
+
+	if (!semver::parse(latestVersion, latest)) {
+		slog(LOG_WARNING) << "Failed to parse latest version: " << latestVersion;
+		return false;
+	}
+
+	if (!semver::parse(currentVersion, current)) {
+		slog(LOG_WARNING) << "Failed to parse current version: " << currentVersion;
+		return false;
+	}
+
+	return latest > current;
+}

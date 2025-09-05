@@ -17,7 +17,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include "PresetWindow.hpp"
-#include "bridge.hpp"
+#include "obs-bridge-utils/obs-bridge-utils.hpp"
 
 #include <functional>
 #include <sstream>
@@ -39,7 +39,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <util/platform.h>
 #include <util/dstr.h>
 
-using kaitotokyo::obs::unique_obs_data_t;
+using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
 
 PresetWindow::PresetWindow(obs_source_t *filter, const Preset &runningPreset, QWidget *parent)
 	: QDialog(parent),

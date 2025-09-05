@@ -6,12 +6,13 @@
 - CMake files must be formatted using gersemi after any modification.
 - OBS team maintains the CMake and GitHub Actions so we don't need to improve these parts.
 - The default branch of this project is `main`.
+- There must be a empty newline at the end of the file.
 
 ## How to build and run tests on macOS
 
-1. Run `cmake --preset macos -DBUILD_TESTING=ON` if CMake-related files were changed.
-2. Run `cmake --build --preset macos`.
-3. Run `ctest --preset macos --rerun-failed --output-on-failure`.
+1. Run `cmake --preset macos-testing`.
+2. Run `cmake --build --preset macos-testing`.
+3. Run `ctest --preset macos-testing --rerun-failed --output-on-failure`.
 
 ## Release Automation with Gemini
 

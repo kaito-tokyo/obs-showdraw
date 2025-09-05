@@ -22,9 +22,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "plugin-support.h"
 
-#include "bridge.hpp"
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
-using kaitotokyo::obs::unique_bfree_t;
+using kaito_tokyo::obs_bridge_utils::unique_bfree_t;
 
 static gs_eparam_t *getEffectParam(gs_effect_t *effect, const char *name)
 {

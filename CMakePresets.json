@@ -48,6 +48,21 @@
       }
     },
     {
+      "name": "macos-testing",
+      "inherits": ["macos"],
+      "displayName": "macOS Universal Testing build",
+      "description": "Build for macOS 12.0+ (Universal binary) for Testing",
+      "cacheVariables": {
+        "BUILD_TESTING": true
+      }
+    },
+    {
+      "name": "macos-testing-ci",
+      "inherits": ["macos-ci", "macos-testing"],
+      "displayName": "macOS Universal Testing CI build",
+      "description": "Build for macOS 12.0+ (Universal binary) for Testing on CI"
+    },
+    {
       "name": "windows-x64",
       "displayName": "Windows x64",
       "description": "Build for Windows x64",
@@ -103,6 +118,42 @@
         "CMAKE_COMPILE_WARNING_AS_ERROR": true,
         "ENABLE_CCACHE": true
       }
+    },
+    {
+      "name": "windows-testing-x64",
+      "inherits": ["windows-x64"],
+      "displayName": "Windows x64 Testing build",
+      "description": "Build for Windows x64 for Testing",
+      "cacheVariables": {
+        "BUILD_TESTING": true
+      }
+    },
+    {
+      "name": "windows-testing-ci-x64",
+      "inherits": [
+        "windows-ci-x64",
+        "windows-testing-x64"
+      ],
+      "displayName": "Windows x64 Testing CI build",
+      "description": "Build for Windows x64 for Testing on CI"
+    },
+    {
+      "name": "ubuntu-testing-x86_64",
+      "inherits": ["ubuntu-x86_64"],
+      "displayName": "Ubuntu x86_64 Testing build",
+      "description": "Build for Ubuntu x86_64 for Testing",
+      "cacheVariables": {
+        "BUILD_TESTING": true
+      }
+    },
+    {
+      "name": "ubuntu-testing-ci-x86_64",
+      "inherits": [
+        "ubuntu-ci-x86_64",
+        "ubuntu-testing-x86_64"
+      ],
+      "displayName": "Ubuntu x86_64 Testing CI build",
+      "description": "Build for Ubuntu x86_64 for Testing on CI"
     }
   ],
   "buildPresets": [
@@ -121,6 +172,20 @@
       "configuration": "RelWithDebInfo"
     },
     {
+      "name": "macos-testing",
+      "configurePreset": "macos-testing",
+      "displayName": "macOS Universal Testing",
+      "description": "macOS build for Universal architectures for Testing",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "macos-testing-ci",
+      "configurePreset": "macos-testing-ci",
+      "displayName": "macOS Universal Testing CI",
+      "description": "macOS CI build for Universal architectures for Testing",
+      "configuration": "RelWithDebInfo"
+    },
+    {
       "name": "windows-x64",
       "configurePreset": "windows-x64",
       "displayName": "Windows x64",
@@ -132,6 +197,20 @@
       "configurePreset": "windows-ci-x64",
       "displayName": "Windows x64 CI",
       "description": "Windows CI build for x64 (RelWithDebInfo configuration)",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windows-testing-x64",
+      "configurePreset": "windows-testing-x64",
+      "displayName": "Windows x64 Testing",
+      "description": "Windows build for x64 for Testing",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "windows-testing-ci-x64",
+      "configurePreset": "windows-testing-ci-x64",
+      "displayName": "Windows x64 Testing CI",
+      "description": "Windows CI build for x64 for Testing",
       "configuration": "RelWithDebInfo"
     },
     {
@@ -147,37 +226,51 @@
       "displayName": "Ubuntu x86_64 CI",
       "description": "Ubuntu CI build for x86_64",
       "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "ubuntu-testing-x86_64",
+      "configurePreset": "ubuntu-testing-x86_64",
+      "displayName": "Ubuntu x86_64 Testing",
+      "description": "Ubuntu build for x86_64 for Testing",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "ubuntu-testing-ci-x86_64",
+      "configurePreset": "ubuntu-testing-ci-x86_64",
+      "displayName": "Ubuntu x86_64 Testing CI",
+      "description": "Ubuntu CI build for x86_64 for Testing",
+      "configuration": "RelWithDebInfo"
     }
   ],
   "testPresets": [
     {
-      "name": "macos",
-      "configurePreset": "macos",
+      "name": "macos-testing",
+      "configurePreset": "macos-testing",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "macos-ci",
-      "configurePreset": "macos-ci",
+      "name": "macos-testing-ci",
+      "configurePreset": "macos-testing-ci",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "windows-x64",
-      "configurePreset": "windows-x64",
+      "name": "windows-testing-x64",
+      "configurePreset": "windows-testing-x64",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "windows-ci-x64",
-      "configurePreset": "windows-ci-x64",
+      "name": "windows-testing-ci-x64",
+      "configurePreset": "windows-testing-ci-x64",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "ubuntu-x86_64",
-      "configurePreset": "ubuntu-x86_64",
+      "name": "ubuntu-testing-x86_64",
+      "configurePreset": "ubuntu-testing-x86_64",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "ubuntu-ci-x86_64",
-      "configurePreset": "ubuntu-ci-x86_64",
+      "name": "ubuntu-testing-ci-x86_64",
+      "configurePreset": "ubuntu-testing-ci-x86_64",
       "configuration": "RelWithDebInfo"
     }
   ]
