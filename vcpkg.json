@@ -1,6 +1,13 @@
 {
   "dependencies": [
     {
+      "name": "curl",
+      "default-features": false,
+      "features": [
+        "wolfssl"
+      ]
+    },
+    {
       "name": "cpr",
       "default-features": false
     },
