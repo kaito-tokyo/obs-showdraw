@@ -73,14 +73,12 @@ private:
 
 class obs_log_ostream : public std::ostream {
 public:
-	explicit obs_log_ostream(int level) noexcept : streambuf(level), std::ostream(nullptr) {
-		rdbuf(&streambuf);
-	}
+	explicit obs_log_ostream(int level) noexcept : streambuf(level), std::ostream(nullptr) { rdbuf(&streambuf); }
 
-    obs_log_ostream(const obs_log_ostream &) = delete;
-    obs_log_ostream &operator=(const obs_log_ostream &) = delete;
-    obs_log_ostream(obs_log_ostream &&) = delete;
-    obs_log_ostream &operator=(obs_log_ostream &&) = delete;
+	obs_log_ostream(const obs_log_ostream &) = delete;
+	obs_log_ostream &operator=(const obs_log_ostream &) = delete;
+	obs_log_ostream(obs_log_ostream &&) = delete;
+	obs_log_ostream &operator=(obs_log_ostream &&) = delete;
 
 private:
 	obs_log_streambuf streambuf;
