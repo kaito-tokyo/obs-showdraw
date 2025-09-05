@@ -23,6 +23,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <string>
 #include <vector>
 
+#include <obs.h>
+
 namespace kaito_tokyo {
 namespace obs_showdraw {
 
