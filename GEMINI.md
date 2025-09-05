@@ -9,9 +9,9 @@
 
 ## How to build and run tests on macOS
 
-1. Run `cmake --preset macos -DBUILD_TESTING=ON` if CMake-related files were changed.
-2. Run `cmake --build --preset macos`.
-3. Run `ctest --preset macos --rerun-failed --output-on-failure`.
+1. Run `cmake --preset macos-testing`.
+2. Run `cmake --build --preset macos-testing`.
+3. Run `ctest --preset macos-testing --rerun-failed --output-on-failure`.
 
 ## Release Automation with Gemini
 
