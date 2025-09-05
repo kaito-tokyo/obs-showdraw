@@ -21,7 +21,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <sstream>
 #include <iostream> // For std::cout
 
-#include <nlohmann/json.hpp>
 #include <cpr/cpr.h> // Add this include
 
 #include <obs.h>
@@ -31,20 +30,11 @@ UpdateChecker::UpdateChecker(void) {}
 
 void UpdateChecker::fetch(void)
 {
-	cpr::Response r = cpr::Get(cpr::Url{"https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest"});
+	cpr::Response r = cpr::Get(cpr::Url{"https://obs-showdraw.kaito.tokyo/metadata/latest-version.txt"});
 
 	if (r.status_code == 200) {
-		try {
-			auto json_response = nlohmann::json::parse(r.text);
-			if (json_response.contains("tag_name")) {
-				latestVersion = json_response["tag_name"].get<std::string>();
-				std::cout << "Latest version: " << latestVersion << std::endl; // For debugging
-			} else {
-				std::cerr << "Error: 'tag_name' not found in the response." << std::endl;
-			}
-		} catch (const nlohmann::json::exception &e) {
-			std::cerr << "JSON parsing error: " << e.what() << std::endl;
-		}
+		latestVersion = r.text;
+		std::cout << "Latest version: " << latestVersion << std::endl; // For debugging
 	} else {
 		std::cerr << "Failed to fetch latest version. Status code: " << r.status_code << std::endl;
 		std::cerr << "Error message: " << r.error.message << std::endl;
