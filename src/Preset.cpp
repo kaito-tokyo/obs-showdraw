@@ -28,11 +28,12 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "plugin-support.h"
 
 #include "Preset.hpp"
-#include "bridge.hpp"
 
-using kaitotokyo::obs::unique_bfree_t;
-using kaitotokyo::obs::unique_obs_data_array_t;
-using kaitotokyo::obs::unique_obs_data_t;
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
+
+using kaito_tokyo::obs_bridge_utils::unique_bfree_t;
+using kaito_tokyo::obs_bridge_utils::unique_obs_data_array_t;
+using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
 
 const char *UserPresetsJson = "UserPresets.json";
 const char *UserPresetsVersion = "2025-09-03";

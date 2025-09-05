@@ -18,10 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "UpdateChecker.hpp"
 
-#include <sstream>
-#include <iostream> // For std::cout
-
-#include <cpr/cpr.h> // Add this include
+#include <cpr/cpr.h>
 
 #include <obs.h>
 #include "plugin-support.h"
@@ -34,11 +31,26 @@ void UpdateChecker::fetch(void)
 
 	if (r.status_code == 200) {
 		latestVersion = r.text;
-		std::cout << "Latest version: " << latestVersion << std::endl; // For debugging
 	} else {
-		std::cerr << "Failed to fetch latest version. Status code: " << r.status_code << std::endl;
-		std::cerr << "Error message: " << r.error.message << std::endl;
+		obs_log(LOG_INFO, "Failed to fetch latest version. Status code: %ld, Error message: %s", r.status_code,
+			r.error.message.c_str());
+		latestVersion = "";
 	}
 }
 
-void UpdateChecker::isUpdateAvailable(void) const noexcept {}
+bool UpdateChecker::isUpdateAvailable(const std::string &currentVersion) const noexcept
+{
+	if (latestVersion.empty()) {
+		obs_log(LOG_INFO, "Latest version information is not available.");
+		return false;
+	}
+
+	if (latestVersion != currentVersion) {
+		blog(LOG_INFO, "[obs-showdraw] A new version is available: %s (current: %s)", latestVersion.c_str(),
+		     currentVersion.c_str());
+	} else {
+		blog(LOG_INFO, "[obs-showdraw] You are using the latest version: %s", currentVersion.c_str());
+	}
+
+	return true;
+}

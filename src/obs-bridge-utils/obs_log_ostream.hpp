@@ -1,5 +1,5 @@
 /*
-obs-showdraw
+obs-bridge-utils
 Copyright (C) 2025 Kaito Udagawa umireon@kaito.tokyo
 
 This program is free software; you can redistribute it and/or modify
@@ -18,15 +18,28 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <string>
+#include <sstream>
 
-class UpdateChecker {
+#include "plugin-support.h"
+
+namespace kaito_tokyo {
+namespace obs_bridge_utils {
+
+class obs_log_ostream {
 public:
-	UpdateChecker(void);
-	void fetch(void);
-	bool isUpdateAvailable(const std::string &currentVersion) const noexcept;
-	const std::string &getLatestVersion() const { return latestVersion; }
+	obs_log_ostream(int level) : level(level) {}
+	~obs_log_ostream() { blog(level, "%s", buffer.str().c_str()); }
+
+	template<typename T> obs_log_ostream &operator<<(const T &value)
+	{
+		buffer << value;
+		return *this;
+	}
 
 private:
-	std::string latestVersion;
+	int level;
+	std::ostringstream buffer;
 };
+
+}
+}

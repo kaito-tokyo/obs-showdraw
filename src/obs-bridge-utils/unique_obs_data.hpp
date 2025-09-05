@@ -1,5 +1,5 @@
 /*
-obs-showdraw
+obs-bridge-utils
 Copyright (C) 2025 Kaito Udagawa umireon@kaito.tokyo
 
 This program is free software; you can redistribute it and/or modify
@@ -18,15 +18,17 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <string>
+#include <memory>
+#include <obs-data.h>
 
-class UpdateChecker {
-public:
-	UpdateChecker(void);
-	void fetch(void);
-	bool isUpdateAvailable(const std::string &currentVersion) const noexcept;
-	const std::string &getLatestVersion() const { return latestVersion; }
+namespace kaito_tokyo {
+namespace obs_bridge_utils {
 
-private:
-	std::string latestVersion;
+struct obs_data_deleter {
+	void operator()(obs_data_t *data) const { obs_data_release(data); }
 };
+
+using unique_obs_data_t = std::unique_ptr<obs_data_t, obs_data_deleter>;
+
+}
+}
