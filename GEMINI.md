@@ -15,31 +15,36 @@
 
 ## Release Automation with Gemini
 
-To initiate a new release, instruct Gemini to start the process (e.g., "リリースを開始して"). Gemini will then guide you through the following steps:
+To initiate a new release, the user will instruct Gemini to start the process (e.g., "リリースを開始して"). Gemini will then perform the following steps:
 
 1.  **Specify New Version**:
-    *   Gemini will display the current version.
-    *   You will be prompted to provide the new version number (e.g., `1.0.0`, `1.0.0-beta1`).
-    *   **Constraint**: The version must follow Semantic Versioning (e.g., `MAJOR.MINOR.PATCH`).
+    *   **ACTION**: Display the current version.
+    *   **ACTION**: Prompt the user to provide the new version number (e.g., `1.0.0`, `1.0.0-beta1`).
+    *   **CONSTRAINT**: The version must follow Semantic Versioning (e.g., `MAJOR.MINOR.PATCH`).
 
 2.  **Prepare & Update `buildspec.json`**:
-    *   Gemini will confirm the current branch is `main` and synchronized with the remote.
-    *   A new branch (`bump-X.Y.Z`) will be created.
-    *   The `version` field in `buildspec.json` will be updated.
+    *   **ACTION**: Confirm the current branch is `main` and synchronized with the remote.
+    *   **ACTION**: Create a new branch (`bump-X.Y.Z`).
+    *   **ACTION**: Update the `version` field in `buildspec.json`.
 
 3.  **Create & Merge Pull Request (PR)**:
-    *   Gemini will create a PR for the version update.
-    *   You will be instructed to merge this PR.
-    *   **Pause**: The process pauses until you confirm the PR merge to Gemini.
+    *   **ACTION**: Create a PR for the version update.
+    *   **ACTION**: Provide the URL of the created PR.
+    *   **ACTION**: Instruct the user to merge this PR.
+    *   **PAUSE**: Wait for user confirmation of PR merge.
 
 4.  **Push Git Tag**:
-    *   After PR merge confirmation, instruct Gemini to push the Git tag.
-    *   **Constraint**: The tag must be `X.Y.Z` (no 'v' prefix).
-    *   Pushing the tag triggers the automated release workflow.
+    *   **TRIGGER**: User instructs Gemini to push the Git tag after PR merge confirmation.
+    *   **ACTION**: Switch to the `main` branch.
+    *   **ACTION**: Synchronize with the remote.
+    *   **ACTION**: Verify the `buildspec.json` version.
+    *   **ACTION**: Push the Git tag.
+    *   **CONSTRAINT**: The tag must be `X.Y.Z` (no 'v' prefix).
+    *   **RESULT**: Pushing the tag triggers the automated release workflow.
 
 5.  **Finalize Release**:
-    *   Gemini will provide the draft release URL.
-    *   You should then complete the release on GitHub.
+    *   **ACTION**: Provide the draft release URL.
+    *   **INSTRUCTION**: User completes the release on GitHub.
 
 **Example Interaction:**
 
