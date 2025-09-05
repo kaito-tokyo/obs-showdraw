@@ -12,7 +12,7 @@
       "cacheVariables": {
         "ENABLE_FRONTEND_API": true,
         "ENABLE_QT": true,
-        "BUILD_TESTING": false
+        "BUILD_TESTING": true
       }
     },
     {
@@ -48,28 +48,6 @@
       }
     },
     {
-      "name": "macos-testing",
-      "inherits": ["macos"],
-      "displayName": "macOS Universal Testing build",
-      "description": "Build for macOS 12.0+ (Universal binary) for Testing",
-      "binaryDir": "${sourceDir}/build_macos_testing",
-      "generator": "Xcode",
-      "cacheVariables": {
-        "BUILD_TESTING": true
-      }
-    },
-    {
-      "name": "macos-testing-ci",
-      "inherits": ["macos-testing"],
-      "displayName": "macOS Universal CI build",
-      "description": "Build for macOS 12.0+ (Universal binary) for CI Testing",
-      "generator": "Xcode",
-      "cacheVariables": {
-        "CMAKE_COMPILE_WARNING_AS_ERROR": true,
-        "ENABLE_CCACHE": true
-      }
-    },
-    {
       "name": "windows-x64",
       "displayName": "Windows x64",
       "description": "Build for Windows x64",
@@ -92,27 +70,6 @@
       "inherits": ["windows-x64"],
       "displayName": "Windows x64 CI build",
       "description": "Build for Windows x64 on CI",
-      "cacheVariables": {
-        "CMAKE_COMPILE_WARNING_AS_ERROR": true
-      }
-    },
-    {
-      "name": "windows-testing-x64",
-      "inherits": ["windows-x64"],
-      "displayName": "Windows x64 Testing build",
-      "description": "Build for Windows x64 for Testing",
-      "binaryDir": "${sourceDir}/build_x64_testing",
-      "generator": "Visual Studio 17 2022",
-      "cacheVariables": {
-        "BUILD_TESTING": true
-      }
-    },
-    {
-      "name": "windows-testing-ci-x64",
-      "inherits": ["windows-testing-x64"],
-      "displayName": "Windows x64 Testing CI build",
-      "description": "Build for Windows x64 for CI Testing",
-      "generator": "Visual Studio 17 2022",
       "cacheVariables": {
         "CMAKE_COMPILE_WARNING_AS_ERROR": true
       }
@@ -146,28 +103,6 @@
         "CMAKE_COMPILE_WARNING_AS_ERROR": true,
         "ENABLE_CCACHE": true
       }
-    },
-    {
-      "name": "ubuntu-testing-x86_64",
-      "inherits": ["ubuntu-x86_64"],
-      "displayName": "Ubuntu x86_64 testing build",
-      "description": "Build for Ubuntu x86_64 for Testing",
-      "binaryDir": "${sourceDir}/build_testing_x86_64",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "BUILD_TESTING": true
-      }
-    },
-    {
-      "name": "ubuntu-testing-ci-x86_64",
-      "inherits": ["ubuntu-testing-x86_64"],
-      "displayName": "Ubuntu x86_64 CI Testing build",
-      "description": "Build for Ubuntu x86_64 for CI Testing",
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CMAKE_COMPILE_WARNING_AS_ERROR": true,
-        "ENABLE_CCACHE": true
-      }
     }
   ],
   "buildPresets": [
@@ -186,20 +121,6 @@
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "macos-testing",
-      "configurePreset": "macos-testing",
-      "displayName": "macOS Universal Testing",
-      "description": "macOS Testing build for Universal architectures",
-      "configuration": "RelWithDebInfo"
-    },
-    {
-      "name": "macos-testing-ci",
-      "configurePreset": "macos-testing-ci",
-      "displayName": "macOS Universal Testing CI",
-      "description": "macOS CI Testing build for Universal architectures",
-      "configuration": "RelWithDebInfo"
-    },
-    {
       "name": "windows-x64",
       "configurePreset": "windows-x64",
       "displayName": "Windows x64",
@@ -214,20 +135,6 @@
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "windows-testing-x64",
-      "configurePreset": "windows-x64",
-      "displayName": "Windows x64 Testing",
-      "description": "Windows testing build for x64",
-      "configuration": "RelWithDebInfo"
-    },
-    {
-      "name": "windows-testing-ci-x64",
-      "configurePreset": "windows-testing-ci-x64",
-      "displayName": "Windows x64 CI Testing",
-      "description": "Windows CI testing build for x64 (RelWithDebInfo configuration)",
-      "configuration": "RelWithDebInfo"
-    },
-    {
       "name": "ubuntu-x86_64",
       "configurePreset": "ubuntu-x86_64",
       "displayName": "Ubuntu x86_64",
@@ -239,20 +146,6 @@
       "configurePreset": "ubuntu-ci-x86_64",
       "displayName": "Ubuntu x86_64 CI",
       "description": "Ubuntu CI build for x86_64",
-      "configuration": "RelWithDebInfo"
-    },
-    {
-      "name": "ubuntu-testing-x86_64",
-      "configurePreset": "ubuntu-x86_64",
-      "displayName": "Ubuntu x86_64 Testing",
-      "description": "Ubuntu testing build for x86_64",
-      "configuration": "RelWithDebInfo"
-    },
-    {
-      "name": "ubuntu-testing-ci-x86_64",
-      "configurePreset": "ubuntu-testing-ci-x86_64",
-      "displayName": "Ubuntu x86_64 CI Testing",
-      "description": "Ubuntu CI testing build for x86_64",
       "configuration": "RelWithDebInfo"
     }
   ],
