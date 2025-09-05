@@ -20,10 +20,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <sstream>
 
-#include <curlpp/Easy.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
-
 #include <nlohmann/json.hpp>
 
 #include <obs.h>
@@ -33,42 +29,29 @@ UpdateChecker::UpdateChecker(void) {}
 
 void UpdateChecker::fetch(void)
 {
-	try {
-		cURLpp::Cleanup myCleanup;
+	cpr::Response response = cpr::Get(cpr::Url{"https://www.example.com"});
+	obs_log(LOG_INFO, "HTTP Request completed with status code: %d", response.status_code);
+	obs_log(LOG_INFO, "HTTP Request completed with status code: %s", response.error.message.c_str());
 
-		std::ostringstream os;
-		curlpp::Easy request;
-		request.setOpt(curlpp::options::Url("https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest"));
-		request.setOpt(curlpp::options::FollowLocation(true));
-		request.setOpt(curlpp::options::UserAgent("obs-showdraw")); // GitHub API requires a User-Agent
-		request.setOpt(new curlpp::options::SslVerifyPeer(false));
-		request.setOpt(new curlpp::options::SslVerifyHost(false));
+	// if (response.status_code == 200) {
+	// 	std::string response_body = response.text;
+	// 	obs_log(LOG_INFO, "GitHub API Response: %s", response_body.c_str());
 
-		std::ostringstream response_stream;
-		request.setOpt(curlpp::options::WriteStream(&response_stream));
-
-		request.perform();
-
-		std::string response_body = response_stream.str();
-		obs_log(LOG_INFO, "GitHub API Response: %s", response_body.c_str());
-
-		try {
-			auto json_response = nlohmann::json::parse(response_body);
-			if (json_response.contains("tag_name")) {
-				latestVersion = json_response["tag_name"].get<std::string>();
-				obs_log(LOG_INFO, "Latest version: %s", latestVersion.c_str());
-			} else {
-				obs_log(LOG_WARNING, "GitHub API Response does not contain 'tag_name'");
-			}
-		} catch (const nlohmann::json::exception& e) {
-			obs_log(LOG_ERROR, "JSON parsing error: %s", e.what());
-		}
-
-	} catch (curlpp::LogicError &e) {
-		obs_log(LOG_ERROR, "UpdateChecker LogicError: %s\n", e.what());
-	} catch (curlpp::RuntimeError &e) {
-		obs_log(LOG_ERROR, "UpdateChecker RuntimeError: %s\n", e.what());
-	}
+	// 	try {
+	// 		auto json_response = nlohmann::json::parse(response_body);
+	// 		if (json_response.contains("tag_name")) {
+	// 			latestVersion = json_response["tag_name"].get<std::string>();
+	// 			obs_log(LOG_INFO, "Latest version: %s", latestVersion.c_str());
+	// 		} else {
+	// 			obs_log(LOG_WARNING, "GitHub API Response does not contain 'tag_name'");
+	// 		}
+	// 	} catch (const nlohmann::json::exception &e) {
+	// 		obs_log(LOG_ERROR, "JSON parsing error: %s", e.what());
+	// 	}
+	// } else {
+	// 	obs_log(LOG_ERROR, "HTTP Request failed with status code: %d", response.status_code);
+	// 	obs_log(LOG_ERROR, "Error message: %s", response.error.message.c_str());
+	// }
 }
 
 void UpdateChecker::isUpdateAvailable(void) const noexcept {}

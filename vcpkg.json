@@ -8,6 +8,9 @@
       ]
     },
     "nlohmann-json",
-    "cpr"
+    {
+      "name": "cpr",
+      "default-features": false
+    }
   ]
 }

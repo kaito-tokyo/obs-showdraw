@@ -19,13 +19,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #pragma once
 
 #include <string>
+#include <cpr/cpr.h>
 
 class UpdateChecker {
 public:
 	UpdateChecker(void);
 	void fetch(void);
 	void isUpdateAvailable(void) const noexcept;
-	const std::string& getLatestVersion() const { return latestVersion; }
+	const std::string &getLatestVersion() const { return latestVersion; }
 
 private:
 	std::string latestVersion;
