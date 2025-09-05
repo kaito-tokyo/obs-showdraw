@@ -36,9 +36,12 @@ void showdraw_video_render(void *data, gs_effect_t *effect);
 }
 
 #include <memory>
+#include <future>
+#include <optional>
 
 #include "DrawingEffect.hpp"
 #include "Preset.hpp"
+#include "UpdateChecker.hpp"
 
 namespace kaito_tokyo {
 namespace obs_showdraw {
@@ -47,8 +50,10 @@ class ShowDrawFilterContext : public std::enable_shared_from_this<ShowDrawFilter
 public:
 	static const char *getName() noexcept;
 
-	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source);
+	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept;
 	~ShowDrawFilterContext() noexcept;
+
+	void afterCreate() noexcept;
 
 	static void getDefaults(obs_data_t *data) noexcept;
 
@@ -87,6 +92,9 @@ private:
 	gs_texture_t *texture_target;
 	gs_texture_t *texture_motion_map;
 	gs_texture_t *texture_previous_luminance;
+
+	std::future<void> future_update_check;
+	std::optional<LatestVersion> latest_version;
 };
 
 } // namespace obs_showdraw

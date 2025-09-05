@@ -52,6 +52,7 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 
 	try {
 		auto self = std::make_shared<ShowDrawFilterContext>(settings, source);
+		self->afterCreate();
 		self->update(settings);
 		return new std::shared_ptr<ShowDrawFilterContext>(self);
 	} catch (const std::exception &e) {
@@ -129,13 +130,11 @@ const char *ShowDrawFilterContext::getName() noexcept
 	return obs_module_text("pluginName");
 }
 
-ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source)
+ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept
 	: settings(settings),
 	  filter(source),
 	  drawingEffect(nullptr)
 {
-	slog(LOG_INFO) << "Creating showdraw filter context";
-
 	runningPreset.presetName = " running";
 }
 
@@ -150,6 +149,16 @@ ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 	gs_texture_destroy(texture_motion_map);
 	gs_texture_destroy(texture_previous_luminance);
 	obs_leave_graphics();
+}
+
+void ShowDrawFilterContext::afterCreate() noexcept
+{
+	slog(LOG_INFO) << "Creating showdraw filter context";
+
+	future_update_check = std::async(std::launch::async, [this]() {
+		UpdateChecker checker;
+		latest_version = checker.fetch();
+	});
 }
 
 void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
