@@ -41,6 +41,8 @@ void UpdateChecker::fetch(void)
 		request.setOpt(curlpp::options::Url("https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest"));
 		request.setOpt(curlpp::options::FollowLocation(true));
 		request.setOpt(curlpp::options::UserAgent("obs-showdraw")); // GitHub API requires a User-Agent
+		request.setOpt(new curlpp::options::SslVerifyPeer(false));
+		request.setOpt(new curlpp::options::SslVerifyHost(false));
 
 		std::ostringstream response_stream;
 		request.setOpt(curlpp::options::WriteStream(&response_stream));
