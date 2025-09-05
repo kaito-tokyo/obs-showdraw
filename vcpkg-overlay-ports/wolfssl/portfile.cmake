@@ -10,6 +10,11 @@ vcpkg_from_github(
 vcpkg_cmake_get_vars(cmake_vars_file)
 include("${cmake_vars_file}")
 
+set(LOCAL_C_FLAGS_RELEASE "${VCPKG_COMBINED_C_FLAGS_RELEASE}")
+set(LOCAL_C_FLAGS_DEBUG "${VCPKG_COMBINED_C_FLAGS_DEBUG}")
+string(REPLACE "-Werror" "" LOCAL_C_FLAGS_RELEASE "${LOCAL_C_FLAGS_RELEASE}")
+string(REPLACE "-Werror" "" LOCAL_C_FLAGS_DEBUG "${LOCAL_C_FLAGS_DEBUG}")
+
 vcpkg_cmake_configure(
     SOURCE_PATH ${SOURCE_PATH}
     OPTIONS
