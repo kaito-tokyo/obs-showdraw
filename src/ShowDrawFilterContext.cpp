@@ -50,7 +50,7 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 void showdraw_destroy(void *data)
 {
 	if (!data) {
-		slog(LOG_WARNING) << "showdraw_destroy called with null data";
+		slog(LOG_ERROR) << "showdraw_destroy called with null data";
 		return;
 	}
 
@@ -66,7 +66,7 @@ void showdraw_get_defaults(obs_data_t *data)
 obs_properties_t *showdraw_get_properties(void *data)
 {
 	if (!data) {
-		slog(LOG_WARNING) << "showdraw_get_properties called with null data";
+		slog(LOG_ERROR) << "showdraw_get_properties called with null data";
 		return nullptr;
 	}
 
@@ -77,7 +77,7 @@ obs_properties_t *showdraw_get_properties(void *data)
 void showdraw_update(void *data, obs_data_t *settings)
 {
 	if (!data) {
-		slog(LOG_WARNING) << "showdraw_update called with null data";
+		slog(LOG_ERROR) << "showdraw_update called with null data";
 		return;
 	}
 
@@ -90,12 +90,12 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	UNUSED_PARAMETER(effect);
 
 	if (!data) {
-		slog(LOG_WARNING) << "showdraw_video_render called with null data";
+		slog(LOG_ERROR) << "showdraw_video_render called with null data";
 		return;
 	}
 
-	ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-	context->videoRender();
+	auto context = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	context->get()->videoRender();
 }
 
 const char *ShowDrawFilterContext::getName() noexcept
@@ -108,7 +108,7 @@ ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t 
 	  filter(source),
 	  drawingEffect(nullptr)
 {
-	obs_log(LOG_INFO, "Creating showdraw filter context");
+	slog(LOG_INFO) << "Creating showdraw filter context";
 
 	runningPreset.presetName = " running";
 
@@ -117,7 +117,7 @@ ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t 
 
 ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 {
-	obs_log(LOG_INFO, "Destroying showdraw filter context");
+	slog(LOG_INFO) << "Destroying showdraw filter context";
 
 	obs_enter_graphics();
 	drawingEffect.release();
@@ -280,28 +280,28 @@ bool ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height) noex
 	try {
 		ensureTexture(texture_source, width, height);
 	} catch (const std::bad_alloc &) {
-		obs_log(LOG_ERROR, "Failed to create source texture");
+		slog(LOG_ERROR) << "Failed to create source texture";
 		return false;
 	}
 
 	try {
 		ensureTexture(texture_target, width, height);
 	} catch (const std::bad_alloc &) {
-		obs_log(LOG_ERROR, "Failed to create target texture");
+		slog(LOG_ERROR) << "Failed to create target texture";
 		return false;
 	}
 
 	try {
 		ensureTexture(texture_motion_map, width, height);
 	} catch (const std::bad_alloc &) {
-		obs_log(LOG_ERROR, "Failed to create motion map texture");
+		slog(LOG_ERROR) << "Failed to create motion map texture";
 		return false;
 	}
 
 	try {
 		ensureTexture(texture_previous_luminance, width, height);
 	} catch (const std::bad_alloc &) {
-		obs_log(LOG_ERROR, "Failed to create previous luminance texture");
+		slog(LOG_ERROR) << "Failed to create previous luminance texture";
 		return false;
 	}
 
@@ -494,14 +494,14 @@ void ShowDrawFilterContext::drawFinalImage() noexcept
 void ShowDrawFilterContext::videoRender() noexcept
 {
 	if (!filter) {
-		obs_log(LOG_ERROR, "Filter source not found");
+		slog(LOG_ERROR) << "Filter source not found";
 		return;
 	}
 
 	obs_source_t *target = obs_filter_get_target(filter);
 
 	if (!target) {
-		obs_log(LOG_ERROR, "Target source not found");
+		slog(LOG_ERROR) << "Target source not found";
 		obs_source_skip_video_filter(filter);
 		return;
 	}
@@ -510,7 +510,7 @@ void ShowDrawFilterContext::videoRender() noexcept
 		try {
 			drawingEffect = std::make_unique<DrawingEffect>();
 		} catch (const std::exception &e) {
-			obs_log(LOG_ERROR, "Failed to create drawing effect: %s", e.what());
+			slog(LOG_ERROR) << "Failed to create drawing effect: " << e.what();
 			obs_source_skip_video_filter(filter);
 			return;
 		}
@@ -520,13 +520,13 @@ void ShowDrawFilterContext::videoRender() noexcept
 	const uint32_t height = obs_source_get_height(target);
 
 	if (width == 0 || height == 0) {
-		obs_log(LOG_DEBUG, "Target source has zero width or height");
+		slog(LOG_DEBUG) << "Target source has zero width or height";
 		obs_source_skip_video_filter(filter);
 		return;
 	}
 
 	if (!ensureTextures(width, height)) {
-		obs_log(LOG_ERROR, "Failed to ensure textures");
+		slog(LOG_ERROR) << "Failed to ensure textures";
 		obs_source_skip_video_filter(filter);
 		return;
 	}
@@ -541,7 +541,7 @@ void ShowDrawFilterContext::videoRender() noexcept
 	gs_texture_t *default_render_target = gs_get_render_target();
 
 	if (!obs_source_process_filter_begin(filter, GS_BGRA, OBS_ALLOW_DIRECT_RENDERING)) {
-		obs_log(LOG_ERROR, "Could not begin processing filter");
+		slog(LOG_ERROR) << "Could not begin processing filter";
 		obs_source_skip_video_filter(filter);
 		return;
 	}
