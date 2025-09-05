@@ -52,6 +52,7 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 
 	try {
 		auto self = std::make_shared<ShowDrawFilterContext>(settings, source);
+		self->afterCreate();
 		self->update(settings);
 		return new std::shared_ptr<ShowDrawFilterContext>(self);
 	} catch (const std::exception &e) {
@@ -129,13 +130,11 @@ const char *ShowDrawFilterContext::getName() noexcept
 	return obs_module_text("pluginName");
 }
 
-ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source)
+ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept
 	: settings(settings),
 	  filter(source),
 	  drawingEffect(nullptr)
 {
-	slog(LOG_INFO) << "Creating showdraw filter context";
-
 	runningPreset.presetName = " running";
 }
 
@@ -150,6 +149,16 @@ ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 	gs_texture_destroy(texture_motion_map);
 	gs_texture_destroy(texture_previous_luminance);
 	obs_leave_graphics();
+}
+
+void ShowDrawFilterContext::afterCreate()
+{
+	slog(LOG_INFO) << "Creating showdraw filter context";
+
+	futureLatestVersion = std::async(std::launch::async, []() {
+				      UpdateChecker checker;
+				      return checker.fetch();
+			      }).share();
 }
 
 void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
@@ -185,6 +194,14 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 {
 	obs_properties_t *props = obs_properties_create();
+
+	const char *updateAvailableText = obs_module_text("updateCheckerPluginIsLatest");
+	std::optional<LatestVersion> latestVersion = getLatestVersion();
+	if (latestVersion.has_value() && latestVersion->isUpdateAvailable(PLUGIN_VERSION)) {
+		updateAvailableText = obs_module_text("updateCheckerUpdateAvailable");
+	}
+
+	obs_properties_add_text(props, "isUpdateAvailable", updateAvailableText, OBS_TEXT_INFO);
 
 	obs_properties_add_button2(
 		props, "openPresetWindow", obs_module_text("openPresetWindow"),
@@ -421,6 +438,19 @@ obs_source_t *ShowDrawFilterContext::getFilter() const noexcept
 Preset ShowDrawFilterContext::getRunningPreset() const noexcept
 {
 	return runningPreset;
+}
+
+std::optional<LatestVersion> ShowDrawFilterContext::getLatestVersion() const
+{
+	if (!futureLatestVersion.valid()) {
+		return std::nullopt;
+	}
+
+	if (futureLatestVersion.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+		return std::nullopt;
+	}
+
+	return futureLatestVersion.get();
 }
 
 void ensureTexture(gs_texture_t *&texture, uint32_t width, uint32_t height)

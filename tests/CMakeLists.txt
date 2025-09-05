@@ -12,9 +12,17 @@ target_link_libraries(
 )
 gtest_discover_tests(UpdateChecker_test DISCOVERY_MODE PRE_TEST)
 
+add_executable(ShowDrawFilterContext_test obs_test_environment.cpp ShowDrawFilterContext_test.cpp)
+target_link_libraries(
+  ShowDrawFilterContext_test
+  PRIVATE GTest::gtest_main semver::semver cpr::cpr nlohmann_json::nlohmann_json OBS::libobs ${CMAKE_PROJECT_NAME}_impl
+)
+gtest_discover_tests(ShowDrawFilterContext_test DISCOVERY_MODE PRE_TEST)
+
 set_target_properties(
   Preset_test
   UpdateChecker_test
+  ShowDrawFilterContext_test
   PROPERTIES
     XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-"
     XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME "YES"
