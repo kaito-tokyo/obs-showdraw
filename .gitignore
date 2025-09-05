@@ -8,6 +8,7 @@
 !/build-aux
 !/cmake
 !/data
+!/docs
 !/src
 !/tests
 !/vcpkg-overlay-ports
