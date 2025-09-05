@@ -6,13 +6,8 @@
 - CMake files must be formatted using gersemi after any modification.
 - OBS team maintains the CMake and GitHub Actions so we don't need to improve these parts.
 
-## How to build on macOS
+## How to build and run tests on macOS
 
 1. Run `cmake --preset macos`.
 2. Run `cmake --build --preset macos`.
-
-## How to run tests on macOS
-
-1. Run `cmake --preset macos-testing`.
-2. Run `cmake --build --preset macos-testing`.
-3. Run `ctest --preset macos-testing`.
+3. Run `ctest --preset macos`.

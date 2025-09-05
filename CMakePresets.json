@@ -151,33 +151,33 @@
   ],
   "testPresets": [
     {
-      "name": "macos-testing",
-      "configurePreset": "macos-testing",
+      "name": "macos",
+      "configurePreset": "macos",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "macos-testing-ci",
-      "configurePreset": "macos-testing-ci",
+      "name": "macos-ci",
+      "configurePreset": "macos-ci",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "windows-testing-x64",
-      "configurePreset": "windows-testing-x64",
+      "name": "windows-x64",
+      "configurePreset": "windows-x64",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "windows-testing-ci-x64",
-      "configurePreset": "windows-testing-ci-x64",
+      "name": "windows-ci-x64",
+      "configurePreset": "windows-ci-x64",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "ubuntu-testing-x86_64",
-      "configurePreset": "ubuntu-testing-x86_64",
+      "name": "ubuntu-x86_64",
+      "configurePreset": "ubuntu-x86_64",
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "ubuntu-testing-ci-x86_64",
-      "configurePreset": "ubuntu-testing-ci-x86_64",
+      "name": "ubuntu-ci-x86_64",
+      "configurePreset": "ubuntu-ci-x86_64",
       "configuration": "RelWithDebInfo"
     }
   ]
