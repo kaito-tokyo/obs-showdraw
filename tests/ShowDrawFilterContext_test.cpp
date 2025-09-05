@@ -12,7 +12,8 @@ using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
 using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
 using kaito_tokyo::obs_showdraw::LatestVersion;
 
-TEST(ShowDrawFilterContextTest, GetLatestVersion) {
+TEST(ShowDrawFilterContextTest, GetLatestVersion)
+{
 	ShowDrawFilterContext context(nullptr, nullptr);
 	context.afterCreate();
 	ASSERT_EQ(context.getLatestVersion(), std::nullopt);
