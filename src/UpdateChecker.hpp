@@ -20,6 +20,12 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <string>
 
+/**
+ * @brief Performs a synchronous check for software updates.
+ *
+ * @note The calling context is expected to handle any desired asynchronous
+ * execution.
+ */
 class UpdateChecker {
 public:
 	UpdateChecker(void);
