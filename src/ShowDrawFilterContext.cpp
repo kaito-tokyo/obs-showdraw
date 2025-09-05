@@ -432,14 +432,17 @@ Preset ShowDrawFilterContext::getRunningPreset() const noexcept
 	return runningPreset;
 }
 
-std::optional<LatestVersion> ShowDrawFilterContext::getLatestVersion()
+std::optional<LatestVersion> ShowDrawFilterContext::getLatestVersion() const
 {
-	if (futureLatestVersion.valid() &&
-	    futureLatestVersion.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-		return futureLatestVersion.get();
+	if (!futureLatestVersion.valid()) {
+		return std::nullopt;
 	}
 
-	return std::nullopt;
+	if (futureLatestVersion.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+		return std::nullopt;
+	}
+
+	return futureLatestVersion.get();
 }
 
 void ensureTexture(gs_texture_t *&texture, uint32_t width, uint32_t height)
