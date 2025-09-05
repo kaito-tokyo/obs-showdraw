@@ -23,17 +23,19 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <iomanip>
 #include <sstream>
 
+#include "plugin-support.h"
 #include <obs-module.h>
 
-#include "plugin-support.h"
+#include "obs-bridge-utils/obs-bridge-utils.hpp"
 
 #include "Preset.hpp"
-
-#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
 using kaito_tokyo::obs_bridge_utils::unique_bfree_t;
 using kaito_tokyo::obs_bridge_utils::unique_obs_data_array_t;
 using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
+
+namespace kaito_tokyo {
+namespace obs_showdraw {
 
 const char *UserPresetsJson = "UserPresets.json";
 const char *UserPresetsVersion = "2025-09-03";
@@ -249,3 +251,6 @@ Preset Preset::getStrongDefault() noexcept
 		6.0,                     // scalingFactorDb
 	};
 }
+
+} // namespace obs_showdraw
+} // namespace kaito_tokyo

@@ -23,7 +23,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <string>
 #include <vector>
 
-#include <obs-module.h>
+namespace kaito_tokyo {
+namespace obs_showdraw {
 
 enum class ExtractionMode {
 	Default = 0,
@@ -70,3 +71,6 @@ public:
 
 	static Preset getStrongDefault() noexcept;
 };
+
+} // namespace obs_showdraw
+} // namespace kaito_tokyo

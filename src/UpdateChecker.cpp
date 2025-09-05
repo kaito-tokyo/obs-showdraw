@@ -21,12 +21,15 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <cpr/cpr.h>
 #include <semver.hpp>
 
-#include <obs.h>
 #include "plugin-support.h"
+#include <obs.h>
 
-#include <obs-bridge-utils/obs-bridge-utils.hpp>
+#include "obs-bridge-utils/obs-bridge-utils.hpp"
 
 using kaito_tokyo::obs_bridge_utils::slog;
+
+namespace kaito_tokyo {
+namespace obs_showdraw {
 
 LatestVersion::LatestVersion(const std::string &version) : version(version) {}
 
@@ -70,3 +73,6 @@ std::optional<LatestVersion> UpdateChecker::fetch()
 		return std::nullopt;
 	}
 }
+
+} // namespace obs_showdraw
+} // namespace kaito_tokyo

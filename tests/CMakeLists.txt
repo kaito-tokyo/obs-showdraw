@@ -1,7 +1,7 @@
 include(GoogleTest)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-add_executable(Preset_test obs_test_environment.cpp test_preset.cpp)
+add_executable(Preset_test obs_test_environment.cpp Preset_test.cpp)
 target_link_libraries(Preset_test PRIVATE GTest::gtest_main OBS::libobs ${CMAKE_PROJECT_NAME}_impl)
 gtest_discover_tests(Preset_test DISCOVERY_MODE PRE_TEST)
 

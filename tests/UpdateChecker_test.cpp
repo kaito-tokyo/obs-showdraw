@@ -20,6 +20,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "UpdateChecker.hpp"
 
+using kaito_tokyo::obs_showdraw::LatestVersion;
+using kaito_tokyo::obs_showdraw::UpdateChecker;
+
 TEST(UpdateCheckerTest, Fetch)
 {
 	UpdateChecker checker;

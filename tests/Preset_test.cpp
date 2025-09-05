@@ -20,6 +20,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "Preset.hpp"
 
+using kaito_tokyo::obs_showdraw::Preset;
+
 TEST(PresetTest, ValidateDefault)
 {
 	Preset preset = Preset::getStrongDefault();

@@ -20,7 +20,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <memory>
 
-#include <obs-module.h>
+#include <obs.h>
 
 #include "DrawingEffect.hpp"
 #include "Preset.hpp"
@@ -39,11 +39,11 @@ void showdraw_video_render(void *data, gs_effect_t *effect);
 
 #ifdef __cplusplus
 }
-#endif
 
-#ifdef __cplusplus
+namespace kaito_tokyo {
+namespace obs_showdraw {
 
-class ShowDrawFilterContext {
+class ShowDrawFilterContext : public std::enable_shared_from_this<ShowDrawFilterContext> {
 public:
 	static const char *getName() noexcept;
 
@@ -51,9 +51,13 @@ public:
 	~ShowDrawFilterContext() noexcept;
 
 	static void getDefaults(obs_data_t *data) noexcept;
+
 	obs_properties_t *getProperties() noexcept;
 	void update(obs_data_t *settings) noexcept;
 	void videoRender() noexcept;
+
+	obs_source_t *getFilter() const noexcept;
+	Preset getRunningPreset() const noexcept;
 
 private:
 	bool ensureTextures(uint32_t width, uint32_t height) noexcept;
@@ -85,4 +89,7 @@ private:
 	gs_texture_t *texture_previous_luminance;
 };
 
-#endif
+} // namespace obs_showdraw
+} // namespace kaito_tokyo
+
+#endif // __cplusplus

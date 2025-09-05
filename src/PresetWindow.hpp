@@ -18,20 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <obs-module.h>
-
-#include "Preset.hpp"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
-}
-#endif
-
-#ifdef __cplusplus
-
+#include <memory>
 #include <vector>
 
 #include <QComboBox>
@@ -43,15 +30,20 @@ extern "C" {
 #include <QVBoxLayout>
 #include <QPushButton>
 
-namespace Ui {
-class PresetWindow;
-}
+#include <obs.h>
+
+#include "Preset.hpp"
+
+namespace kaito_tokyo {
+namespace obs_showdraw {
+
+class ShowDrawFilterContext;
 
 class PresetWindow : public QDialog {
 	Q_OBJECT
 
 public:
-	PresetWindow(obs_source_t *filter, const Preset &runningPreset, QWidget *parent = nullptr);
+	PresetWindow(std::shared_ptr<ShowDrawFilterContext> context, QWidget *parent);
 	~PresetWindow();
 
 private slots:
@@ -62,8 +54,7 @@ private slots:
 	void onApplyButtonClicked();
 
 private:
-	obs_source_t *filter;
-	const Preset &runningPreset;
+	std::shared_ptr<ShowDrawFilterContext> context;
 	std::vector<Preset> presets;
 
 	QComboBox *const presetSelector;
@@ -78,4 +69,5 @@ private:
 	bool validateSettingsJsonTextEdit();
 };
 
-#endif
+} // namespace obs_showdraw
+} // namespace kaito_tokyo

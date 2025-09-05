@@ -16,77 +16,99 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
-#include <new>
+#include "ShowDrawFilterContext.h"
+
 #include <stdexcept>
 
-#include <obs-frontend-api.h>
 #include "plugin-support.h"
-#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
-#include "ShowDrawFilterContext.hpp"
+#include <obs-frontend-api.h>
+#include <obs-module.h>
+
+#include "obs-bridge-utils/obs-bridge-utils.hpp"
+
 #include "DrawingEffect.hpp"
 #include "Preset.hpp"
 #include "PresetWindow.hpp"
 
 using kaito_tokyo::obs_bridge_utils::slog;
 
+using kaito_tokyo::obs_showdraw::DrawingEffect;
+using kaito_tokyo::obs_showdraw::ExtractionMode;
+using kaito_tokyo::obs_showdraw::Preset;
+using kaito_tokyo::obs_showdraw::PresetWindow;
+
 const char *showdraw_get_name(void *type_data)
 {
+	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
+
 	UNUSED_PARAMETER(type_data);
 	return ShowDrawFilterContext::getName();
 }
 
 void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 {
-    try {
-        auto context = std::make_shared<ShowDrawFilterContext>(settings, source);
-        return new std::shared_ptr<ShowDrawFilterContext>(context);
-    } catch (const std::exception &e) {
-        slog(LOG_ERROR) << "Failed to create showdraw context: " << e.what();
-        return nullptr;
-    }
+	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
+
+	try {
+		auto self = std::make_shared<ShowDrawFilterContext>(settings, source);
+		return new std::shared_ptr<ShowDrawFilterContext>(self);
+	} catch (const std::exception &e) {
+		slog(LOG_ERROR) << "Failed to create showdraw context: " << e.what();
+		return nullptr;
+	}
 }
 
 void showdraw_destroy(void *data)
 {
+	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
+
 	if (!data) {
 		slog(LOG_ERROR) << "showdraw_destroy called with null data";
 		return;
 	}
 
-	auto context = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
-	delete context;
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	delete self;
 }
 
 void showdraw_get_defaults(obs_data_t *data)
 {
+	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
+
 	ShowDrawFilterContext::getDefaults(data);
 }
 
 obs_properties_t *showdraw_get_properties(void *data)
 {
+	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
+
 	if (!data) {
 		slog(LOG_ERROR) << "showdraw_get_properties called with null data";
 		return nullptr;
 	}
 
-	auto context = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
-	return context->get()->getProperties();
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	return self->get()->getProperties();
 }
 
 void showdraw_update(void *data, obs_data_t *settings)
 {
+	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
+
 	if (!data) {
 		slog(LOG_ERROR) << "showdraw_update called with null data";
 		return;
 	}
 
-	auto context = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
-	context->get()->update(settings);
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	self->get()->update(settings);
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
 {
+	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
+
 	UNUSED_PARAMETER(effect);
 
 	if (!data) {
@@ -94,9 +116,12 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	auto context = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
-	context->get()->videoRender();
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	self->get()->videoRender();
 }
+
+namespace kaito_tokyo {
+namespace obs_showdraw {
 
 const char *ShowDrawFilterContext::getName() noexcept
 {
@@ -111,8 +136,6 @@ ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t 
 	slog(LOG_INFO) << "Creating showdraw filter context";
 
 	runningPreset.presetName = " running";
-
-	update(settings);
 }
 
 ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
@@ -167,11 +190,11 @@ obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 		[](obs_properties_t *props, obs_property_t *property, void *data) {
 			UNUSED_PARAMETER(props);
 			UNUSED_PARAMETER(property);
-			ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-			PresetWindow *window = new PresetWindow(context->filter, context->runningPreset,
+			auto this_ = static_cast<ShowDrawFilterContext *>(data);
+			PresetWindow *window = new PresetWindow(this_->shared_from_this(),
 								static_cast<QWidget *>(obs_frontend_get_main_window()));
 			window->exec();
-			return false;
+			return true;
 		},
 		this);
 
@@ -260,6 +283,143 @@ void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 
 	runningPreset.scalingFactorDb = obs_data_get_double(settings, "scalingFactorDb");
 	scaling_factor = pow(10.0, runningPreset.scalingFactorDb / 10.0);
+}
+
+void ShowDrawFilterContext::videoRender() noexcept
+{
+	if (!filter) {
+		slog(LOG_ERROR) << "Filter source not found";
+		return;
+	}
+
+	obs_source_t *target = obs_filter_get_target(filter);
+
+	if (!target) {
+		slog(LOG_ERROR) << "Target source not found";
+		obs_source_skip_video_filter(filter);
+		return;
+	}
+
+	if (!drawingEffect) {
+		try {
+			drawingEffect = std::make_unique<DrawingEffect>();
+		} catch (const std::exception &e) {
+			slog(LOG_ERROR) << "Failed to create drawing effect: " << e.what();
+			obs_source_skip_video_filter(filter);
+			return;
+		}
+	}
+
+	const uint32_t width = obs_source_get_width(target);
+	const uint32_t height = obs_source_get_height(target);
+
+	if (width == 0 || height == 0) {
+		slog(LOG_DEBUG) << "Target source has zero width or height";
+		obs_source_skip_video_filter(filter);
+		return;
+	}
+
+	if (!ensureTextures(width, height)) {
+		slog(LOG_ERROR) << "Failed to ensure textures";
+		obs_source_skip_video_filter(filter);
+		return;
+	}
+
+	ExtractionMode extractionMode = runningPreset.extractionMode == ExtractionMode::Default
+						? ExtractionMode::Scaling
+						: runningPreset.extractionMode;
+
+	const float texelWidth = 1.0f / (float)width;
+	const float texelHeight = 1.0f / (float)height;
+
+	gs_texture_t *default_render_target = gs_get_render_target();
+
+	if (!obs_source_process_filter_begin(filter, GS_BGRA, OBS_ALLOW_DIRECT_RENDERING)) {
+		slog(LOG_ERROR) << "Could not begin processing filter";
+		obs_source_skip_video_filter(filter);
+		return;
+	}
+
+	gs_set_render_target(texture_target, NULL);
+
+	gs_viewport_push();
+	gs_projection_push();
+	gs_matrix_push();
+
+	gs_set_viewport(0, 0, width, height);
+	gs_matrix_identity();
+
+	obs_source_process_filter_end(filter, drawingEffect->effect, 0, 0);
+
+	std::swap(texture_source, texture_target);
+
+	if (extractionMode >= ExtractionMode::LuminanceExtraction) {
+		applyLuminanceExtractionPass();
+
+		if (runningPreset.medianFilteringKernelSize > 1) {
+			applyMedianFilteringPass(texelWidth, texelHeight);
+		}
+
+		if (runningPreset.motionAdaptiveFilteringStrength > 0.0) {
+			applyMotionAdaptiveFilteringPass(texelWidth, texelHeight);
+		}
+	}
+
+	if (extractionMode >= ExtractionMode::EdgeDetection) {
+		applySobelPass(texelWidth, texelHeight);
+
+		applySuppressNonMaximumPass(texelWidth, texelHeight);
+
+		applyHysteresisClassifyPass(texelWidth, texelHeight, runningPreset.hysteresisHighThreshold,
+					    runningPreset.hysteresisLowThreshold);
+
+		for (int i = 0; i < 8; i++) {
+			applyHysteresisPropagatePass(texelWidth, texelHeight);
+		}
+
+		applyHysteresisFinalizePass(texelWidth, texelHeight);
+
+		if (runningPreset.morphologyOpeningErosionKernelSize > 1) {
+			applyMorphologyPass(texelWidth, texelHeight, drawingEffect->tech_erosion,
+					    (int)runningPreset.morphologyOpeningErosionKernelSize);
+		}
+
+		if (runningPreset.morphologyOpeningDilationKernelSize > 1) {
+			applyMorphologyPass(texelWidth, texelHeight, drawingEffect->tech_dilation,
+					    (int)runningPreset.morphologyOpeningDilationKernelSize);
+		}
+
+		if (runningPreset.morphologyClosingDilationKernelSize > 1) {
+			applyMorphologyPass(texelWidth, texelHeight, drawingEffect->tech_dilation,
+					    (int)runningPreset.morphologyClosingDilationKernelSize);
+		}
+
+		if (runningPreset.morphologyClosingErosionKernelSize > 1) {
+			applyMorphologyPass(texelWidth, texelHeight, drawingEffect->tech_erosion,
+					    (int)runningPreset.morphologyClosingErosionKernelSize);
+		}
+	}
+
+	if (extractionMode >= ExtractionMode::Scaling) {
+		applyScalingPass();
+	}
+
+	gs_viewport_pop();
+	gs_projection_pop();
+	gs_matrix_pop();
+	gs_set_render_target(default_render_target, NULL);
+
+	drawFinalImage();
+}
+
+obs_source_t *ShowDrawFilterContext::getFilter() const noexcept
+{
+	return filter;
+}
+
+Preset ShowDrawFilterContext::getRunningPreset() const noexcept
+{
+	return runningPreset;
 }
 
 void ensureTexture(gs_texture_t *&texture, uint32_t width, uint32_t height)
@@ -491,129 +651,5 @@ void ShowDrawFilterContext::drawFinalImage() noexcept
 	gs_technique_end(drawingEffect->tech_draw);
 }
 
-void ShowDrawFilterContext::videoRender() noexcept
-{
-	if (!filter) {
-		slog(LOG_ERROR) << "Filter source not found";
-		return;
-	}
-
-	obs_source_t *target = obs_filter_get_target(filter);
-
-	if (!target) {
-		slog(LOG_ERROR) << "Target source not found";
-		obs_source_skip_video_filter(filter);
-		return;
-	}
-
-	if (!drawingEffect) {
-		try {
-			drawingEffect = std::make_unique<DrawingEffect>();
-		} catch (const std::exception &e) {
-			slog(LOG_ERROR) << "Failed to create drawing effect: " << e.what();
-			obs_source_skip_video_filter(filter);
-			return;
-		}
-	}
-
-	const uint32_t width = obs_source_get_width(target);
-	const uint32_t height = obs_source_get_height(target);
-
-	if (width == 0 || height == 0) {
-		slog(LOG_DEBUG) << "Target source has zero width or height";
-		obs_source_skip_video_filter(filter);
-		return;
-	}
-
-	if (!ensureTextures(width, height)) {
-		slog(LOG_ERROR) << "Failed to ensure textures";
-		obs_source_skip_video_filter(filter);
-		return;
-	}
-
-	ExtractionMode extractionMode = runningPreset.extractionMode == ExtractionMode::Default
-						? ExtractionMode::Scaling
-						: runningPreset.extractionMode;
-
-	const float texelWidth = 1.0f / (float)width;
-	const float texelHeight = 1.0f / (float)height;
-
-	gs_texture_t *default_render_target = gs_get_render_target();
-
-	if (!obs_source_process_filter_begin(filter, GS_BGRA, OBS_ALLOW_DIRECT_RENDERING)) {
-		slog(LOG_ERROR) << "Could not begin processing filter";
-		obs_source_skip_video_filter(filter);
-		return;
-	}
-
-	gs_set_render_target(texture_target, NULL);
-
-	gs_viewport_push();
-	gs_projection_push();
-	gs_matrix_push();
-
-	gs_set_viewport(0, 0, width, height);
-	gs_matrix_identity();
-
-	obs_source_process_filter_end(filter, drawingEffect->effect, 0, 0);
-
-	std::swap(texture_source, texture_target);
-
-	if (extractionMode >= ExtractionMode::LuminanceExtraction) {
-		applyLuminanceExtractionPass();
-
-		if (runningPreset.medianFilteringKernelSize > 1) {
-			applyMedianFilteringPass(texelWidth, texelHeight);
-		}
-
-		if (runningPreset.motionAdaptiveFilteringStrength > 0.0) {
-			applyMotionAdaptiveFilteringPass(texelWidth, texelHeight);
-		}
-	}
-
-	if (extractionMode >= ExtractionMode::EdgeDetection) {
-		applySobelPass(texelWidth, texelHeight);
-
-		applySuppressNonMaximumPass(texelWidth, texelHeight);
-
-		applyHysteresisClassifyPass(texelWidth, texelHeight, runningPreset.hysteresisHighThreshold,
-					    runningPreset.hysteresisLowThreshold);
-
-		for (int i = 0; i < 8; i++) {
-			applyHysteresisPropagatePass(texelWidth, texelHeight);
-		}
-
-		applyHysteresisFinalizePass(texelWidth, texelHeight);
-
-		if (runningPreset.morphologyOpeningErosionKernelSize > 1) {
-			applyMorphologyPass(texelWidth, texelHeight, drawingEffect->tech_erosion,
-					    (int)runningPreset.morphologyOpeningErosionKernelSize);
-		}
-
-		if (runningPreset.morphologyOpeningDilationKernelSize > 1) {
-			applyMorphologyPass(texelWidth, texelHeight, drawingEffect->tech_dilation,
-					    (int)runningPreset.morphologyOpeningDilationKernelSize);
-		}
-
-		if (runningPreset.morphologyClosingDilationKernelSize > 1) {
-			applyMorphologyPass(texelWidth, texelHeight, drawingEffect->tech_dilation,
-					    (int)runningPreset.morphologyClosingDilationKernelSize);
-		}
-
-		if (runningPreset.morphologyClosingErosionKernelSize > 1) {
-			applyMorphologyPass(texelWidth, texelHeight, drawingEffect->tech_erosion,
-					    (int)runningPreset.morphologyClosingErosionKernelSize);
-		}
-	}
-
-	if (extractionMode >= ExtractionMode::Scaling) {
-		applyScalingPass();
-	}
-
-	gs_viewport_pop();
-	gs_projection_pop();
-	gs_matrix_pop();
-	gs_set_render_target(default_render_target, NULL);
-
-	drawFinalImage();
-}
+} // namespace obs_showdraw
+} // namespace kaito_tokyo

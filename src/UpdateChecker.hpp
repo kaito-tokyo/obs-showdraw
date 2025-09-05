@@ -21,6 +21,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <optional>
 #include <string>
 
+namespace kaito_tokyo {
+namespace obs_showdraw {
+
 class LatestVersion {
 public:
 	explicit LatestVersion(const std::string &version);
@@ -42,3 +45,6 @@ public:
 	UpdateChecker();
 	std::optional<LatestVersion> fetch();
 };
+
+} // namespace obs_showdraw
+} // namespace kaito_tokyo

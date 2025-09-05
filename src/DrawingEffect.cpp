@@ -16,13 +16,12 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
-#include <stdexcept>
-
 #include "DrawingEffect.hpp"
 
 #include "plugin-support.h"
+#include <obs-module.h>
 
-#include <obs-bridge-utils/obs-bridge-utils.hpp>
+#include "obs-bridge-utils/obs-bridge-utils.hpp"
 
 using kaito_tokyo::obs_bridge_utils::unique_bfree_t;
 
@@ -49,6 +48,9 @@ static gs_technique_t *getEffectTech(gs_effect_t *effect, const char *name)
 
 	return tech;
 }
+
+namespace kaito_tokyo {
+namespace obs_showdraw {
 
 DrawingEffect::DrawingEffect()
 {
@@ -111,3 +113,6 @@ DrawingEffect::~DrawingEffect() noexcept
 {
 	gs_effect_destroy(effect);
 }
+
+} // namespace obs_showdraw
+} // namespace kaito_tokyo
