@@ -50,8 +50,16 @@ bool UpdateChecker::isUpdateAvailable(const std::string &currentVersion) const n
 	}
 
 	semver::version latest, current;
-	semver::parse(latestVersion, latest);
-	semver::parse(currentVersion, current);
+
+	if (!semver::parse(latestVersion, latest)) {
+		slog(LOG_WARNING) << "Failed to parse latest version: " << latestVersion;
+		return false;
+	}
+
+	if (!semver::parse(currentVersion, current)) {
+		slog(LOG_WARNING) << "Failed to parse current version: " << currentVersion;
+		return false;
+	}
 
 	return latest > current;
 }
