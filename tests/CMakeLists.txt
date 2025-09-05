@@ -6,7 +6,17 @@ target_link_libraries(Preset_test PRIVATE GTest::gtest_main OBS::libobs ${CMAKE_
 gtest_discover_tests(Preset_test DISCOVERY_MODE PRE_TEST)
 
 add_executable(UpdateChecker_test obs_test_environment.cpp UpdateChecker_test.cpp)
-target_link_libraries(UpdateChecker_test PRIVATE GTest::gtest_main wolfssl::wolfssl CURL::libcurl cpr::cpr nlohmann_json::nlohmann_json OBS::libobs ${CMAKE_PROJECT_NAME}_impl)
+target_link_libraries(
+  UpdateChecker_test
+  PRIVATE
+    GTest::gtest_main
+    wolfssl::wolfssl
+    CURL::libcurl
+    cpr::cpr
+    nlohmann_json::nlohmann_json
+    OBS::libobs
+    ${CMAKE_PROJECT_NAME}_impl
+)
 gtest_discover_tests(UpdateChecker_test DISCOVERY_MODE PRE_TEST)
 
 set_target_properties(

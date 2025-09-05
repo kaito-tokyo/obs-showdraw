@@ -60,7 +60,10 @@ find_package(wolfssl CONFIG REQUIRED)
 find_package(cpr CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
-target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs wolfssl::wolfssl CURL::libcurl cpr::cpr nlohmann_json::nlohmann_json)
+target_link_libraries(
+  ${CMAKE_PROJECT_NAME}_impl
+  PRIVATE OBS::libobs wolfssl::wolfssl CURL::libcurl cpr::cpr nlohmann_json::nlohmann_json
+)
 
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl
