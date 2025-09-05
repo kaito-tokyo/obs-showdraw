@@ -24,4 +24,5 @@ TEST(UpdateCheckerTest, Fetch)
 {
 	UpdateChecker checker;
 	checker.fetch();
+	EXPECT_FALSE(checker.getLatestVersion().empty());
 }

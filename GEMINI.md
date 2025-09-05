@@ -10,4 +10,4 @@
 
 1. Run `cmake --preset macos`.
 2. Run `cmake --build --preset macos`.
-3. Run `ctest --preset macos`.
+3. Run `ctest --preset macos --rerun-failed --output-on-failure`.

@@ -25,6 +25,7 @@ public:
 	UpdateChecker(void);
 	void fetch(void);
 	void isUpdateAvailable(void) const noexcept;
+	const std::string& getLatestVersion() const { return latestVersion; }
 
 private:
 	std::string latestVersion;
