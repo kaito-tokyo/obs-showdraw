@@ -59,7 +59,10 @@ find_package(CURL REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/curl" NO_DEFAULT_
 find_package(unofficial-curlpp CONFIG REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/unofficial-curlpp" NO_DEFAULT_PATH)
 find_package(nlohmann_json CONFIG REQUIRED)
 
-target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs CURL::libcurl_static unofficial::curlpp::curlpp nlohmann_json::nlohmann_json)
+target_link_libraries(
+  ${CMAKE_PROJECT_NAME}_impl
+  PRIVATE OBS::libobs CURL::libcurl_static unofficial::curlpp::curlpp nlohmann_json::nlohmann_json
+)
 
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl
