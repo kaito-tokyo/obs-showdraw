@@ -19,8 +19,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "UpdateChecker.hpp"
 
 #include <sstream>
+#include <iostream> // For std::cout
 
 #include <nlohmann/json.hpp>
+#include <cpr/cpr.h> // Add this include
 
 #include <obs.h>
 #include "plugin-support.h"
@@ -29,29 +31,24 @@ UpdateChecker::UpdateChecker(void) {}
 
 void UpdateChecker::fetch(void)
 {
-	cpr::Response response = cpr::Get(cpr::Url{"https://www.example.com"});
-	obs_log(LOG_INFO, "HTTP Request completed with status code: %d", response.status_code);
-	obs_log(LOG_INFO, "HTTP Request completed with status code: %s", response.error.message.c_str());
+	cpr::Response r = cpr::Get(cpr::Url{"https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest"});
 
-	// if (response.status_code == 200) {
-	// 	std::string response_body = response.text;
-	// 	obs_log(LOG_INFO, "GitHub API Response: %s", response_body.c_str());
-
-	// 	try {
-	// 		auto json_response = nlohmann::json::parse(response_body);
-	// 		if (json_response.contains("tag_name")) {
-	// 			latestVersion = json_response["tag_name"].get<std::string>();
-	// 			obs_log(LOG_INFO, "Latest version: %s", latestVersion.c_str());
-	// 		} else {
-	// 			obs_log(LOG_WARNING, "GitHub API Response does not contain 'tag_name'");
-	// 		}
-	// 	} catch (const nlohmann::json::exception &e) {
-	// 		obs_log(LOG_ERROR, "JSON parsing error: %s", e.what());
-	// 	}
-	// } else {
-	// 	obs_log(LOG_ERROR, "HTTP Request failed with status code: %d", response.status_code);
-	// 	obs_log(LOG_ERROR, "Error message: %s", response.error.message.c_str());
-	// }
+	if (r.status_code == 200) {
+		try {
+			auto json_response = nlohmann::json::parse(r.text);
+			if (json_response.contains("tag_name")) {
+				latestVersion = json_response["tag_name"].get<std::string>();
+				std::cout << "Latest version: " << latestVersion << std::endl; // For debugging
+			} else {
+				std::cerr << "Error: 'tag_name' not found in the response." << std::endl;
+			}
+		} catch (const nlohmann::json::exception &e) {
+			std::cerr << "JSON parsing error: " << e.what() << std::endl;
+		}
+	} else {
+		std::cerr << "Failed to fetch latest version. Status code: " << r.status_code << std::endl;
+		std::cerr << "Error message: " << r.error.message << std::endl;
+	}
 }
 
 void UpdateChecker::isUpdateAvailable(void) const noexcept {}
