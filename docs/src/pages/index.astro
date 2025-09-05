@@ -1,0 +1,60 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="OBS線画強調プラグイン" lang="ja">
+  <h1>線画強調プラグイン</h1>
+  <p>
+    線画強調（ShowDraw）は、アナログイラストレーターのためのOBS
+    Studio用のプラグインです。
+    スケッチブックに描かれた線画をリアルタイムで強調表示し、視聴者の皆さんと一緒に楽しむことができます。
+  </p>
+  <p lang="en">
+    Line Art Emphasis (ShowDraw) is an OBS Studio plugin for analog
+    illustrators. It allows you to emphasize line art drawn on a sketchbook in
+    real-time, so you can enjoy it together with your viewers.
+  </p>
+  <div class="links">
+    <a href="/plugin-description/ja/">日本語で詳しく見る</a>
+    <a href="/plugin-description/en/">Learn more in English</a>
+  </div>
+</Layout>
+
+<style>
+  main {
+    margin: auto;
+    padding: 1rem;
+    width: 800px;
+    max-width: calc(100% - 2rem);
+    color: black;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    margin-bottom: 1em;
+  }
+  .links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 2em;
+  }
+  .links a {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #4caf50; /* Green */
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    font-size: 18px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  .links a:hover {
+    background-color: #45a049;
+  }
+</style>

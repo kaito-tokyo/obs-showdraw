@@ -1,3 +1,10 @@
+---
+layout: "../../layouts/MarkdownLayout.astro"
+
+title: "線画強調（ShowDraw）"
+lang: "ja"
+---
+
 # OBS ShowDraw プラグイン
 
 このプラグインを使用すると、OBS Studio のキャンバスに直接描画できます。これは、放送中にリアルタイムでハイライト、注釈、またはスケッチする必要があるストリーマー、教育者、コンテンツクリエーターに最適です。

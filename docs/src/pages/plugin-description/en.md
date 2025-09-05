@@ -1,3 +1,10 @@
+---
+layout: "../../layouts/MarkdownLayout.astro"
+
+title: "Line Art Emphasis (ShowDraw)"
+lang: "en"
+---
+
 # OBS ShowDraw Plugin
 
 This plugin allows you to draw directly on your OBS Studio canvas. It's perfect for streamers, educators, and content creators who need to highlight, annotate, or sketch in real-time during their broadcasts.
