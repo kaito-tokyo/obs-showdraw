@@ -52,6 +52,7 @@ void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 
 	try {
 		auto self = std::make_shared<ShowDrawFilterContext>(settings, source);
+		self->update(settings);
 		return new std::shared_ptr<ShowDrawFilterContext>(self);
 	} catch (const std::exception &e) {
 		slog(LOG_ERROR) << "Failed to create showdraw context: " << e.what();
