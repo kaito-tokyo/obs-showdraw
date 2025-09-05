@@ -151,14 +151,9 @@ ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 	obs_leave_graphics();
 }
 
-void ShowDrawFilterContext::afterCreate() noexcept
+void ShowDrawFilterContext::afterCreate()
 {
 	slog(LOG_INFO) << "Creating showdraw filter context";
-
-	future_update_check = std::async(std::launch::async, [this]() {
-		UpdateChecker checker;
-		latest_version = checker.fetch();
-	});
 }
 
 void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept

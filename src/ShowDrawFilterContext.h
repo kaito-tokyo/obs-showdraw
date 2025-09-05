@@ -53,7 +53,7 @@ public:
 	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept;
 	~ShowDrawFilterContext() noexcept;
 
-	void afterCreate() noexcept;
+	void afterCreate();
 
 	static void getDefaults(obs_data_t *data) noexcept;
 
@@ -92,9 +92,6 @@ private:
 	gs_texture_t *texture_target;
 	gs_texture_t *texture_motion_map;
 	gs_texture_t *texture_previous_luminance;
-
-	std::future<void> future_update_check;
-	std::optional<LatestVersion> latest_version;
 };
 
 } // namespace obs_showdraw
