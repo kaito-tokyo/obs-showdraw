@@ -1,9 +1,17 @@
 {
   "dependencies": [
+    "wolfssl",
     {
       "name": "curl",
+      "default-features": false,
+      "features": [
+        "wolfssl"
+      ]
+    },
+    {
+      "name": "cpr",
       "default-features": false
     },
-    "curlpp"
+    "nlohmann-json"
   ]
 }

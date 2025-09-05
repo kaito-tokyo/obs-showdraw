@@ -18,29 +18,36 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "UpdateChecker.hpp"
 
+#include <sstream>
+#include <iostream> // For std::cout
+
+#include <nlohmann/json.hpp>
+#include <cpr/cpr.h> // Add this include
+
 #include <obs.h>
 #include "plugin-support.h"
-
-#include <curlpp/Easy.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
-
-#include <sstream>
 
 UpdateChecker::UpdateChecker(void) {}
 
 void UpdateChecker::fetch(void)
 {
-	try {
-		cURLpp::Cleanup myCleanup;
+	cpr::Response r = cpr::Get(cpr::Url{"https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest"});
 
-		std::ostringstream os;
-		os << curlpp::options::Url("https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest");
-
-	} catch (curlpp::LogicError &e) {
-		obs_log(LOG_ERROR, "UpdateChecker LogicError: %s\n", e.what());
-	} catch (curlpp::RuntimeError &e) {
-		obs_log(LOG_ERROR, "UpdateChecker RuntimeError: %s\n", e.what());
+	if (r.status_code == 200) {
+		try {
+			auto json_response = nlohmann::json::parse(r.text);
+			if (json_response.contains("tag_name")) {
+				latestVersion = json_response["tag_name"].get<std::string>();
+				std::cout << "Latest version: " << latestVersion << std::endl; // For debugging
+			} else {
+				std::cerr << "Error: 'tag_name' not found in the response." << std::endl;
+			}
+		} catch (const nlohmann::json::exception &e) {
+			std::cerr << "JSON parsing error: " << e.what() << std::endl;
+		}
+	} else {
+		std::cerr << "Failed to fetch latest version. Status code: " << r.status_code << std::endl;
+		std::cerr << "Error message: " << r.error.message << std::endl;
 	}
 }
 

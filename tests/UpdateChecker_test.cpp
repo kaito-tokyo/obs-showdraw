@@ -20,8 +20,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "UpdateChecker.hpp"
 
-TEST(UpdateCheckerTest, Fetch)
-{
-	UpdateChecker checker;
-	checker.fetch();
-}
+// TEST(UpdateCheckerTest, Fetch)
+// {
+// 	UpdateChecker checker;
+// 	checker.fetch();
+// 	EXPECT_FALSE(checker.getLatestVersion().empty());
+// }

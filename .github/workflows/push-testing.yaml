@@ -34,14 +34,14 @@ jobs:
       - name: "Checkout"
         uses: "actions/checkout@v5"
 
-      - name: "Configure for CI Testing"
-        run: "cmake --preset macos-testing-ci"
+      - name: "Configure"
+        run: "cmake --preset macos-ci -DBUILD_TESTING=ON"
 
-      - name: "Build for CI Testing"
-        run: "cmake --build --preset macos-testing-ci"
+      - name: "Build"
+        run: "cmake --build --preset macos-ci"
 
       - name: "Run tests"
-        run: "ctest --preset macos-testing-ci --verbose --rerun-failed --output-on-failure"
+        run: "ctest --preset macos-ci --rerun-failed --output-on-failure"
 
   RunTestsOnWindows:
     name: "Run Tests on Windows"
@@ -60,14 +60,14 @@ jobs:
       - name: "Checkout"
         uses: "actions/checkout@v5"
 
-      - name: "Configure for CI Testing"
-        run: "cmake --preset windows-testing-ci-x64"
+      - name: "Configure"
+        run: "cmake --preset windows-ci-x64 -DBUILD_TESTING=ON"
 
-      - name: "Build for CI Testing"
-        run: "cmake --build --preset windows-testing-ci-x64"
+      - name: "Build"
+        run: "cmake --build --preset windows-ci-x64"
 
       - name: "Run tests"
-        run: "ctest --preset windows-testing-ci-x64 --verbose --rerun-failed --output-on-failure"
+        run: "ctest --preset windows-ci-x64 --rerun-failed --output-on-failure"
 
   RunTestsOnUbuntu:
     name: "Run Tests on Ubuntu"
@@ -109,11 +109,11 @@ jobs:
       - name: "Checkout"
         uses: "actions/checkout@v5"
 
-      - name: "Configure for CI Testing"
-        run: "cmake --preset ubuntu-testing-ci-x86_64"
+      - name: "Configure"
+        run: "cmake --preset ubuntu-ci-x86_64 -DBUILD_TESTING=ON"
 
-      - name: "Build for CI Testing"
-        run: "cmake --build --preset ubuntu-testing-ci-x86_64"
+      - name: "Build"
+        run: "cmake --build --preset ubuntu-ci-x86_64"
 
       - name: "Run tests"
-        run: "ctest --preset ubuntu-testing-ci-x86_64 --verbose --rerun-failed --output-on-failure"
+        run: "ctest --preset ubuntu-ci-x86_64 --rerun-failed --output-on-failure"
