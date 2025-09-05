@@ -54,14 +54,8 @@ endif()
 
 set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
-find_package(CURL REQUIRED
-  PATHS "${VCPKG_INSTALLED_DIR}/share/curl"
-  NO_DEFAULT_PATH
-)
-find_package(unofficial-curlpp CONFIG REQUIRED
-  PATHS "${VCPKG_INSTALLED_DIR}/share/unofficial-curlpp"
-  NO_DEFAULT_PATH
-)
+find_package(CURL REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/curl" NO_DEFAULT_PATH)
+find_package(unofficial-curlpp CONFIG REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/unofficial-curlpp" NO_DEFAULT_PATH)
 if(TARGET CURL::libcurl_static)
   message(STATUS "Found target: CURL::libcurl_static")
 else()
