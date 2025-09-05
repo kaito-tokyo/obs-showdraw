@@ -33,9 +33,9 @@ extern const char *PLUGIN_VERSION;
 void obs_log(int log_level, const char *format, ...);
 
 #ifdef _MSC_VER
-__declspec(dllexport) void blogva(int log_level, const char *format, va_list args);
+extern __declspec(dllexport) void blogva(int log_level, const char *format, va_list args);
 #else
-__attribute__((visibility("default"))) void blogva(int log_level, const char *format, va_list args);
+extern __attribute__((visibility("default"))) void blogva(int log_level, const char *format, va_list args);
 #endif
 
 #ifdef __cplusplus
