@@ -57,6 +57,7 @@ list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGE
 
 find_package(CURL REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/curl" NO_DEFAULT_PATH)
 find_package(cpr CONFIG REQUIRED)
+find_package(wolfssl CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 target_link_libraries(
