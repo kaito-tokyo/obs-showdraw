@@ -1,4 +1,4 @@
-# Development Guideline
+# Development Guideline of the OBS plugin
 
 - This project must be developed in C++17.
 - Use `()` instead of `(void)` for empty argument lists.
@@ -64,3 +64,10 @@ User: `はい`
 Gemini: `mainブランチに切り替え、リモートと同期し、buildspec.jsonのバージョンを確認しました。Git タグ '1.2.3' をプッシュしました。GitHub Actions でリリースワークフローが開始されます。`
 Gemini: `GitHub リリースドラフトのURL: https://github.com/kaito-tokyo/obs-showdraw/releases/tag/1.2.3`
 Gemini: `GitHub上でリリースを完了してください。`
+
+# Development Guideline of the Astro pages
+
+- Astro generates the official site of this OBS plugin and GitHub Pages will host it on obs-showdraw.kaito.tokyo.
+- The source codes of Astro sites are placed under docs directory.
+- https://obs-showdraw.kaito.tokyo/ hosts the multilingual plugin description.
+- https://obs-showdraw.kaito.tokyo/metadata/ hosts the metadata used by OBS plugin.
