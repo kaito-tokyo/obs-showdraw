@@ -79,7 +79,7 @@ private:
 	obs_log_streambuf streambuf;
 };
 
-obs_log_ostream log(int level) noexcept
+inline obs_log_ostream slog(int level) noexcept
 {
 	return obs_log_ostream(level);
 }

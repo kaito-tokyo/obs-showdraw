@@ -26,7 +26,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs-bridge-utils/obs-bridge-utils.hpp>
 
-using kaito_tokyo::obs_bridge_utils::log;
+using kaito_tokyo::obs_bridge_utils::slog;
 
 UpdateChecker::UpdateChecker(void) {}
 
@@ -37,7 +37,7 @@ void UpdateChecker::fetch(void)
 	if (r.status_code == 200) {
 		latestVersion = r.text;
 	} else {
-		log(LOG_WARNING) << "Failed to fetch latest version information: HTTP " << r.status_code;
+		slog(LOG_WARNING) << "Failed to fetch latest version information: HTTP " << r.status_code;
 		latestVersion = "";
 	}
 }
@@ -45,7 +45,7 @@ void UpdateChecker::fetch(void)
 bool UpdateChecker::isUpdateAvailable(const std::string &currentVersion) const noexcept
 {
 	if (latestVersion.empty()) {
-		log(LOG_INFO) << "Latest version information is not available.";
+		slog(LOG_INFO) << "Latest version information is not available.";
 		return false;
 	}
 
