@@ -54,17 +54,12 @@ endif()
 
 set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+
 find_package(CURL REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/curl" NO_DEFAULT_PATH)
 find_package(unofficial-curlpp CONFIG REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/unofficial-curlpp" NO_DEFAULT_PATH)
-if(TARGET CURL::libcurl_static)
-  message(STATUS "Found target: CURL::libcurl_static")
-else()
-  message(FATAL_ERROR "Target CURL::libcurl_static was not found by find_package.")
-endif()
-if(TARGET unofficial::curlpp::curlpp)
-  message(STATUS "Found target: unofficial::curlpp::curlpp")
-endif()
-target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs CURL::libcurl_static unofficial::curlpp::curlpp)
+find_package(nlohmann_json CONFIG REQUIRED)
+
+target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs CURL::libcurl_static unofficial::curlpp::curlpp nlohmann_json::nlohmann_json)
 
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl
