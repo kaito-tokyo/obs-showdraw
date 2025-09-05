@@ -60,23 +60,6 @@ jobs:
       - name: "Checkout"
         uses: "actions/checkout@v5"
 
-      - run: |
-          $VCPKG_INSTALLATION_ROOT/vcpkg install --triplet x64-windows-static
-          find vcpkg_installed
-          echo === vcpkg_installed/x64-windows-static/share/curl/CURLConfig.cmake
-          cat vcpkg_installed/x64-windows-static/share/curl/CURLConfig.cmake
-          echo === vcpkg_installed/x64-windows-static/share/curl/CURLConfigVersion.cmake
-          cat vcpkg_installed/x64-windows-static/share/curl/CURLConfigVersion.cmake
-          echo === vcpkg_installed/x64-windows-static/share/curl/CURLTargets-debug.cmake
-          cat vcpkg_installed/x64-windows-static/share/curl/CURLTargets-debug.cmake
-          echo === vcpkg_installed/x64-windows-static/share/curl/CURLTargets-release.cmake
-          cat vcpkg_installed/x64-windows-static/share/curl/CURLTargets-release.cmake
-          echo === vcpkg_installed/x64-windows-static/share/curl/CURLTargets.cmake
-          cat vcpkg_installed/x64-windows-static/share/curl/CURLTargets.cmake
-          echo === vcpkg_installed/x64-windows-static/share/curl/vcpkg-cmake-wrapper.cmake
-          cat vcpkg_installed/x64-windows-static/share/curl/vcpkg-cmake-wrapper.cmake
-
-
       - name: "Configure for CI Testing"
         run: "cmake --preset windows-testing-ci-x64"
 
