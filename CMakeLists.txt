@@ -61,6 +61,8 @@ find_package(cpr CONFIG REQUIRED)
 find_package(semver CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
+target_compile_definitions(${CMAKE_PROJECT_NAME}_impl PRIVATE NOMINMAX)
+
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}_impl
   PRIVATE OBS::libobs semver::semver cpr::cpr nlohmann_json::nlohmann_json
