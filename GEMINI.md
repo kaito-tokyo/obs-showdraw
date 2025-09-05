@@ -65,9 +65,14 @@ Gemini: `mainブランチに切り替え、リモートと同期し、buildspec.
 Gemini: `GitHub リリースドラフトのURL: https://github.com/kaito-tokyo/obs-showdraw/releases/tag/1.2.3`
 Gemini: `GitHub上でリリースを完了してください。`
 
-# Development Guideline of the Astro pages
+# Development Guideline for Astro Pages
 
-- Astro generates the official site of this OBS plugin and GitHub Pages will host it on obs-showdraw.kaito.tokyo.
-- The source codes of Astro sites are placed under docs directory.
-- https://obs-showdraw.kaito.tokyo/ hosts the multilingual plugin description.
-- https://obs-showdraw.kaito.tokyo/metadata/ hosts the metadata used by OBS plugin.
+- **Purpose**: The Astro project in the `docs/` directory builds the official website for this OBS plugin.
+- **Hosting**: The site is hosted on GitHub Pages at `obs-showdraw.kaito.tokyo`.
+- **Source Directory**: All source code for the Astro site is located in the `docs` directory.
+- **Key URLs**:
+    - `https://obs-showdraw.kaito.tokyo/`: Main page with a multilingual plugin description.
+    - `https://obs-showdraw.kaito.tokyo/metadata/`: Hosts metadata for the OBS plugin itself.
+- **Formatting**: All files within the `docs/` directory must be formatted using Prettier.
+- **Formatting Command**: To format the files, run `npm run format` from within the `docs/` directory.
+- **Dependencies**: Dependencies are managed by `npm` and defined in `docs/package.json`.
