@@ -5,7 +5,7 @@ vcpkg_from_github(
     SHA512 29f52644966f21908e0d3f795c62b0f5af9cd2d766db20c6ed5c588611f19f048119827fe6e787ccc3ce676d8c97cf7ab409d996df0e3acb812d6cd01364de61
     HEAD_REF master
     PATCHES
-    )
+)
 
 vcpkg_cmake_get_vars(cmake_vars_file)
 include("${cmake_vars_file}")
@@ -29,17 +29,17 @@ vcpkg_cmake_configure(
     OPTIONS_DEBUG
       -DCMAKE_C_FLAGS=${VCPKG_COMBINED_C_FLAGS_DEBUG}
       -DWOLFSSL_DEBUG=yes
-    )
+)
 
 vcpkg_cmake_install()
 vcpkg_copy_pdbs()
 vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/wolfssl)
 
 if(VCPKG_TARGET_IS_IOS OR VCPKG_TARGET_IS_OSX)
-    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/lib/pkgconfig/wolfssl.pc" "Libs.private: " "Libs.private: -framework CoreFoundation -framework Security ")
-    if(NOT VCPKG_BUILD_TYPE)
-        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/wolfssl.pc" "Libs.private: " "Libs.private: -framework CoreFoundation -framework Security ")
-    endif()
+  vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/lib/pkgconfig/wolfssl.pc" "Libs.private: " "Libs.private: -framework CoreFoundation -framework Security ")
+  if(NOT VCPKG_BUILD_TYPE)
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/wolfssl.pc" "Libs.private: " "Libs.private: -framework CoreFoundation -framework Security ")
+  endif()
 endif()
 vcpkg_fixup_pkgconfig()
 
