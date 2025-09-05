@@ -21,11 +21,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs-frontend-api.h>
 #include "plugin-support.h"
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
 #include "ShowDrawFilterContext.hpp"
 #include "DrawingEffect.hpp"
 #include "Preset.hpp"
 #include "PresetWindow.hpp"
+
+using kaito_tokyo::obs_bridge_utils::slog;
 
 const char *showdraw_get_name(void *type_data)
 {
@@ -35,32 +38,24 @@ const char *showdraw_get_name(void *type_data)
 
 void *showdraw_create(obs_data_t *settings, obs_source_t *source)
 {
-	void *data = bzalloc(sizeof(ShowDrawFilterContext));
-
-	if (!data) {
-		obs_log(LOG_ERROR, "Failed to allocate memory for showdraw context");
-		return nullptr;
-	}
-
-	try {
-		ShowDrawFilterContext *context = new (data) ShowDrawFilterContext(settings, source);
-		return context;
-	} catch (const std::exception &e) {
-		obs_log(LOG_ERROR, "Failed to create showdraw context: %s", e.what());
-		return nullptr;
-	}
+    try {
+        auto context = std::make_shared<ShowDrawFilterContext>(settings, source);
+        return new std::shared_ptr<ShowDrawFilterContext>(context);
+    } catch (const std::exception &e) {
+        slog(LOG_ERROR) << "Failed to create showdraw context: " << e.what();
+        return nullptr;
+    }
 }
 
 void showdraw_destroy(void *data)
 {
 	if (!data) {
-		obs_log(LOG_WARNING, "showdraw_destroy called with null data");
+		slog(LOG_WARNING) << "showdraw_destroy called with null data";
 		return;
 	}
 
-	ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-	context->~ShowDrawFilterContext();
-	bfree(context);
+	auto context = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	delete context;
 }
 
 void showdraw_get_defaults(obs_data_t *data)
@@ -71,30 +66,31 @@ void showdraw_get_defaults(obs_data_t *data)
 obs_properties_t *showdraw_get_properties(void *data)
 {
 	if (!data) {
-		obs_log(LOG_WARNING, "showdraw_get_properties called with null data");
+		slog(LOG_WARNING) << "showdraw_get_properties called with null data";
 		return nullptr;
 	}
 
-	ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-	return context->getProperties();
+	auto context = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	return context->get()->getProperties();
 }
 
 void showdraw_update(void *data, obs_data_t *settings)
 {
 	if (!data) {
-		obs_log(LOG_WARNING, "showdraw_update called with null data");
+		slog(LOG_WARNING) << "showdraw_update called with null data";
 		return;
 	}
 
-	ShowDrawFilterContext *context = static_cast<ShowDrawFilterContext *>(data);
-	context->update(settings);
+	auto context = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	context->get()->update(settings);
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
 {
 	UNUSED_PARAMETER(effect);
+
 	if (!data) {
-		obs_log(LOG_WARNING, "showdraw_video_render called with null data");
+		slog(LOG_WARNING) << "showdraw_video_render called with null data";
 		return;
 	}
 
