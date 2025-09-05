@@ -18,12 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <memory>
-
 #include <obs.h>
-
-#include "DrawingEffect.hpp"
-#include "Preset.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,6 +34,11 @@ void showdraw_video_render(void *data, gs_effect_t *effect);
 
 #ifdef __cplusplus
 }
+
+#include <memory>
+
+#include "DrawingEffect.hpp"
+#include "Preset.hpp"
 
 namespace kaito_tokyo {
 namespace obs_showdraw {
