@@ -63,6 +63,7 @@ public:
 
 	obs_source_t *getFilter() const noexcept;
 	Preset getRunningPreset() const noexcept;
+	std::optional<LatestVersion> getLatestVersion() const;
 
 private:
 	bool ensureTextures(uint32_t width, uint32_t height) noexcept;
@@ -92,6 +93,8 @@ private:
 	gs_texture_t *texture_target;
 	gs_texture_t *texture_motion_map;
 	gs_texture_t *texture_previous_luminance;
+
+	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
 };
 
 } // namespace obs_showdraw

@@ -154,6 +154,11 @@ ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 void ShowDrawFilterContext::afterCreate()
 {
 	slog(LOG_INFO) << "Creating showdraw filter context";
+
+	futureLatestVersion = std::async(std::launch::async, []() {
+				      UpdateChecker checker;
+				      return checker.fetch();
+			      }).share();
 }
 
 void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
@@ -425,6 +430,16 @@ obs_source_t *ShowDrawFilterContext::getFilter() const noexcept
 Preset ShowDrawFilterContext::getRunningPreset() const noexcept
 {
 	return runningPreset;
+}
+
+std::optional<LatestVersion> ShowDrawFilterContext::getLatestVersion()
+{
+	if (futureLatestVersion.valid() &&
+	    futureLatestVersion.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+		return futureLatestVersion.get();
+	}
+
+	return std::nullopt;
 }
 
 void ensureTexture(gs_texture_t *&texture, uint32_t width, uint32_t height)
