@@ -12,7 +12,7 @@
       "cacheVariables": {
         "ENABLE_FRONTEND_API": true,
         "ENABLE_QT": true,
-        "BUILD_TESTING": true
+        "BUILD_TESTING": false
       }
     },
     {
