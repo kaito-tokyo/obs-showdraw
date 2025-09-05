@@ -32,7 +32,7 @@ jobs:
         run: "brew install obs"
 
       - name: "Checkout"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v5"
 
       - name: "Configure for CI Testing"
         run: "cmake --preset macos-testing-ci"
@@ -41,7 +41,7 @@ jobs:
         run: "cmake --build --preset macos-testing-ci"
 
       - name: "Run tests"
-        run: "ctest --preset macos-testing-ci --rerun-failed --output-on-failure"
+        run: "ctest --preset macos-testing-ci --verbose --rerun-failed --output-on-failure"
 
   RunTestsOnWindows:
     name: "Run Tests on Windows"
@@ -58,7 +58,7 @@ jobs:
         shell: "pwsh"
 
       - name: "Checkout"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v5"
 
       - name: "Configure for CI Testing"
         run: "cmake --preset windows-testing-ci-x64"
@@ -67,7 +67,7 @@ jobs:
         run: "cmake --build --preset windows-testing-ci-x64"
 
       - name: "Run tests"
-        run: "ctest --preset windows-testing-ci-x64 --rerun-failed --output-on-failure"
+        run: "ctest --preset windows-testing-ci-x64 --verbose --rerun-failed --output-on-failure"
 
   RunTestsOnUbuntu:
     name: "Run Tests on Ubuntu"
@@ -107,7 +107,7 @@ jobs:
         run: "sudo Xvfb $DISPLAY -screen 0 1920x1080x24 +extension Composite &"
 
       - name: "Checkout"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v5"
 
       - name: "Configure for CI Testing"
         run: "cmake --preset ubuntu-testing-ci-x86_64"
@@ -116,4 +116,4 @@ jobs:
         run: "cmake --build --preset ubuntu-testing-ci-x86_64"
 
       - name: "Run tests"
-        run: "ctest --preset ubuntu-testing-ci-x86_64 --rerun-failed --output-on-failure"
+        run: "ctest --preset ubuntu-testing-ci-x86_64 --verbose --rerun-failed --output-on-failure"

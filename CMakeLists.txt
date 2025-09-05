@@ -11,17 +11,9 @@ include(compilerconfig)
 include(defaults)
 include(helpers)
 
-if(BUILD_TESTING)
-  if(APPLE)
-    set(CMAKE_INSTALL_RPATH "/Applications/OBS.app/Contents/Frameworks")
-    set(CMAKE_XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "/Applications/OBS.app/Contents/Frameworks")
-  endif(APPLE)
-endif(BUILD_TESTING)
-
 add_library(${CMAKE_PROJECT_NAME}_impl STATIC)
 
 find_package(libobs REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs)
 
 if(ENABLE_FRONTEND_API)
   find_package(obs-frontend-api REQUIRED)
@@ -29,7 +21,7 @@ if(ENABLE_FRONTEND_API)
 endif()
 
 if(ENABLE_QT)
-  find_package(Qt6 COMPONENTS Widgets Core)
+  find_package(Qt6 COMPONENTS Network Widgets Core)
   target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE Qt6::Core Qt6::Widgets)
   target_compile_options(
     ${CMAKE_PROJECT_NAME}_impl
@@ -43,9 +35,40 @@ endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE plugin-support)
 
+if(NOT $ENV{VCPKG_ROOT} STREQUAL "")
+  set(VCPKG_ROOT $ENV{VCPKG_ROOT})
+elseif(NOT $ENV{VCPKG_INSTALLATION_ROOT} STREQUAL "")
+  set(VCPKG_ROOT $ENV{VCPKG_INSTALLATION_ROOT})
+else()
+  message(FATAL_ERROR "VCPKG_ROOT or VCPKG_INSTALLATION_ROOT environment variable is not set")
+endif()
+
+execute_process(
+  COMMAND ${VCPKG_ROOT}/vcpkg install --triplet=${VCPKG_TARGET_TRIPLET}
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  RESULT_VARIABLE _vcpkg_result
+)
+if(NOT _vcpkg_result EQUAL 0)
+  message(FATAL_ERROR "vcpkg install failed")
+endif()
+
+set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+find_package(CURL REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/curl" NO_DEFAULT_PATH)
+find_package(unofficial-curlpp CONFIG REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/unofficial-curlpp" NO_DEFAULT_PATH)
+if(TARGET CURL::libcurl_static)
+  message(STATUS "Found target: CURL::libcurl_static")
+else()
+  message(FATAL_ERROR "Target CURL::libcurl_static was not found by find_package.")
+endif()
+if(TARGET unofficial::curlpp::curlpp)
+  message(STATUS "Found target: unofficial::curlpp::curlpp")
+endif()
+target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::libobs CURL::libcurl_static unofficial::curlpp::curlpp)
+
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl
-  PRIVATE src/Preset.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp
+  PRIVATE src/Preset.cpp src/UpdateChecker.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp
 )
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
