@@ -6,6 +6,7 @@
 - CMake files must be formatted using gersemi after any modification.
 - OBS team maintains the CMake and GitHub Actions so we don't need to improve these parts.
 - The default branch of this project is `main`.
+- There must be a empty newline at the end of the file.
 
 ## How to build and run tests on macOS
 
