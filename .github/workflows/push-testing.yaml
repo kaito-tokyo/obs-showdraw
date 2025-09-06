@@ -28,17 +28,36 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: "Install OBS.app"
-        run: "brew install obs"
+      - name: "Install dependencies"
+        run: "brew install obs ccache"
 
       - name: "Checkout"
         uses: "actions/checkout@v5"
+
+      - name: "Restore Ccache cache"
+        uses: "actions/cache/restore@v4"
+        id: "ccache-cache"
+        with:
+          path: "~/.ccache"
+          key: "${{ runner.os }}-ccache-${{ github.ref_name }}-testing-${{ github.sha }}"
+          restore-keys: |
+            ${{ runner.os }}-ccache-${{ github.ref_name }}-testing-
+            ${{ runner.os }}-ccache-main-testing-
 
       - name: "Configure"
         run: "cmake --preset macos-testing-ci"
 
       - name: "Build"
         run: "cmake --build --preset macos-testing-ci"
+
+      - name: "Show Ccache statistics"
+        run: "ccache -s"
+
+      - name: "Save Ccache cache"
+        uses: "actions/cache/save@v4"
+        with:
+          path: "~/.ccache"
+          key: "${{ runner.os }}-ccache-${{ github.ref_name }}-testing-${{ github.sha }}"
 
       - name: "Run tests"
         run: "ctest --preset macos-testing-ci --rerun-failed --output-on-failure"
@@ -109,11 +128,30 @@ jobs:
       - name: "Checkout"
         uses: "actions/checkout@v5"
 
+      - name: "Restore Ccache cache"
+        uses: "actions/cache/restore@v4"
+        id: "ccache-cache"
+        with:
+          path: "~/.ccache"
+          key: "${{ runner.os }}-ccache-${{ github.ref_name }}-testing-${{ github.sha }}"
+          restore-keys: |
+            ${{ runner.os }}-ccache-${{ github.ref_name }}-testing-
+            ${{ runner.os }}-ccache-main-testing-
+
       - name: "Configure"
         run: "cmake --preset ubuntu-testing-ci-x86_64"
 
       - name: "Build"
         run: "cmake --build --preset ubuntu-testing-ci-x86_64"
+
+      - name: "Show Ccache statistics"
+        run: "ccache -s"
+
+      - name: "Save Ccache cache"
+        uses: "actions/cache/save@v4"
+        with:
+          path: "~/.ccache"
+          key: "${{ runner.os }}-ccache-${{ github.ref_name }}-testing-${{ github.sha }}"
 
       - name: "Run tests"
         run: "ctest --preset ubuntu-testing-ci-x86_64 --rerun-failed --output-on-failure"
