@@ -19,6 +19,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "ShowDrawFilterContext.h"
 
 #include <stdexcept>
+#include <utility>
 
 #include "plugin-support.h"
 
@@ -33,38 +34,26 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 using kaito_tokyo::obs_bridge_utils::slog;
 
-using kaito_tokyo::obs_showdraw::DrawingEffect;
-using kaito_tokyo::obs_showdraw::ExtractionMode;
-using kaito_tokyo::obs_showdraw::Preset;
-using kaito_tokyo::obs_showdraw::PresetWindow;
+using namespace kaito_tokyo::obs_showdraw;
 
 const char *showdraw_get_name(void *type_data)
 {
-	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
-
 	UNUSED_PARAMETER(type_data);
 	return ShowDrawFilterContext::getName();
 }
 
 void *showdraw_create(obs_data_t *settings, obs_source_t *source)
-{
-	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
-
-	try {
-		auto self = std::make_shared<ShowDrawFilterContext>(settings, source);
-		self->afterCreate();
-		self->update(settings);
-		return new std::shared_ptr<ShowDrawFilterContext>(self);
-	} catch (const std::exception &e) {
-		slog(LOG_ERROR) << "Failed to create showdraw context: " << e.what();
-		return nullptr;
-	}
+try {
+	auto self = std::make_shared<ShowDrawFilterContext>(settings, source);
+	self->afterCreate(settings, source);
+	return new std::shared_ptr<ShowDrawFilterContext>(self);
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to create showdraw context: %s", e.what());
+	return nullptr;
 }
 
 void showdraw_destroy(void *data)
-{
-	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
-
+try {
 	if (!data) {
 		slog(LOG_ERROR) << "showdraw_destroy called with null data";
 		return;
@@ -72,19 +61,39 @@ void showdraw_destroy(void *data)
 
 	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
 	delete self;
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to destroy showdraw context: %s", e.what());
+}
+
+uint32_t showdraw_get_width(void *data)
+{
+	if (!data) {
+		obs_log(LOG_ERROR, "showdraw_get_width called with null data");
+		return 0;
+	}
+
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	return self->get()->getWidth();
+}
+
+uint32_t showdraw_get_height(void *data)
+{
+	if (!data) {
+		obs_log(LOG_ERROR, "showdraw_get_height called with null data");
+		return 0;
+	}
+
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	return self->get()->getHeight();
 }
 
 void showdraw_get_defaults(obs_data_t *data)
 {
-	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
-
 	ShowDrawFilterContext::getDefaults(data);
 }
 
 obs_properties_t *showdraw_get_properties(void *data)
-{
-	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
-
+try {
 	if (!data) {
 		slog(LOG_ERROR) << "showdraw_get_properties called with null data";
 		return nullptr;
@@ -92,12 +101,13 @@ obs_properties_t *showdraw_get_properties(void *data)
 
 	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
 	return self->get()->getProperties();
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to get properties: %s", e.what());
+	return nullptr;
 }
 
 void showdraw_update(void *data, obs_data_t *settings)
-{
-	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
-
+try {
 	if (!data) {
 		slog(LOG_ERROR) << "showdraw_update called with null data";
 		return;
@@ -105,12 +115,83 @@ void showdraw_update(void *data, obs_data_t *settings)
 
 	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
 	self->get()->update(settings);
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to update showdraw context: %s", e.what());
+}
+
+void showdraw_activate(void *data)
+try {
+	if (!data) {
+		obs_log(LOG_ERROR, "showdraw_activate called with null data");
+		return;
+	}
+
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	self->get()->activate();
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to activate showdraw context: %s", e.what());
+}
+
+void showdraw_deactivate(void *data)
+try {
+	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
+
+	if (!data) {
+		slog(LOG_ERROR) << "showdraw_deactivate called with null data";
+		return;
+	}
+
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	self->get()->deactivate();
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to deactivate showdraw context: %s", e.what());
+}
+
+void showdraw_show(void *data)
+try {
+	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
+
+	if (!data) {
+		slog(LOG_ERROR) << "showdraw_show called with null data";
+		return;
+	}
+
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	self->get()->show();
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to show showdraw context: %s", e.what());
+}
+
+void showdraw_hide(void *data)
+try {
+	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
+
+	if (!data) {
+		slog(LOG_ERROR) << "showdraw_hide called with null data";
+		return;
+	}
+
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	self->get()->hide();
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to hide showdraw context: %s", e.what());
+}
+
+void showdraw_video_tick(void *data, float seconds)
+try {
+	if (!data) {
+		slog(LOG_ERROR) << "showdraw_video_tick called with null data";
+		return;
+	}
+
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	self->get()->videoTick(seconds);
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to tick showdraw context: %s", e.what());
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
-{
-	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
-
+try {
 	UNUSED_PARAMETER(effect);
 
 	if (!data) {
@@ -120,6 +201,22 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 
 	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
 	self->get()->videoRender();
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to render video in showdraw context: %s", e.what());
+}
+
+struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame)
+try {
+	if (!data) {
+		slog(LOG_ERROR) << "showdraw_filter_video called with null data";
+		return frame;
+	}
+
+	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	return self->get()->filterVideo(frame);
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to filter video in showdraw context: %s", e.what());
+	return frame;
 }
 
 namespace kaito_tokyo {
@@ -138,6 +235,20 @@ ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t 
 	runningPreset.presetName = " running";
 }
 
+void ShowDrawFilterContext::afterCreate(obs_data_t *settings, obs_source_t *source)
+{
+	UNUSED_PARAMETER(source);
+
+	slog(LOG_INFO) << "Creating showdraw filter context";
+
+	update(settings);
+
+	futureLatestVersion = std::async(std::launch::async, []() {
+				      UpdateChecker checker;
+				      return checker.fetch();
+			      }).share();
+}
+
 ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 {
 	slog(LOG_INFO) << "Destroying showdraw filter context";
@@ -151,14 +262,14 @@ ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 	obs_leave_graphics();
 }
 
-void ShowDrawFilterContext::afterCreate()
+uint32_t ShowDrawFilterContext::getWidth() const noexcept
 {
-	slog(LOG_INFO) << "Creating showdraw filter context";
+	return width;
+}
 
-	futureLatestVersion = std::async(std::launch::async, []() {
-				      UpdateChecker checker;
-				      return checker.fetch();
-			      }).share();
+uint32_t ShowDrawFilterContext::getHeight() const noexcept
+{
+	return height;
 }
 
 void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
@@ -194,7 +305,7 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 				 defaultPreset.morphologyClosingErosionKernelSize);
 }
 
-obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
+obs_properties_t *ShowDrawFilterContext::getProperties()
 {
 	obs_properties_t *props = obs_properties_create();
 
@@ -283,7 +394,7 @@ obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 	return props;
 }
 
-void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
+void ShowDrawFilterContext::update(obs_data_t *settings)
 {
 	runningPreset.extractionMode = static_cast<ExtractionMode>(obs_data_get_int(settings, "extractionMode"));
 
@@ -316,21 +427,33 @@ void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 		obs_data_get_int(settings, "morphologyClosingErosionKernelSize");
 }
 
-void ShowDrawFilterContext::videoRender() noexcept
+void ShowDrawFilterContext::activate()
 {
-	if (!filter) {
-		slog(LOG_ERROR) << "Filter source not found";
-		return;
-	}
+	slog(LOG_INFO) << "Activating showdraw filter context";
+}
 
-	obs_source_t *target = obs_filter_get_target(filter);
+void ShowDrawFilterContext::deactivate()
+{
+	slog(LOG_INFO) << "Deactivating showdraw filter context";
+}
 
-	if (!target) {
-		slog(LOG_ERROR) << "Target source not found";
-		obs_source_skip_video_filter(filter);
-		return;
-	}
+void ShowDrawFilterContext::show()
+{
+	slog(LOG_INFO) << "Showing showdraw filter context";
+}
 
+void ShowDrawFilterContext::hide()
+{
+	slog(LOG_INFO) << "Hiding showdraw filter context";
+}
+
+void ShowDrawFilterContext::videoTick(float seconds)
+{
+	UNUSED_PARAMETER(seconds);
+}
+
+void ShowDrawFilterContext::videoRender()
+{
 	if (!drawingEffect) {
 		try {
 			drawingEffect = std::make_unique<DrawingEffect>();
@@ -341,20 +464,13 @@ void ShowDrawFilterContext::videoRender() noexcept
 		}
 	}
 
-	const uint32_t width = obs_source_get_width(target);
-	const uint32_t height = obs_source_get_height(target);
-
 	if (width == 0 || height == 0) {
-		slog(LOG_DEBUG) << "Target source has zero width or height";
+		slog(LOG_INFO) << "Target source has zero width or height";
 		obs_source_skip_video_filter(filter);
 		return;
 	}
 
-	if (!ensureTextures(width, height)) {
-		slog(LOG_ERROR) << "Failed to ensure textures";
-		obs_source_skip_video_filter(filter);
-		return;
-	}
+	ensureTextures(width, height);
 
 	ExtractionMode extractionMode = runningPreset.extractionMode == ExtractionMode::Default
 						? DefaultExtractionMode
@@ -447,6 +563,13 @@ void ShowDrawFilterContext::videoRender() noexcept
 	}
 }
 
+obs_source_frame *ShowDrawFilterContext::filterVideo(struct obs_source_frame *frame)
+{
+	width = frame->width;
+	height = frame->height;
+	return frame;
+}
+
 obs_source_t *ShowDrawFilterContext::getFilter() const noexcept
 {
 	return filter;
@@ -483,44 +606,13 @@ void ensureTexture(gs_texture_t *&texture, uint32_t width, uint32_t height)
 	}
 }
 
-bool ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height) noexcept
+void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 {
-	try {
-		ensureTexture(textureSource, width, height);
-	} catch (const std::bad_alloc &) {
-		slog(LOG_ERROR) << "Failed to create source texture";
-		return false;
-	}
-
-	try {
-		ensureTexture(textureTarget, width, height);
-	} catch (const std::bad_alloc &) {
-		slog(LOG_ERROR) << "Failed to create target texture";
-		return false;
-	}
-
-	try {
-		ensureTexture(textureMotionMap, width, height);
-	} catch (const std::bad_alloc &) {
-		slog(LOG_ERROR) << "Failed to create motion map texture";
-		return false;
-	}
-
-	try {
-		ensureTexture(texturePreviousLuminance, width, height);
-	} catch (const std::bad_alloc &) {
-		slog(LOG_ERROR) << "Failed to create previous luminance texture";
-		return false;
-	}
-
-	try {
-		ensureTexture(textureFinalSobelMagnitude, width, height);
-	} catch (const std::bad_alloc &) {
-		slog(LOG_ERROR) << "Failed to create final sobel magnitude texture";
-		return false;
-	}
-
-	return true;
+	ensureTexture(textureSource, width, height);
+	ensureTexture(textureTarget, width, height);
+	ensureTexture(textureMotionMap, width, height);
+	ensureTexture(texturePreviousLuminance, width, height);
+	ensureTexture(textureFinalSobelMagnitude, width, height);
 }
 
 static void applyEffectPass(gs_technique_t *technique, gs_texture_t *texture) noexcept

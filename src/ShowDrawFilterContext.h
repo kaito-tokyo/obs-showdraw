@@ -27,10 +27,18 @@ extern "C" {
 const char *showdraw_get_name(void *type_data);
 void *showdraw_create(obs_data_t *settings, obs_source_t *source);
 void showdraw_destroy(void *data);
+uint32_t showdraw_get_width(void *data);
+uint32_t showdraw_get_height(void *data);
 void showdraw_get_defaults(obs_data_t *data);
 obs_properties_t *showdraw_get_properties(void *data);
 void showdraw_update(void *data, obs_data_t *settings);
+void showdraw_activate(void *data);
+void showdraw_deactivate(void *data);
+void showdraw_show(void *data);
+void showdraw_hide(void *data);
+void showdraw_video_tick(void *data, float seconds);
 void showdraw_video_render(void *data, gs_effect_t *effect);
+struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame);
 
 #ifdef __cplusplus
 }
@@ -51,22 +59,34 @@ public:
 	static const char *getName() noexcept;
 
 	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept;
+
+	void afterCreate(obs_data_t *settings, obs_source_t *source);
+
 	~ShowDrawFilterContext() noexcept;
 
-	void afterCreate();
+	std::pair<uint32_t, uint32_t> getDimensions() const noexcept;
+	uint32_t getWidth() const noexcept;
+	uint32_t getHeight() const noexcept;
 
 	static void getDefaults(obs_data_t *data) noexcept;
 
-	obs_properties_t *getProperties() noexcept;
-	void update(obs_data_t *settings) noexcept;
-	void videoRender() noexcept;
+	obs_properties_t *getProperties();
+	void update(obs_data_t *settings);
+	void activate();
+	void deactivate();
+	void show();
+	void hide();
+
+	void videoTick(float seconds);
+	void videoRender();
+	obs_source_frame *filterVideo(struct obs_source_frame *frame);
 
 	obs_source_t *getFilter() const noexcept;
 	Preset getRunningPreset() const noexcept;
 	std::optional<LatestVersion> getLatestVersion() const;
 
 private:
-	bool ensureTextures(uint32_t width, uint32_t height) noexcept;
+	void ensureTextures(uint32_t width, uint32_t height);
 
 	void applyLuminanceExtractionPass() noexcept;
 	void applyMedianFilteringPass(const float texelWidth, const float texelHeight) noexcept;
@@ -85,6 +105,8 @@ private:
 
 	obs_data_t *settings;
 	obs_source_t *filter;
+	uint32_t width;
+	uint32_t height;
 	std::unique_ptr<DrawingEffect> drawingEffect;
 	Preset runningPreset;
 
