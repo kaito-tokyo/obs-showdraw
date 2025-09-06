@@ -58,14 +58,12 @@ DrawingEffect::DrawingEffect()
 
 	unique_bfree_t effect_path(obs_module_file("effects/drawing.effect"));
 	if (!effect_path) {
-		obs_leave_graphics();
 		obs_log(LOG_ERROR, "Failed to get effect path");
 		throw std::runtime_error("Failed to get effect path");
 	}
 
 	effect = gs_effect_create_from_file(effect_path.get(), &error_string);
 	if (!effect) {
-		obs_leave_graphics();
 		obs_log(LOG_ERROR, "Error loading effect: %s", error_string);
 		bfree(error_string);
 		throw std::runtime_error("Error loading effect");

@@ -191,18 +191,24 @@ try {
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
-try {
+{
 	UNUSED_PARAMETER(effect);
 
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_video_render called with null data";
+		obs_log(LOG_ERROR, "showdraw_video_render called with null data");
 		return;
 	}
 
 	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
-	self->get()->videoRender();
-} catch (const std::exception &e) {
-	obs_log(LOG_ERROR, "Failed to render video in showdraw context: %s", e.what());
+	try {
+		self->get()->videoRender();
+	} catch (const std::exception &e) {
+		obs_log(LOG_ERROR, "Failed to render video in showdraw context: %s", e.what());
+		obs_source_t *filter = self->get()->getFilter();
+		if (filter) {
+			obs_source_skip_video_filter(filter);
+		}
+	}
 }
 
 struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame)
@@ -462,15 +468,13 @@ void ShowDrawFilterContext::videoRender()
 			drawingEffect = std::make_unique<DrawingEffect>();
 		} catch (const std::exception &e) {
 			slog(LOG_ERROR) << "Failed to create drawing effect: " << e.what();
-			obs_source_skip_video_filter(filter);
-			return;
+			throw std::runtime_error("Failed to create drawing effect");
 		}
 	}
 
 	if (width == 0 || height == 0) {
 		slog(LOG_INFO) << "Target source has zero width or height";
-		obs_source_skip_video_filter(filter);
-		return;
+		throw std::runtime_error("Target source has zero width or height");
 	}
 
 	ensureTextures(width, height);
@@ -483,8 +487,7 @@ void ShowDrawFilterContext::videoRender()
 
 	if (!obs_source_process_filter_begin(filter, GS_BGRA, OBS_ALLOW_DIRECT_RENDERING)) {
 		slog(LOG_ERROR) << "Could not begin processing filter";
-		obs_source_skip_video_filter(filter);
-		return;
+		throw std::runtime_error("Could not begin processing filter");
 	}
 
 	gs_set_render_target(textureSource, NULL);
@@ -551,7 +554,8 @@ void ShowDrawFilterContext::videoRender()
 			std::swap(textureSource, textureTarget);
 		}
 
-		gs_copy_texture(textureFinalSobelMagnitude, textureSource);
+		std::swap(textureFinalSobelMagnitude, textureSource);
+		std::swap(textureSource, textureComplexSobel);
 	}
 
 	if (extractionMode >= ExtractionMode::EdgeDetection) {
