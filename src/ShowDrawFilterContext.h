@@ -91,25 +91,8 @@ public:
 	std::optional<LatestVersion> getLatestVersion() const;
 
 private:
+	void reloadDrawingEffectInGraphics();
 	void ensureTextures(uint32_t width, uint32_t height);
-
-	void applyLuminanceExtractionPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-	void applyMedianFilteringPass(gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
-				      gs_texture_t *sourceTexture) noexcept;
-	void applyMotionAdaptiveFilteringPass(gs_texture_t *targetTexture, gs_texture_t *sourceMotionMapTexture,
-					      gs_texture_t *sourceTexture,
-					      gs_texture_t *sourcePreviousLuminanceTexture) noexcept;
-	void applySobelPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-	void applyFinalizeSobelMagnitudePass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-	void applySuppressNonMaximumPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-	void applyHysteresisClassifyPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-	void applyHysteresisPropagatePass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-	void applyHysteresisFinalizePass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-	void applyMorphologyPass(gs_technique_t *horizontalTechnique, gs_technique_t *verticalTechnique, int kernelSize,
-				 gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
-				 gs_texture_t *sourceTexture) noexcept;
-	void applyScalingPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-	void drawFinalImage(gs_texture_t *drawingTexture) noexcept;
 
 	obs_data_t *settings;
 	obs_source_t *filter;
@@ -117,7 +100,7 @@ private:
 	uint32_t height;
 	float texelWidth;
 	float texelHeight;
-	std::unique_ptr<DrawingEffect> drawingEffect;
+	std::shared_ptr<DrawingEffect> drawingEffect;
 	Preset runningPreset;
 
 	double sobelMagnitudeFinalizationScalingFactor = 1.0;
