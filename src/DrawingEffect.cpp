@@ -91,7 +91,14 @@ DrawingEffect::DrawingEffect()
 
 		techDraw = getEffectTech(effect, "Draw");
 		techExtractLuminance = getEffectTech(effect, "ExtractLuminance");
-		techMedianFiltering = getEffectTech(effect, "MedianFiltering");
+		techHorizontalMedian3 = getEffectTech(effect, "HorizontalMedian3");
+		techHorizontalMedian5 = getEffectTech(effect, "HorizontalMedian5");
+		techHorizontalMedian7 = getEffectTech(effect, "HorizontalMedian7");
+		techHorizontalMedian9 = getEffectTech(effect, "HorizontalMedian9");
+		techVerticalMedian3 = getEffectTech(effect, "VerticalMedian3");
+		techVerticalMedian5 = getEffectTech(effect, "VerticalMedian5");
+		techVerticalMedian7 = getEffectTech(effect, "VerticalMedian7");
+		techVerticalMedian9 = getEffectTech(effect, "VerticalMedian9");
 		techCalculateMotionMap = getEffectTech(effect, "CalculateMotionMap");
 		techMotionAdaptiveFiltering = getEffectTech(effect, "MotionAdaptiveFiltering");
 		techApplySobel = getEffectTech(effect, "ApplySobel");

@@ -631,7 +631,7 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 {
 	ensureTexture(textureSource, width, height);
 	ensureTexture(textureTarget, width, height);
-	ensureTexture(textureMotionMap, width, height);
+	ensureTexture(textureTemporary1, width, height);
 	ensureTexture(texturePreviousLuminance, width, height);
 	ensureTexture(textureComplexSobel, width, height);
 	ensureTexture(textureFinalSobelMagnitude, width, height);
@@ -660,17 +660,52 @@ void ShowDrawFilterContext::applyLuminanceExtractionPass(gs_texture_t *targetTex
 }
 
 void ShowDrawFilterContext::applyMedianFilteringPass(const float texelWidth, const float texelHeight,
-						     gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
+						     gs_texture_t *targetTexture,
+						     gs_texture_t *targetIntermediateTexture,
+						     gs_texture_t *sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	gs_technique_t *techHorizontal, *techVertical;
+	switch (runningPreset.medianFilteringKernelSize) {
+	case 3:
+		techHorizontal = drawingEffect->techHorizontalMedian3;
+		techVertical = drawingEffect->techVerticalMedian3;
+		break;
+	case 5:
+		techHorizontal = drawingEffect->techHorizontalMedian5;
+		techVertical = drawingEffect->techVerticalMedian5;
+		break;
+	case 7:
+		techHorizontal = drawingEffect->techHorizontalMedian7;
+		techVertical = drawingEffect->techVerticalMedian7;
+		break;
+	case 9:
+		techHorizontal = drawingEffect->techHorizontalMedian9;
+		techVertical = drawingEffect->techVerticalMedian9;
+		break;
+	default:
+		slog(LOG_WARNING)
+			<< "Invalid median filtering kernel size: " << runningPreset.medianFilteringKernelSize;
+		gs_copy_texture(targetTexture, sourceTexture);
+		return;
+	}
+
+	gs_set_render_target(targetIntermediateTexture, nullptr);
 
 	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
+	gs_effect_set_int(drawingEffect->intKernelSize, (int)runningPreset.medianFilteringKernelSize);
+
+	applyEffectPass(techHorizontal, sourceTexture);
+
+	gs_set_render_target(targetTexture, nullptr);
+
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
+
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 	gs_effect_set_int(drawingEffect->intKernelSize, (int)runningPreset.medianFilteringKernelSize);
 
-	applyEffectPass(drawingEffect->techMedianFiltering, sourceTexture);
+	applyEffectPass(techVertical, sourceTexture);
 }
 
 void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(const float texelWidth, const float texelHeight,

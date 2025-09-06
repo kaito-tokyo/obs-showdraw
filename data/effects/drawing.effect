@@ -138,86 +138,115 @@ float median9(float v0, float v1, float v2, float v3, float v4, float v5, float 
 	return v4;
 }
 
+//==================================================================================
+// Horizontal Pass
+//==================================================================================
 //
-// Role:      Applies a separable median filter to reduce noise.
-// Prerequisite: PSExtractLuminance (or any other shader that outputs a grayscale image).
-// Input:     A single-channel image in 'image.r' (e.g., a luminance map).
-// Uniforms:  kernelSize, texelWidth, texelHeight.
-// Output:    A grayscale image with the median-filtered value in the .rgb channels.
+// Role:      Applies a 1D horizontal median filter. This is the first pass of a
+//            two-pass separable median filter used to reduce noise.
+// Prerequisite: A grayscale image (e.g., a luminance map from a previous pass).
+// Input:     A single-channel image in 'inputTexture.r'.
+// Uniforms:  texelWidth.
+// Output:    A grayscale image containing the horizontal medians, intended for an
+//            intermediate render target.
 //
-float4 PSMedianFiltering(VertInOut vert_in) : TARGET
+float4 PSHorizontalMedian3(VertInOut vert_in) : SV_TARGET
 {
-	float2 texel_size = float2(texelWidth, texelHeight);
-	float2 uv = vert_in.uv;
-	float final_median;
+    float samples[3];
+    float2 texelStep = float2(texelWidth, 0.0f);
+    float2 startUV = vert_in.uv - texelStep * 1;
+    [unroll]
+    for (int i = 0; i < 3; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    float medianValue = median3(samples[0], samples[1], samples[2]);
+    return float4(medianValue, medianValue, medianValue, 1.0f);
+}
 
-	if (kernelSize == 1) {
-		final_median = image.Sample(def_sampler, uv).r;
-	} else if (kernelSize == 3) {
-		int radius = 1;
-		float p[9];
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				p[(y + radius) * 3 + (x + radius)] =
-					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-			}
-		}
-		float h_medians[3];
-		for (int i = 0; i < 3; i++) {
-			h_medians[i] = median3(p[i * 3 + 0], p[i * 3 + 1], p[i * 3 + 2]);
-		}
-		final_median = median3(h_medians[0], h_medians[1], h_medians[2]);
-	} else if (kernelSize == 5) {
-		int radius = 2;
-		float p[25];
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				p[(y + radius) * 5 + (x + radius)] =
-					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-			}
-		}
-		float h_medians[5];
-		for (int i = 0; i < 5; i++) {
-			h_medians[i] = median5(p[i * 5 + 0], p[i * 5 + 1], p[i * 5 + 2], p[i * 5 + 3], p[i * 5 + 4]);
-		}
-		final_median = median5(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4]);
-	} else if (kernelSize == 7) {
-		int radius = 3;
-		float p[49];
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				p[(y + radius) * 7 + (x + radius)] =
-					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-			}
-		}
-		float h_medians[7];
-		for (int i = 0; i < 7; i++) {
-			h_medians[i] = median7(p[i * 7 + 0], p[i * 7 + 1], p[i * 7 + 2], p[i * 7 + 3], p[i * 7 + 4],
-					       p[i * 7 + 5], p[i * 7 + 6]);
-		}
-		final_median = median7(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4],
-				       h_medians[5], h_medians[6]);
-	} else if (kernelSize == 9) {
-		int radius = 4;
-		float p[81];
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				p[(y + radius) * 9 + (x + radius)] =
-					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-			}
-		}
-		float h_medians[9];
-		for (int i = 0; i < 9; i++) {
-			h_medians[i] = median9(p[i * 9 + 0], p[i * 9 + 1], p[i * 9 + 2], p[i * 9 + 3], p[i * 9 + 4],
-					       p[i * 9 + 5], p[i * 9 + 6], p[i * 9 + 7], p[i * 9 + 8]);
-		}
-		final_median = median9(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4],
-				       h_medians[5], h_medians[6], h_medians[7], h_medians[8]);
-	} else {
-		return image.Sample(def_sampler, vert_in.uv);
-	}
+float4 PSHorizontalMedian5(VertInOut vert_in) : SV_TARGET
+{
+    float samples[5];
+    float2 texelStep = float2(texelWidth, 0.0f);
+    float2 startUV = vert_in.uv - texelStep * 2;
+    [unroll]
+    for (int i = 0; i < 5; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    float medianValue = median5(samples[0], samples[1], samples[2], samples[3], samples[4]);
+    return float4(medianValue, medianValue, medianValue, 1.0f);
+}
 
-	return float4(final_median, final_median, final_median, 1.0);
+float4 PSHorizontalMedian7(VertInOut vert_in) : SV_TARGET
+{
+    float samples[7];
+    float2 texelStep = float2(texelWidth, 0.0f);
+    float2 startUV = vert_in.uv - texelStep * 3;
+    [unroll]
+    for (int i = 0; i < 7; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    float medianValue = median7(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6]);
+    return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+float4 PSHorizontalMedian9(VertInOut vert_in) : SV_TARGET
+{
+    float samples[9];
+    float2 texelStep = float2(texelWidth, 0.0f);
+    float2 startUV = vert_in.uv - texelStep * 4;
+    [unroll]
+    for (int i = 0; i < 9; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    float medianValue = median9(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6], samples[7], samples[8]);
+    return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+//==================================================================================
+// Vertical Pass
+//==================================================================================
+//
+// Role:      Applies a 1D vertical median filter. This is the second and final pass
+//            of a two-pass separable median filter.
+// Prerequisite: The result from the horizontal median filter pass.
+// Input:     A single-channel image from the horizontal pass in 'inputTexture.r'.
+// Uniforms:  texelHeight.
+// Output:    The final median-filtered grayscale image.
+//
+float4 PSVerticalMedian3(VertInOut vert_in) : SV_TARGET
+{
+    float samples[3];
+    float2 texelStep = float2(0.0f, texelHeight);
+    float2 startUV = vert_in.uv - texelStep * 1;
+    [unroll]
+    for (int i = 0; i < 3; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    float medianValue = median3(samples[0], samples[1], samples[2]);
+    return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+float4 PSVerticalMedian5(VertInOut vert_in) : SV_TARGET
+{
+    float samples[5];
+    float2 texelStep = float2(0.0f, texelHeight);
+    float2 startUV = vert_in.uv - texelStep * 2;
+    [unroll]
+    for (int i = 0; i < 5; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    float medianValue = median5(samples[0], samples[1], samples[2], samples[3], samples[4]);
+    return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+float4 PSVerticalMedian7(VertInOut vert_in) : SV_TARGET
+{
+    float samples[7];
+    float2 texelStep = float2(0.0f, texelHeight);
+    float2 startUV = vert_in.uv - texelStep * 3;
+    [unroll]
+    for (int i = 0; i < 7; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    float medianValue = median7(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6]);
+    return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+float4 PSVerticalMedian9(VertInOut vert_in) : SV_TARGET
+{
+    float samples[9];
+    float2 texelStep = float2(0.0f, texelHeight);
+    float2 startUV = vert_in.uv - texelStep * 4;
+    [unroll]
+    for (int i = 0; i < 9; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    float medianValue = median9(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6], samples[7], samples[8]);
+    return float4(medianValue, medianValue, medianValue, 1.0f);
 }
 
 //
@@ -512,12 +541,75 @@ technique ExtractLuminance
 	}
 }
 
-technique MedianFiltering
+technique HorizontalMedian3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSMedianFiltering(vert_in);
+		pixel_shader = PSHorizontalMedian3(vert_in);
+	}
+}
+
+technique HorizontalMedian5
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSHorizontalMedian5(vert_in);
+	}
+}
+
+technique HorizontalMedian7
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSHorizontalMedian7(vert_in);
+	}
+}
+
+technique HorizontalMedian9
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSHorizontalMedian9(vert_in);
+	}
+}
+
+technique VerticalMedian3
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSVerticalMedian3(vert_in);
+	}
+}
+
+technique VerticalMedian5
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSVerticalMedian5(vert_in);
+	}
+}
+
+technique VerticalMedian7
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSVerticalMedian7(vert_in);
+	}
+}
+
+technique VerticalMedian9
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSVerticalMedian9(vert_in);
 	}
 }
 

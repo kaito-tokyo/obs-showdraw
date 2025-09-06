@@ -123,7 +123,7 @@ private:
 
 	gs_texture_t *textureSource;
 	gs_texture_t *textureTarget;
-	gs_texture_t *textureMotionMap;
+	gs_texture_t *textureTemporary1;
 	gs_texture_t *texturePreviousLuminance;
 	gs_texture_t *textureComplexSobel;
 	gs_texture_t *textureFinalSobelMagnitude;
