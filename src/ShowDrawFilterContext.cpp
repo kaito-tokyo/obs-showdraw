@@ -205,6 +205,7 @@ obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 
 	obs_properties_add_text(props, "isUpdateAvailable", updateAvailableText, OBS_TEXT_INFO);
 
+	/*
 	obs_properties_add_button2(
 		props, "openPresetWindow", obs_module_text("openPresetWindow"),
 		[](obs_properties_t *props, obs_property_t *property, void *data) {
@@ -217,6 +218,7 @@ obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 			return true;
 		},
 		this);
+	*/
 
 	obs_property_t *propExtractionMode = obs_properties_add_list(
 		props, "extractionMode", obs_module_text("extractionMode"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
