@@ -52,8 +52,8 @@ if(NOT _vcpkg_result EQUAL 0)
   message(FATAL_ERROR "vcpkg install failed")
 endif()
 
-set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
-list(PREPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed")
+list(PREPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}")
 
 find_package(CURL REQUIRED)
 find_package(wolfssl CONFIG REQUIRED)
