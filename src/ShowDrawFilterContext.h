@@ -89,10 +89,10 @@ private:
 
 	double scaling_factor;
 
-	gs_texture_t *texture_source;
-	gs_texture_t *texture_target;
-	gs_texture_t *texture_motion_map;
-	gs_texture_t *texture_previous_luminance;
+	gs_texture_t *textureSource;
+	gs_texture_t *textureTarget;
+	gs_texture_t *textureMotionMap;
+	gs_texture_t *texturePreviousLuminance;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
 };

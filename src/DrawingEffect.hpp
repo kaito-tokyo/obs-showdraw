@@ -30,35 +30,35 @@ public:
 
 	gs_effect_t *effect = nullptr;
 
-	gs_eparam_t *texture_image = nullptr;
-	gs_eparam_t *texture_image1 = nullptr;
+	gs_eparam_t *textureImage = nullptr;
+	gs_eparam_t *textureImage1 = nullptr;
 
-	gs_eparam_t *float_texel_width = nullptr;
-	gs_eparam_t *float_texel_height = nullptr;
-	gs_eparam_t *int_kernel_size = nullptr;
+	gs_eparam_t *floatTexelWidth = nullptr;
+	gs_eparam_t *floatTexelHeight = nullptr;
+	gs_eparam_t *intKernelSize = nullptr;
 
-	gs_eparam_t *texture_motion_map = nullptr;
-	gs_eparam_t *float_strength = nullptr;
-	gs_eparam_t *float_motion_threshold = nullptr;
+	gs_eparam_t *textureMotionMap = nullptr;
+	gs_eparam_t *floatStrength = nullptr;
+	gs_eparam_t *floatMotionThreshold = nullptr;
 
-	gs_eparam_t *float_high_threshold = nullptr;
-	gs_eparam_t *float_low_threshold = nullptr;
+	gs_eparam_t *floatHighThreshold = nullptr;
+	gs_eparam_t *floatLowThreshold = nullptr;
 
-	gs_eparam_t *float_scaling_factor = nullptr;
+	gs_eparam_t *floatScalingFactor = nullptr;
 
-	gs_technique_t *tech_draw = nullptr;
-	gs_technique_t *tech_extract_luminance = nullptr;
-	gs_technique_t *tech_median_filtering = nullptr;
-	gs_technique_t *tech_calculate_motion_map = nullptr;
-	gs_technique_t *tech_motion_adaptive_filtering = nullptr;
-	gs_technique_t *tech_apply_sobel = nullptr;
-	gs_technique_t *tech_suppress_non_maximum = nullptr;
-	gs_technique_t *tech_hysteresis_classify = nullptr;
-	gs_technique_t *tech_hysteresis_propagate = nullptr;
-	gs_technique_t *tech_hysteresis_finalize = nullptr;
-	gs_technique_t *tech_erosion = nullptr;
-	gs_technique_t *tech_dilation = nullptr;
-	gs_technique_t *tech_scaling = nullptr;
+	gs_technique_t *techDraw = nullptr;
+	gs_technique_t *techExtractLuminance = nullptr;
+	gs_technique_t *techMedianFiltering = nullptr;
+	gs_technique_t *techCalculateMotionMap = nullptr;
+	gs_technique_t *techMotionAdaptiveFiltering = nullptr;
+	gs_technique_t *techApplySobel = nullptr;
+	gs_technique_t *techSuppressNonMaximum = nullptr;
+	gs_technique_t *techHysteresisClassify = nullptr;
+	gs_technique_t *techHysteresisPropagate = nullptr;
+	gs_technique_t *techHysteresisFinalize = nullptr;
+	gs_technique_t *techErosion = nullptr;
+	gs_technique_t *techDilation = nullptr;
+	gs_technique_t *techScaling = nullptr;
 };
 
 } // namespace obs_showdraw

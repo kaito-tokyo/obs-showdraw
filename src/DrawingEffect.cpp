@@ -72,35 +72,35 @@ DrawingEffect::DrawingEffect()
 	}
 
 	try {
-		texture_image = getEffectParam(effect, "image");
-		texture_image1 = getEffectParam(effect, "image1");
+		textureImage = getEffectParam(effect, "image");
+		textureImage1 = getEffectParam(effect, "image1");
 
-		float_texel_width = getEffectParam(effect, "texelWidth");
-		float_texel_height = getEffectParam(effect, "texelHeight");
-		int_kernel_size = getEffectParam(effect, "kernelSize");
+		floatTexelWidth = getEffectParam(effect, "texelWidth");
+		floatTexelHeight = getEffectParam(effect, "texelHeight");
+		intKernelSize = getEffectParam(effect, "kernelSize");
 
-		texture_motion_map = getEffectParam(effect, "motionMap");
-		float_strength = getEffectParam(effect, "strength");
-		float_motion_threshold = getEffectParam(effect, "motionThreshold");
+		textureMotionMap = getEffectParam(effect, "motionMap");
+		floatStrength = getEffectParam(effect, "strength");
+		floatMotionThreshold = getEffectParam(effect, "motionThreshold");
 
-		float_high_threshold = getEffectParam(effect, "highThreshold");
-		float_low_threshold = getEffectParam(effect, "lowThreshold");
+		floatHighThreshold = getEffectParam(effect, "highThreshold");
+		floatLowThreshold = getEffectParam(effect, "lowThreshold");
 
-		float_scaling_factor = getEffectParam(effect, "scalingFactor");
+		floatScalingFactor = getEffectParam(effect, "scalingFactor");
 
-		tech_draw = getEffectTech(effect, "Draw");
-		tech_extract_luminance = getEffectTech(effect, "ExtractLuminance");
-		tech_median_filtering = getEffectTech(effect, "MedianFiltering");
-		tech_calculate_motion_map = getEffectTech(effect, "CalculateMotionMap");
-		tech_motion_adaptive_filtering = getEffectTech(effect, "MotionAdaptiveFiltering");
-		tech_apply_sobel = getEffectTech(effect, "ApplySobel");
-		tech_suppress_non_maximum = getEffectTech(effect, "SuppressNonMaximum");
-		tech_hysteresis_classify = getEffectTech(effect, "HysteresisClassify");
-		tech_hysteresis_propagate = getEffectTech(effect, "HysteresisPropagate");
-		tech_hysteresis_finalize = getEffectTech(effect, "HysteresisFinalize");
-		tech_erosion = getEffectTech(effect, "Erosion");
-		tech_dilation = getEffectTech(effect, "Dilation");
-		tech_scaling = getEffectTech(effect, "Scaling");
+		techDraw = getEffectTech(effect, "Draw");
+		techExtractLuminance = getEffectTech(effect, "ExtractLuminance");
+		techMedianFiltering = getEffectTech(effect, "MedianFiltering");
+		techCalculateMotionMap = getEffectTech(effect, "CalculateMotionMap");
+		techMotionAdaptiveFiltering = getEffectTech(effect, "MotionAdaptiveFiltering");
+		techApplySobel = getEffectTech(effect, "ApplySobel");
+		techSuppressNonMaximum = getEffectTech(effect, "SuppressNonMaximum");
+		techHysteresisClassify = getEffectTech(effect, "HysteresisClassify");
+		techHysteresisPropagate = getEffectTech(effect, "HysteresisPropagate");
+		techHysteresisFinalize = getEffectTech(effect, "HysteresisFinalize");
+		techErosion = getEffectTech(effect, "Erosion");
+		techDilation = getEffectTech(effect, "Dilation");
+		techScaling = getEffectTech(effect, "Scaling");
 	} catch (const std::exception &e) {
 		gs_effect_destroy(effect);
 		effect = nullptr;
