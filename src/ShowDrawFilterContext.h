@@ -54,6 +54,11 @@ struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_fra
 namespace kaito_tokyo {
 namespace obs_showdraw {
 
+class skip_video_filter_exception : public std::exception {
+public:
+	const char *what() const noexcept override { return "skip video filter"; }
+};
+
 class ShowDrawFilterContext : public std::enable_shared_from_this<ShowDrawFilterContext> {
 public:
 	static const char *getName() noexcept;
@@ -91,7 +96,7 @@ private:
 	void applyLuminanceExtractionPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
 	void applyMedianFilteringPass(gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
 				      gs_texture_t *sourceTexture) noexcept;
-	void applyMotionAdaptiveFilteringPass(gs_texture_t *targetTexture, gs_texture_t *targetMotionMapTexture,
+	void applyMotionAdaptiveFilteringPass(gs_texture_t *targetTexture, gs_texture_t *sourceMotionMapTexture,
 					      gs_texture_t *sourceTexture,
 					      gs_texture_t *sourcePreviousLuminanceTexture) noexcept;
 	void applySobelPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
@@ -120,6 +125,7 @@ private:
 	gs_texture_t *textureTarget;
 	gs_texture_t *textureTemporary1;
 	gs_texture_t *texturePreviousLuminance;
+	gs_texture_t *textureMotionMap;
 	gs_texture_t *textureFinalSobelMagnitude;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;

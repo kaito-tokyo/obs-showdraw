@@ -191,7 +191,7 @@ try {
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
-{
+try {
 	UNUSED_PARAMETER(effect);
 
 	if (!data) {
@@ -202,13 +202,14 @@ void showdraw_video_render(void *data, gs_effect_t *effect)
 	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
 	try {
 		self->get()->videoRender();
-	} catch (const std::exception &e) {
-		obs_log(LOG_ERROR, "Failed to render video in showdraw context: %s", e.what());
+	} catch (const skip_video_filter_exception &) {
 		obs_source_t *filter = self->get()->getFilter();
 		if (filter) {
 			obs_source_skip_video_filter(filter);
 		}
 	}
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to render video in showdraw context: %s", e.what());
 }
 
 struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame)
@@ -265,6 +266,7 @@ ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 	gs_texture_destroy(textureTarget);
 	gs_texture_destroy(textureTemporary1);
 	gs_texture_destroy(texturePreviousLuminance);
+	gs_texture_destroy(textureMotionMap);
 	gs_texture_destroy(textureFinalSobelMagnitude);
 	obs_leave_graphics();
 }
@@ -468,13 +470,13 @@ void ShowDrawFilterContext::videoRender()
 			drawingEffect = std::make_unique<DrawingEffect>();
 		} catch (const std::exception &e) {
 			slog(LOG_ERROR) << "Failed to create drawing effect: " << e.what();
-			throw std::runtime_error("Failed to create drawing effect");
+			throw skip_video_filter_exception();
 		}
 	}
 
 	if (width == 0 || height == 0) {
-		slog(LOG_INFO) << "Target source has zero width or height";
-		throw std::runtime_error("Target source has zero width or height");
+		slog(LOG_DEBUG) << "Target source has zero width or height";
+		throw skip_video_filter_exception();
 	}
 
 	ensureTextures(width, height);
@@ -487,7 +489,7 @@ void ShowDrawFilterContext::videoRender()
 
 	if (!obs_source_process_filter_begin(filter, GS_BGRA, OBS_ALLOW_DIRECT_RENDERING)) {
 		slog(LOG_ERROR) << "Could not begin processing filter";
-		throw std::runtime_error("Could not begin processing filter");
+		throw skip_video_filter_exception();
 	}
 
 	gs_set_render_target(textureSource, NULL);
@@ -511,7 +513,7 @@ void ShowDrawFilterContext::videoRender()
 		}
 
 		if (runningPreset.motionAdaptiveFilteringStrength > 0.0) {
-			applyMotionAdaptiveFilteringPass(textureTarget, textureTemporary1, textureSource,
+			applyMotionAdaptiveFilteringPass(textureTarget, textureMotionMap, textureSource,
 							 texturePreviousLuminance);
 			std::swap(textureSource, textureTarget);
 		}
@@ -637,6 +639,7 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTexture(textureTarget, width, height);
 	ensureTexture(textureTemporary1, width, height);
 	ensureTexture(texturePreviousLuminance, width, height);
+	ensureTexture(textureMotionMap, width, height);
 	ensureTexture(textureFinalSobelMagnitude, width, height);
 }
 
@@ -732,6 +735,7 @@ void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(gs_texture_t *targe
 
 	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
 	gs_effect_set_texture(drawingEffect->textureImage1, sourcePreviousLuminanceTexture);
+	gs_effect_set_texture(drawingEffect->textureMotionMap, targetMotionMapTexture);
 
 	gs_effect_set_float(drawingEffect->floatStrength, (float)runningPreset.motionAdaptiveFilteringStrength);
 	gs_effect_set_float(drawingEffect->floatMotionThreshold,

@@ -150,48 +150,53 @@ float median9(float v0, float v1, float v2, float v3, float v4, float v5, float 
 // Output:    A grayscale image containing the horizontal medians, intended for an
 //            intermediate render target.
 //
-float4 PSHorizontalMedian3(VertInOut vert_in) : SV_TARGET
+float4 PSHorizontalMedian3(VertInOut vert_in) : TARGET
 {
-    float samples[3];
-    float2 texelStep = float2(texelWidth, 0.0f);
-    float2 startUV = vert_in.uv - texelStep * 1;
-    [unroll]
-    for (int i = 0; i < 3; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
-    float medianValue = median3(samples[0], samples[1], samples[2]);
-    return float4(medianValue, medianValue, medianValue, 1.0f);
+	float samples[3];
+	float2 texelStep = float2(texelWidth, 0.0f);
+	float2 startUV = vert_in.uv - texelStep * 1;
+	for (int i = 0; i < 3; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median3(samples[0], samples[1], samples[2]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
 }
 
-float4 PSHorizontalMedian5(VertInOut vert_in) : SV_TARGET
+float4 PSHorizontalMedian5(VertInOut vert_in) : TARGET
 {
-    float samples[5];
-    float2 texelStep = float2(texelWidth, 0.0f);
-    float2 startUV = vert_in.uv - texelStep * 2;
-    [unroll]
-    for (int i = 0; i < 5; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
-    float medianValue = median5(samples[0], samples[1], samples[2], samples[3], samples[4]);
-    return float4(medianValue, medianValue, medianValue, 1.0f);
+	float samples[5];
+	float2 texelStep = float2(texelWidth, 0.0f);
+	float2 startUV = vert_in.uv - texelStep * 2;
+	for (int i = 0; i < 5; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median5(samples[0], samples[1], samples[2], samples[3], samples[4]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
 }
 
-float4 PSHorizontalMedian7(VertInOut vert_in) : SV_TARGET
+float4 PSHorizontalMedian7(VertInOut vert_in) : TARGET
 {
-    float samples[7];
-    float2 texelStep = float2(texelWidth, 0.0f);
-    float2 startUV = vert_in.uv - texelStep * 3;
-    [unroll]
-    for (int i = 0; i < 7; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
-    float medianValue = median7(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6]);
-    return float4(medianValue, medianValue, medianValue, 1.0f);
+	float samples[7];
+	float2 texelStep = float2(texelWidth, 0.0f);
+	float2 startUV = vert_in.uv - texelStep * 3;
+	for (int i = 0; i < 7; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median7(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
 }
 
-float4 PSHorizontalMedian9(VertInOut vert_in) : SV_TARGET
+float4 PSHorizontalMedian9(VertInOut vert_in) : TARGET
 {
-    float samples[9];
-    float2 texelStep = float2(texelWidth, 0.0f);
-    float2 startUV = vert_in.uv - texelStep * 4;
-    [unroll]
-    for (int i = 0; i < 9; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
-    float medianValue = median9(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6], samples[7], samples[8]);
-    return float4(medianValue, medianValue, medianValue, 1.0f);
+	float samples[9];
+	float2 texelStep = float2(texelWidth, 0.0f);
+	float2 startUV = vert_in.uv - texelStep * 4;
+	for (int i = 0; i < 9; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median9(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6],
+				    samples[7], samples[8]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
 }
 
 //==================================================================================
@@ -205,48 +210,53 @@ float4 PSHorizontalMedian9(VertInOut vert_in) : SV_TARGET
 // Uniforms:  texelHeight.
 // Output:    The final median-filtered grayscale image.
 //
-float4 PSVerticalMedian3(VertInOut vert_in) : SV_TARGET
+float4 PSVerticalMedian3(VertInOut vert_in) : TARGET
 {
-    float samples[3];
-    float2 texelStep = float2(0.0f, texelHeight);
-    float2 startUV = vert_in.uv - texelStep * 1;
-    [unroll]
-    for (int i = 0; i < 3; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
-    float medianValue = median3(samples[0], samples[1], samples[2]);
-    return float4(medianValue, medianValue, medianValue, 1.0f);
+	float samples[3];
+	float2 texelStep = float2(0.0f, texelHeight);
+	float2 startUV = vert_in.uv - texelStep * 1;
+	for (int i = 0; i < 3; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median3(samples[0], samples[1], samples[2]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
 }
 
-float4 PSVerticalMedian5(VertInOut vert_in) : SV_TARGET
+float4 PSVerticalMedian5(VertInOut vert_in) : TARGET
 {
-    float samples[5];
-    float2 texelStep = float2(0.0f, texelHeight);
-    float2 startUV = vert_in.uv - texelStep * 2;
-    [unroll]
-    for (int i = 0; i < 5; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
-    float medianValue = median5(samples[0], samples[1], samples[2], samples[3], samples[4]);
-    return float4(medianValue, medianValue, medianValue, 1.0f);
+	float samples[5];
+	float2 texelStep = float2(0.0f, texelHeight);
+	float2 startUV = vert_in.uv - texelStep * 2;
+	for (int i = 0; i < 5; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median5(samples[0], samples[1], samples[2], samples[3], samples[4]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
 }
 
-float4 PSVerticalMedian7(VertInOut vert_in) : SV_TARGET
+float4 PSVerticalMedian7(VertInOut vert_in) : TARGET
 {
-    float samples[7];
-    float2 texelStep = float2(0.0f, texelHeight);
-    float2 startUV = vert_in.uv - texelStep * 3;
-    [unroll]
-    for (int i = 0; i < 7; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
-    float medianValue = median7(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6]);
-    return float4(medianValue, medianValue, medianValue, 1.0f);
+	float samples[7];
+	float2 texelStep = float2(0.0f, texelHeight);
+	float2 startUV = vert_in.uv - texelStep * 3;
+	for (int i = 0; i < 7; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median7(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
 }
 
-float4 PSVerticalMedian9(VertInOut vert_in) : SV_TARGET
+float4 PSVerticalMedian9(VertInOut vert_in) : TARGET
 {
-    float samples[9];
-    float2 texelStep = float2(0.0f, texelHeight);
-    float2 startUV = vert_in.uv - texelStep * 4;
-    [unroll]
-    for (int i = 0; i < 9; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
-    float medianValue = median9(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6], samples[7], samples[8]);
-    return float4(medianValue, medianValue, medianValue, 1.0f);
+	float samples[9];
+	float2 texelStep = float2(0.0f, texelHeight);
+	float2 startUV = vert_in.uv - texelStep * 4;
+	for (int i = 0; i < 9; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median9(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6],
+				    samples[7], samples[8]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
 }
 
 //
@@ -260,38 +270,44 @@ float4 PSCalculateMotionMap(VertInOut vert_in) : TARGET
 {
 	float2 texel_size = float2(texelWidth, texelHeight);
 	float2 uv = vert_in.uv;
-	float sad = 0.0;
+	float mad = 0.0;
 	int radius = kernelSize / 2;
 
 	for (int y = -radius; y <= radius; y++) {
 		for (int x = -radius; x <= radius; x++) {
 			float luma = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
 			float luma1 = image1.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-			sad += abs(luma - luma1);
+			mad += abs(luma - luma1);
 		}
 	}
 
-	sad /= float(kernelSize * kernelSize);
+	mad = saturate(mad / float(kernelSize * kernelSize));
 
-	return float4(sad, sad, sad, 1.0);
+	return float4(mad, mad, mad, 1.0);
 }
 
 //
-// Role:      Performs motion adaptive filtering by blending between two frames based on pixel-wise difference.
-// Prerequisite: Two grayscale images.
-// Input:     'image.r' (e.g., noisy current frame), 'image1.r' (e.g., filtered previous frame).
-// Uniforms:  motionThreshold, strength.
-// Output:    A grayscale image with the adaptively filtered value in the .rgb channels.
+// Role:      Performs motion-adaptive temporal filtering by blending the current frame
+//            with the previous frame, using a pre-calculated motion map to control
+//            the blend strength. This is highly effective for reducing noise in
+//            static or low-motion areas of a video stream.
+// Prerequisite: Requires a motion map, typically generated by the 'PSCalculateMotionMap'
+//               pass, along with the current and previous frames.
+// Input:     'image.r': The current (potentially noisy) grayscale frame.
+//            'image1.r': The previously filtered grayscale frame (temporal accumulator).
+//            'motionMap.r': A map where pixel intensity indicates the amount of motion.
+// Uniforms:  strength, motionThreshold.
+// Output:    A grayscale image with temporal noise reduction applied, stored in .rgb.
 //
 float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
 {
-	float luma = image.Sample(def_sampler, vert_in.uv).r;
-	float luma1 = image1.Sample(def_sampler, vert_in.uv).r;
-	float diff = abs(luma - luma1);
-	float motionFactor = smoothstep(0.0, motionThreshold, diff);
-	float blendFactor = strength * motionFactor;
-	float finalLuma = lerp(luma1, luma, blendFactor);
-	return float4(finalLuma, finalLuma, finalLuma, 1.0);
+        float luma = image.Sample(def_sampler, vert_in.uv).r;
+        float luma1 = image1.Sample(def_sampler, vert_in.uv).r;
+        float motion = motionMap.Sample(def_sampler, vert_in.uv).r;
+        float motionFactor = smoothstep(0.0, motionThreshold, motion);
+        float blendFactor = strength * motionFactor;
+        float finalLuma = lerp(luma1, luma, blendFactor);
+        return float4(finalLuma, finalLuma, finalLuma, 1.0);
 }
 
 //
