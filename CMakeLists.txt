@@ -60,7 +60,8 @@ find_package(wolfssl CONFIG REQUIRED NO_DEFAULT_PATH)
 find_package(cpr CONFIG REQUIRED NO_DEFAULT_PATH)
 find_package(semver CONFIG REQUIRED NO_DEFAULT_PATH)
 find_package(nlohmann_json CONFIG REQUIRED NO_DEFAULT_PATH)
-find_package(OpenCV REQUIRED NO_DEFAULT_PATH)
+set(OpenCV_DIR "${VCPKG_INSTALLED_DIR}/share/opencv4")
+find_package(OpenCV CONFIG REQUIRED NO_DEFAULT_PATH)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}_impl PRIVATE NOMINMAX)
 
