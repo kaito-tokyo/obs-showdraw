@@ -26,7 +26,7 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 struct obs_source_info showdraw_filter = {.id = "showdraw",
 					  .type = OBS_SOURCE_TYPE_FILTER,
-					  .output_flags = OBS_SOURCE_VIDEO,
+					  .output_flags = OBS_SOURCE_ASYNC_VIDEO,
 					  .get_name = showdraw_get_name,
 					  .create = showdraw_create,
 					  .destroy = showdraw_destroy,
@@ -39,10 +39,9 @@ struct obs_source_info showdraw_filter = {.id = "showdraw",
 					  .deactivate = showdraw_deactivate,
 					  .show = showdraw_show,
 					  .hide = showdraw_hide,
-					//   .video_tick = showdraw_video_tick,
+					  .video_tick = showdraw_video_tick,
 					  .video_render = showdraw_video_render,
-					//   .filter_video = showdraw_filter_video
-};
+					  .filter_video = showdraw_filter_video};
 
 bool obs_module_load()
 {

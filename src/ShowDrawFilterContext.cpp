@@ -205,18 +205,18 @@ try {
 	obs_log(LOG_ERROR, "Failed to render video in showdraw context: %s", e.what());
 }
 
-struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *video)
+struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame)
 try {
 	if (!data) {
 		slog(LOG_ERROR) << "showdraw_filter_video called with null data";
-		return video;
+		return frame;
 	}
 
 	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
-	return self->get()->filterVideo(video);
+	return self->get()->filterVideo(frame);
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to filter video in showdraw context: %s", e.what());
-	return video;
+	return frame;
 }
 
 namespace kaito_tokyo {
@@ -262,33 +262,14 @@ ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 	obs_leave_graphics();
 }
 
-std::pair<uint32_t, uint32_t> ShowDrawFilterContext::getDimensions() const noexcept
-{
-	gs_texture_t *renderingTexture;
-	if (runningPreset.extractionMode == ExtractionMode::SobelMagnitude) {
-		renderingTexture = textureFinalSobelMagnitude;
-	} else {
-		renderingTexture = textureSource;
-	}
-	obs_log(LOG_ERROR, "%d", (long long)renderingTexture);
-
-	if (!renderingTexture) {
-		return {0, 0};
-	}
-
-	obs_log(LOG_ERROR, "%d %d", gs_texture_get_width(renderingTexture), gs_texture_get_height(renderingTexture));
-
-	return {gs_texture_get_width(renderingTexture), gs_texture_get_height(renderingTexture)};
-}
-
 uint32_t ShowDrawFilterContext::getWidth() const noexcept
 {
-	return getDimensions().first;
+	return width;
 }
 
 uint32_t ShowDrawFilterContext::getHeight() const noexcept
 {
-	return getDimensions().second;
+	return height;
 }
 
 void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
@@ -473,19 +454,6 @@ void ShowDrawFilterContext::videoTick(float seconds)
 
 void ShowDrawFilterContext::videoRender()
 {
-	if (!filter) {
-		slog(LOG_ERROR) << "Filter source not found";
-		return;
-	}
-
-	obs_source_t *parent = obs_filter_get_parent(filter);
-
-	if (!parent) {
-		slog(LOG_ERROR) << "Parent source not found";
-		obs_source_skip_video_filter(filter);
-		return;
-	}
-
 	if (!drawingEffect) {
 		try {
 			drawingEffect = std::make_unique<DrawingEffect>();
@@ -495,9 +463,6 @@ void ShowDrawFilterContext::videoRender()
 			return;
 		}
 	}
-
-	const uint32_t width = obs_source_get_width(parent);
-	const uint32_t height = obs_source_get_height(parent);
 
 	if (width == 0 || height == 0) {
 		slog(LOG_INFO) << "Target source has zero width or height";
@@ -598,9 +563,11 @@ void ShowDrawFilterContext::videoRender()
 	}
 }
 
-obs_source_frame *ShowDrawFilterContext::filterVideo(struct obs_source_frame *video)
+obs_source_frame *ShowDrawFilterContext::filterVideo(struct obs_source_frame *frame)
 {
-	return video;
+	width = frame->width;
+	height = frame->height;
+	return frame;
 }
 
 obs_source_t *ShowDrawFilterContext::getFilter() const noexcept

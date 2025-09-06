@@ -38,7 +38,7 @@ void showdraw_show(void *data);
 void showdraw_hide(void *data);
 void showdraw_video_tick(void *data, float seconds);
 void showdraw_video_render(void *data, gs_effect_t *effect);
-struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *video);
+struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame);
 
 #ifdef __cplusplus
 }
@@ -79,7 +79,7 @@ public:
 
 	void videoTick(float seconds);
 	void videoRender();
-	obs_source_frame *filterVideo(struct obs_source_frame *video);
+	obs_source_frame *filterVideo(struct obs_source_frame *frame);
 
 	obs_source_t *getFilter() const noexcept;
 	Preset getRunningPreset() const noexcept;
@@ -105,6 +105,8 @@ private:
 
 	obs_data_t *settings;
 	obs_source_t *filter;
+	uint32_t width;
+	uint32_t height;
 	std::unique_ptr<DrawingEffect> drawingEffect;
 	Preset runningPreset;
 
