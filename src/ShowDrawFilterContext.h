@@ -54,6 +54,11 @@ struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_fra
 namespace kaito_tokyo {
 namespace obs_showdraw {
 
+class skip_video_filter_exception : public std::exception {
+public:
+	const char *what() const noexcept override { return "skip video filter"; }
+};
+
 class ShowDrawFilterContext : public std::enable_shared_from_this<ShowDrawFilterContext> {
 public:
 	static const char *getName() noexcept;
@@ -88,25 +93,29 @@ public:
 private:
 	void ensureTextures(uint32_t width, uint32_t height);
 
-	void applyLuminanceExtractionPass() noexcept;
-	void applyMedianFilteringPass(const float texelWidth, const float texelHeight) noexcept;
-	void applyMotionAdaptiveFilteringPass(const float texelWidth, const float texelHeight) noexcept;
-	void applySobelPass(const float texelWidth, const float texelHeight) noexcept;
-	void applyFinalizeSobelMagnitudePass() noexcept;
-	void applySuppressNonMaximumPass(const float texelWidth, const float texelHeight) noexcept;
-	void applyHysteresisClassifyPass(const float texelWidth, const float texelHeight, const float highThreshold,
-					 const float lowThreshold) noexcept;
-	void applyHysteresisPropagatePass(const float texelWidth, const float texelHeight) noexcept;
-	void applyHysteresisFinalizePass(const float texelWidth, const float texelHeight) noexcept;
-	void applyMorphologyPass(const float texelWidth, const float texelHeight, gs_technique_t *technique,
-				 int kernelSize) noexcept;
-	void applyScalingPass() noexcept;
+	void applyLuminanceExtractionPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
+	void applyMedianFilteringPass(gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
+				      gs_texture_t *sourceTexture) noexcept;
+	void applyMotionAdaptiveFilteringPass(gs_texture_t *targetTexture, gs_texture_t *sourceMotionMapTexture,
+					      gs_texture_t *sourceTexture,
+					      gs_texture_t *sourcePreviousLuminanceTexture) noexcept;
+	void applySobelPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
+	void applyFinalizeSobelMagnitudePass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
+	void applySuppressNonMaximumPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
+	void applyHysteresisClassifyPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
+	void applyHysteresisPropagatePass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
+	void applyHysteresisFinalizePass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
+	void applyMorphologyPass(gs_technique_t *technique, int kernelSize, gs_texture_t *targetTexture,
+				 gs_texture_t *sourceTexture) noexcept;
+	void applyScalingPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
 	void drawFinalImage(gs_texture_t *drawingTexture) noexcept;
 
 	obs_data_t *settings;
 	obs_source_t *filter;
 	uint32_t width;
 	uint32_t height;
+	float texelWidth;
+	float texelHeight;
 	std::unique_ptr<DrawingEffect> drawingEffect;
 	Preset runningPreset;
 
@@ -114,8 +123,9 @@ private:
 
 	gs_texture_t *textureSource;
 	gs_texture_t *textureTarget;
-	gs_texture_t *textureMotionMap;
+	gs_texture_t *textureTemporary1;
 	gs_texture_t *texturePreviousLuminance;
+	gs_texture_t *textureMotionMap;
 	gs_texture_t *textureFinalSobelMagnitude;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;

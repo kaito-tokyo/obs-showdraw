@@ -49,7 +49,14 @@ public:
 
 	gs_technique_t *techDraw = nullptr;
 	gs_technique_t *techExtractLuminance = nullptr;
-	gs_technique_t *techMedianFiltering = nullptr;
+	gs_technique_t *techHorizontalMedian3 = nullptr;
+	gs_technique_t *techHorizontalMedian5 = nullptr;
+	gs_technique_t *techHorizontalMedian7 = nullptr;
+	gs_technique_t *techHorizontalMedian9 = nullptr;
+	gs_technique_t *techVerticalMedian3 = nullptr;
+	gs_technique_t *techVerticalMedian5 = nullptr;
+	gs_technique_t *techVerticalMedian7 = nullptr;
+	gs_technique_t *techVerticalMedian9 = nullptr;
 	gs_technique_t *techCalculateMotionMap = nullptr;
 	gs_technique_t *techMotionAdaptiveFiltering = nullptr;
 	gs_technique_t *techApplySobel = nullptr;

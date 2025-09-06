@@ -58,14 +58,12 @@ DrawingEffect::DrawingEffect()
 
 	unique_bfree_t effect_path(obs_module_file("effects/drawing.effect"));
 	if (!effect_path) {
-		obs_leave_graphics();
 		obs_log(LOG_ERROR, "Failed to get effect path");
 		throw std::runtime_error("Failed to get effect path");
 	}
 
 	effect = gs_effect_create_from_file(effect_path.get(), &error_string);
 	if (!effect) {
-		obs_leave_graphics();
 		obs_log(LOG_ERROR, "Error loading effect: %s", error_string);
 		bfree(error_string);
 		throw std::runtime_error("Error loading effect");
@@ -91,7 +89,14 @@ DrawingEffect::DrawingEffect()
 
 		techDraw = getEffectTech(effect, "Draw");
 		techExtractLuminance = getEffectTech(effect, "ExtractLuminance");
-		techMedianFiltering = getEffectTech(effect, "MedianFiltering");
+		techHorizontalMedian3 = getEffectTech(effect, "HorizontalMedian3");
+		techHorizontalMedian5 = getEffectTech(effect, "HorizontalMedian5");
+		techHorizontalMedian7 = getEffectTech(effect, "HorizontalMedian7");
+		techHorizontalMedian9 = getEffectTech(effect, "HorizontalMedian9");
+		techVerticalMedian3 = getEffectTech(effect, "VerticalMedian3");
+		techVerticalMedian5 = getEffectTech(effect, "VerticalMedian5");
+		techVerticalMedian7 = getEffectTech(effect, "VerticalMedian7");
+		techVerticalMedian9 = getEffectTech(effect, "VerticalMedian9");
 		techCalculateMotionMap = getEffectTech(effect, "CalculateMotionMap");
 		techMotionAdaptiveFiltering = getEffectTech(effect, "MotionAdaptiveFiltering");
 		techApplySobel = getEffectTech(effect, "ApplySobel");

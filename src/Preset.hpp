@@ -32,8 +32,9 @@ enum class ExtractionMode {
 	Default = 0,
 	Passthrough = 100,
 	LuminanceExtraction = 200,
-	SobelMagnitude = 300,
-	EdgeDetection = 400,
+	MotionMapCalculation = 300,
+	SobelMagnitude = 400,
+	EdgeDetection = 500,
 };
 
 constexpr ExtractionMode DefaultExtractionMode = ExtractionMode::SobelMagnitude;
@@ -56,6 +57,8 @@ public:
 
 	double hysteresisHighThreshold;
 	double hysteresisLowThreshold;
+
+	std::int64_t hysteresisPropagationIterations;
 
 	std::int64_t morphologyOpeningErosionKernelSize;
 	std::int64_t morphologyOpeningDilationKernelSize;

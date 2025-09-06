@@ -250,6 +250,7 @@ Preset Preset::getStrongDefault() noexcept
 	preset.sobelMagnitudeFinalizationScalingFactorDb = 10.0;
 	preset.hysteresisHighThreshold = 0.2;
 	preset.hysteresisLowThreshold = 0.1;
+	preset.hysteresisPropagationIterations = 8;
 	preset.morphologyOpeningErosionKernelSize = 1;
 	preset.morphologyOpeningDilationKernelSize = 1;
 	preset.morphologyClosingDilationKernelSize = 7;
