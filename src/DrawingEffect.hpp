@@ -20,54 +20,61 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs.h>
 
+#include "obs-bridge-utils/obs-bridge-utils.hpp"
+
 namespace kaito_tokyo {
 namespace obs_showdraw {
 
 class DrawingEffect {
 public:
-	DrawingEffect();
-	~DrawingEffect() noexcept;
+	DrawingEffect(kaito_tokyo::obs_bridge_utils::unique_gs_effect_t effect);
 
-	gs_effect_t *effect = nullptr;
+	DrawingEffect(const DrawingEffect &) = delete;
+	DrawingEffect(DrawingEffect &&) = delete;
+	DrawingEffect &operator=(const DrawingEffect &) = delete;
+	DrawingEffect &operator=(DrawingEffect &&) = delete;
 
-	gs_eparam_t *textureImage = nullptr;
-	gs_eparam_t *textureImage1 = nullptr;
+	const kaito_tokyo::obs_bridge_utils::unique_gs_effect_t effect;
 
-	gs_eparam_t *floatTexelWidth = nullptr;
-	gs_eparam_t *floatTexelHeight = nullptr;
-	gs_eparam_t *intKernelSize = nullptr;
+	gs_eparam_t *const textureImage;
+	gs_eparam_t *const textureImage1;
 
-	gs_eparam_t *textureMotionMap = nullptr;
-	gs_eparam_t *floatStrength = nullptr;
-	gs_eparam_t *floatMotionThreshold = nullptr;
+	gs_eparam_t *const floatTexelWidth;
+	gs_eparam_t *const floatTexelHeight;
+	gs_eparam_t *const intKernelSize;
 
-	gs_eparam_t *boolUseLog = nullptr;
-	gs_eparam_t *floatScalingFactor = nullptr;
+	gs_eparam_t *const textureMotionMap;
+	gs_eparam_t *const floatStrength;
+	gs_eparam_t *const floatMotionThreshold;
 
-	gs_eparam_t *floatHighThreshold = nullptr;
-	gs_eparam_t *floatLowThreshold = nullptr;
+	gs_eparam_t *const boolUseLog;
+	gs_eparam_t *const floatScalingFactor;
 
-	gs_technique_t *techDraw = nullptr;
-	gs_technique_t *techExtractLuminance = nullptr;
-	gs_technique_t *techHorizontalMedian3 = nullptr;
-	gs_technique_t *techHorizontalMedian5 = nullptr;
-	gs_technique_t *techHorizontalMedian7 = nullptr;
-	gs_technique_t *techHorizontalMedian9 = nullptr;
-	gs_technique_t *techVerticalMedian3 = nullptr;
-	gs_technique_t *techVerticalMedian5 = nullptr;
-	gs_technique_t *techVerticalMedian7 = nullptr;
-	gs_technique_t *techVerticalMedian9 = nullptr;
-	gs_technique_t *techCalculateMotionMap = nullptr;
-	gs_technique_t *techMotionAdaptiveFiltering = nullptr;
-	gs_technique_t *techApplySobel = nullptr;
-	gs_technique_t *techFinalizeSobelMagnitude = nullptr;
-	gs_technique_t *techSuppressNonMaximum = nullptr;
-	gs_technique_t *techHysteresisClassify = nullptr;
-	gs_technique_t *techHysteresisPropagate = nullptr;
-	gs_technique_t *techHysteresisFinalize = nullptr;
-	gs_technique_t *techErosion = nullptr;
-	gs_technique_t *techDilation = nullptr;
-	gs_technique_t *techScaling = nullptr;
+	gs_eparam_t *const floatHighThreshold;
+	gs_eparam_t *const floatLowThreshold;
+
+	gs_technique_t *const techDraw;
+	gs_technique_t *const techExtractLuminance;
+	gs_technique_t *const techHorizontalMedian3;
+	gs_technique_t *const techHorizontalMedian5;
+	gs_technique_t *const techHorizontalMedian7;
+	gs_technique_t *const techHorizontalMedian9;
+	gs_technique_t *const techVerticalMedian3;
+	gs_technique_t *const techVerticalMedian5;
+	gs_technique_t *const techVerticalMedian7;
+	gs_technique_t *const techVerticalMedian9;
+	gs_technique_t *const techCalculateHorizontalMotionMap;
+	gs_technique_t *const techCalculateVerticalMotionMap;
+	gs_technique_t *const techMotionAdaptiveFiltering;
+	gs_technique_t *const techApplySobel;
+	gs_technique_t *const techFinalizeSobelMagnitude;
+	gs_technique_t *const techSuppressNonMaximum;
+	gs_technique_t *const techHysteresisClassify;
+	gs_technique_t *const techHysteresisPropagate;
+	gs_technique_t *const techHysteresisFinalize;
+	gs_technique_t *const techErosion;
+	gs_technique_t *const techDilation;
+	gs_technique_t *const techScaling;
 };
 
 } // namespace obs_showdraw

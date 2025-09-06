@@ -18,8 +18,17 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <obs-bridge-utils/obs_log_ostream.hpp>
-#include <obs-bridge-utils/unique_bfree.hpp>
-#include <obs-bridge-utils/unique_gs_effect.hpp>
-#include <obs-bridge-utils/unique_obs_data_array.hpp>
-#include <obs-bridge-utils/unique_obs_data.hpp>
+#include <memory>
+#include <obs.h>
+
+namespace kaito_tokyo {
+namespace obs_bridge_utils {
+
+struct gs_effect_deleter {
+	void operator()(gs_effect_t *effect) const { gs_effect_destroy(effect); }
+};
+
+using unique_gs_effect_t = std::unique_ptr<gs_effect_t, gs_effect_deleter>;
+
+} // namespace obs_bridge_utils
+} // namespace kaito_tokyo

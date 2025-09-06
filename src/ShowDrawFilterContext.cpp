@@ -32,8 +32,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "Preset.hpp"
 #include "PresetWindow.hpp"
 
-using kaito_tokyo::obs_bridge_utils::slog;
-
+using namespace kaito_tokyo::obs_bridge_utils;
 using namespace kaito_tokyo::obs_showdraw;
 
 const char *showdraw_get_name(void *type_data)
@@ -471,9 +470,25 @@ void ShowDrawFilterContext::videoRender()
 {
 	if (!drawingEffect) {
 		try {
-			drawingEffect = std::make_unique<DrawingEffect>();
+			unique_bfree_t effectPath(obs_module_file("effects/drawing.effect"));
+			if (!effectPath) {
+				throw std::runtime_error("Could not find effect file");
+			}
+
+			char *rawErrorString = nullptr;
+			gs_effect_t *rawEffect = gs_effect_create_from_file(effectPath.get(), &rawErrorString);
+			unique_bfree_t errorString(rawErrorString);
+
+			if (!rawEffect) {
+				const char *msg = errorString ? errorString.get() : "(unknown error)";
+				throw std::runtime_error(std::string("gs_effect_create_from_file failed: ") + msg);
+			}
+
+			unique_gs_effect_t effect(rawEffect);
+
+			drawingEffect = std::make_unique<DrawingEffect>(std::move(effect));
 		} catch (const std::exception &e) {
-			slog(LOG_ERROR) << "Failed to create drawing effect: " << e.what();
+			slog(LOG_ERROR) << "Failed to load drawing effect: " << e.what();
 			throw skip_video_filter_exception();
 		}
 	}
@@ -505,7 +520,7 @@ void ShowDrawFilterContext::videoRender()
 	gs_set_viewport(0, 0, width, height);
 	gs_matrix_identity();
 
-	obs_source_process_filter_end(filter, drawingEffect->effect, 0, 0);
+	obs_source_process_filter_end(filter, drawingEffect.get()->effect.get(), 0, 0);
 
 	if (extractionMode >= ExtractionMode::LuminanceExtraction) {
 		applyLuminanceExtractionPass(textureTarget, textureSource);
@@ -724,17 +739,28 @@ void ShowDrawFilterContext::applyMotionAdaptiveFilteringPass(gs_texture_t *targe
 							     gs_texture_t *sourceTexture,
 							     gs_texture_t *sourcePreviousLuminanceTexture) noexcept
 {
-	// Calculate motion map
-	gs_set_render_target(targetMotionMapTexture, nullptr);
+	gs_texture_t *&textureIntermediate = textureTemporary1;
+
+	// Calculate horizontal motion map
+	gs_set_render_target(textureIntermediate, nullptr);
 
 	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
 	gs_effect_set_texture(drawingEffect->textureImage1, sourcePreviousLuminanceTexture);
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
+	gs_effect_set_int(drawingEffect->intKernelSize, (int)runningPreset.motionMapKernelSize);
+
+	applyEffectPass(drawingEffect->techCalculateHorizontalMotionMap, sourceTexture);
+
+	// Calculate vertical motion map
+	gs_set_render_target(textureMotionMap, nullptr);
+
+	gs_effect_set_texture(drawingEffect->textureImage, textureIntermediate);
+
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 	gs_effect_set_int(drawingEffect->intKernelSize, (int)runningPreset.motionMapKernelSize);
 
-	applyEffectPass(drawingEffect->techCalculateMotionMap, sourceTexture);
+	applyEffectPass(drawingEffect->techCalculateVerticalMotionMap, textureIntermediate);
 
 	// Apply motion adaptive filtering
 	gs_set_render_target(targetTexture, nullptr);
