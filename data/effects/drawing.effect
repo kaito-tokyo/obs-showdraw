@@ -344,7 +344,7 @@ float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
 		// If gradient is in the 2nd or 4th quadrant (e.g., top-right to bottom-left edge),
 		// flip the y-component of the offset.
 		if ((gx > 0.0f && gy < 0.0f) || (gx < 0.0f && gy > 0.0f)) {
-			offset.y = -1.0f;
+			offset.y = -texelHeight;
 		}
 	}
 
