@@ -27,6 +27,9 @@ jobs:
 
     timeout-minutes: 30
 
+    env:
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
+
     steps:
       - name: "Install dependencies"
         run: "brew install obs ccache"
@@ -44,6 +47,16 @@ jobs:
             ${{ runner.os }}-ccache-${{ github.ref_name }}-testing-
             ${{ runner.os }}-ccache-main-testing-
 
+      - name: "Restore Vcpkg cache"
+        uses: "actions/cache/restore@v4"
+        id: "vcpkg-cache"
+        with:
+          path: "${{ github.workspace }}/vcpkg-cache"
+          key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-
+            ${{ runner.os }}-vcpkg-main-testing-
+
       - name: "Configure"
         run: "cmake --preset macos-testing-ci"
 
@@ -59,6 +72,12 @@ jobs:
           path: "~/.ccache"
           key: "${{ runner.os }}-ccache-${{ github.ref_name }}-testing-${{ github.sha }}"
 
+      - name: "Save Vcpkg cache"
+        uses: "actions/cache/save@v4"
+        with:
+          path: "${{ github.workspace }}/vcpkg-cache"
+          key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
+
       - name: "Run tests"
         run: "ctest --preset macos-testing-ci --rerun-failed --output-on-failure"
 
@@ -68,6 +87,9 @@ jobs:
     runs-on: "windows-2022"
 
     timeout-minutes: 30
+
+    env:
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
 
     steps:
       - name: "Install obs-studio.install"
@@ -79,11 +101,27 @@ jobs:
       - name: "Checkout"
         uses: "actions/checkout@v5"
 
+      - name: "Restore Vcpkg cache"
+        uses: "actions/cache/restore@v4"
+        id: "vcpkg-cache"
+        with:
+          path: "${{ github.workspace }}/vcpkg-cache"
+          key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-
+            ${{ runner.os }}-vcpkg-main-testing-
+
       - name: "Configure"
         run: "cmake --preset windows-testing-ci-x64"
 
       - name: "Build"
         run: "cmake --build --preset windows-testing-ci-x64"
+
+      - name: "Save Vcpkg cache"
+        uses: "actions/cache/save@v4"
+        with:
+          path: "${{ github.workspace }}/vcpkg-cache"
+          key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
 
       - name: "Run tests"
         run: "ctest --preset windows-testing-ci-x64 --rerun-failed --output-on-failure"
@@ -97,6 +135,7 @@ jobs:
 
     env:
       DISPLAY: ":99.0"
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
 
     steps:
       - name: "Disable man-db update"
@@ -138,6 +177,16 @@ jobs:
             ${{ runner.os }}-ccache-${{ github.ref_name }}-testing-
             ${{ runner.os }}-ccache-main-testing-
 
+      - name: "Restore Vcpkg cache"
+        uses: "actions/cache/restore@v4"
+        id: "vcpkg-cache"
+        with:
+          path: "${{ github.workspace }}/vcpkg-cache"
+          key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-
+            ${{ runner.os }}-vcpkg-main-testing-
+
       - name: "Configure"
         run: "cmake --preset ubuntu-testing-ci-x86_64"
 
@@ -152,6 +201,12 @@ jobs:
         with:
           path: "~/.ccache"
           key: "${{ runner.os }}-ccache-${{ github.ref_name }}-testing-${{ github.sha }}"
+
+      - name: "Save Vcpkg cache"
+        uses: "actions/cache/save@v4"
+        with:
+          path: "${{ github.workspace }}/vcpkg-cache"
+          key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
 
       - name: "Run tests"
         run: "ctest --preset ubuntu-testing-ci-x86_64 --rerun-failed --output-on-failure"
