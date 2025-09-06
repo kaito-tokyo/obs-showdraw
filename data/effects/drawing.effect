@@ -156,7 +156,7 @@ float4 PSHorizontalMedian3(VertInOut vert_in) : SV_TARGET
     float2 texelStep = float2(texelWidth, 0.0f);
     float2 startUV = vert_in.uv - texelStep * 1;
     [unroll]
-    for (int i = 0; i < 3; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    for (int i = 0; i < 3; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
     float medianValue = median3(samples[0], samples[1], samples[2]);
     return float4(medianValue, medianValue, medianValue, 1.0f);
 }
@@ -167,7 +167,7 @@ float4 PSHorizontalMedian5(VertInOut vert_in) : SV_TARGET
     float2 texelStep = float2(texelWidth, 0.0f);
     float2 startUV = vert_in.uv - texelStep * 2;
     [unroll]
-    for (int i = 0; i < 5; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    for (int i = 0; i < 5; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
     float medianValue = median5(samples[0], samples[1], samples[2], samples[3], samples[4]);
     return float4(medianValue, medianValue, medianValue, 1.0f);
 }
@@ -178,7 +178,7 @@ float4 PSHorizontalMedian7(VertInOut vert_in) : SV_TARGET
     float2 texelStep = float2(texelWidth, 0.0f);
     float2 startUV = vert_in.uv - texelStep * 3;
     [unroll]
-    for (int i = 0; i < 7; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    for (int i = 0; i < 7; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
     float medianValue = median7(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6]);
     return float4(medianValue, medianValue, medianValue, 1.0f);
 }
@@ -189,7 +189,7 @@ float4 PSHorizontalMedian9(VertInOut vert_in) : SV_TARGET
     float2 texelStep = float2(texelWidth, 0.0f);
     float2 startUV = vert_in.uv - texelStep * 4;
     [unroll]
-    for (int i = 0; i < 9; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    for (int i = 0; i < 9; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
     float medianValue = median9(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6], samples[7], samples[8]);
     return float4(medianValue, medianValue, medianValue, 1.0f);
 }
@@ -211,7 +211,7 @@ float4 PSVerticalMedian3(VertInOut vert_in) : SV_TARGET
     float2 texelStep = float2(0.0f, texelHeight);
     float2 startUV = vert_in.uv - texelStep * 1;
     [unroll]
-    for (int i = 0; i < 3; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    for (int i = 0; i < 3; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
     float medianValue = median3(samples[0], samples[1], samples[2]);
     return float4(medianValue, medianValue, medianValue, 1.0f);
 }
@@ -222,7 +222,7 @@ float4 PSVerticalMedian5(VertInOut vert_in) : SV_TARGET
     float2 texelStep = float2(0.0f, texelHeight);
     float2 startUV = vert_in.uv - texelStep * 2;
     [unroll]
-    for (int i = 0; i < 5; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    for (int i = 0; i < 5; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
     float medianValue = median5(samples[0], samples[1], samples[2], samples[3], samples[4]);
     return float4(medianValue, medianValue, medianValue, 1.0f);
 }
@@ -233,7 +233,7 @@ float4 PSVerticalMedian7(VertInOut vert_in) : SV_TARGET
     float2 texelStep = float2(0.0f, texelHeight);
     float2 startUV = vert_in.uv - texelStep * 3;
     [unroll]
-    for (int i = 0; i < 7; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    for (int i = 0; i < 7; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
     float medianValue = median7(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6]);
     return float4(medianValue, medianValue, medianValue, 1.0f);
 }
@@ -244,7 +244,7 @@ float4 PSVerticalMedian9(VertInOut vert_in) : SV_TARGET
     float2 texelStep = float2(0.0f, texelHeight);
     float2 startUV = vert_in.uv - texelStep * 4;
     [unroll]
-    for (int i = 0; i < 9; ++i) { samples[i] = inputTexture.Sample(defaultSampler, startUV + texelStep * i).r; }
+    for (int i = 0; i < 9; ++i) { samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r; }
     float medianValue = median9(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6], samples[7], samples[8]);
     return float4(medianValue, medianValue, medianValue, 1.0f);
 }
