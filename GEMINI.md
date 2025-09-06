@@ -50,7 +50,7 @@ To initiate a new release, the user will instruct Gemini to start the process (e
     *   **RESULT**: Pushing the tag triggers the automated release workflow.
 
 5.  **Finalize Release**:
-    *   **ACTION**: Provide the draft release URL.
+    *   **ACTION**: Provide the releases URL.
     *   **INSTRUCTION**: User completes the release on GitHub.
 
 **Example Interaction:**
@@ -67,7 +67,7 @@ User: `マージしたのでタグをプッシュして`
 Gemini: `バージョン 1.2.3 の Git タグをプッシュします。よろしいですか？`
 User: `はい`
 Gemini: `mainブランチに切り替え、リモートと同期し、buildspec.jsonのバージョンを確認しました。Git タグ '1.2.3' をプッシュしました。GitHub Actions でリリースワークフローが開始されます。`
-Gemini: `GitHub リリースドラフトのURL: https://github.com/kaito-tokyo/obs-showdraw/releases/tag/1.2.3`
+Gemini: `GitHub リリースのURL: https://github.com/kaito-tokyo/obs-showdraw/releases`
 Gemini: `GitHub上でリリースを完了してください。`
 
 # Development Guideline for Astro Pages
