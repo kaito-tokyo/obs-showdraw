@@ -839,7 +839,7 @@ void ShowDrawFilterContext::drawFinalImage(gs_texture_t *drawingTexture) noexcep
 	passes = gs_technique_begin(drawingEffect->techDraw);
 	for (size_t i = 0; i < passes; i++) {
 		if (gs_technique_begin_pass(drawingEffect->techDraw, i)) {
-			gs_draw_sprite(textureTarget, 0, 0, 0);
+			gs_draw_sprite(drawingTexture, 0, 0, 0);
 			gs_technique_end_pass(drawingEffect->techDraw);
 		}
 	}
