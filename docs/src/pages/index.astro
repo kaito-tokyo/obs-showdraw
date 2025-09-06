@@ -1,16 +1,70 @@
 ---
+import Layout from "../layouts/Layout.astro";
 
+const response = await fetch(
+  "https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest",
+);
+const data = await response.json();
+const tagName = data.tag_name;
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Layout title="ShowDraw - OBS線画強調プラグイン" lang="ja">
+  <h1>手元の線画、もっとクリアに視聴者へ。</h1>
+  <p>
+    ShowDrawは、アナログイラスト配信のためのOBS
+    Studioプラグインです。カメラに映る繊細な線をリアルタイムでくっきりと強調し、あなたの創作過程を視聴者と鮮明に共有できます。
+  </p>
+  <p lang="en">
+    Showcase your analog line art, clearer than ever. ShowDraw is an OBS Studio
+    plugin for illustrators that enhances your hand-drawn lines in real-time,
+    allowing you to share every delicate stroke with your viewers.
+  </p>
+  <div class="links">
+    <a href="/plugin-description/ja/">日本語で詳しく見る</a>
+    <a href="/plugin-description/en/">Learn more in English</a>
+  </div>
+  <div class="links">
+    <a href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-windows-x64.zip`>Windows</a>
+    <a href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-macos-universal.pkg`>Mac</a>
+    <a href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-x86_64-linux-gnu.deb`>Ubuntu</a>
+  </div>
+</Layout>
+
+<style>
+  main {
+    margin: auto;
+    padding: 1rem;
+    width: 800px;
+    max-width: calc(100% - 2rem);
+    color: black;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    margin-bottom: 1em;
+  }
+  .links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 2em;
+  }
+  .links a {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #4caf50; /* Green */
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    font-size: 18px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  .links a:hover {
+    background-color: #45a049;
+  }
+</style>
