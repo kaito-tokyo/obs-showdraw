@@ -15,6 +15,11 @@
 2. Run `cmake --build --preset macos-testing`.
 3. Run `ctest --preset macos-testing --rerun-failed --output-on-failure`.
 
+## How to test plugin with OBS
+
+1. Run `cmake --preset macos-testing` only when CMake-related changes are made.
+2. Run `cmake --build --preset macos-testing && rm -rf ~/"Library/Application Support/obs-studio/plugins/obs-showdraw.plugin" && cp -r ./build_macos/RelWithDebInfo/obs-showdraw.plugin ~/"Library/Application Support/obs-studio/plugins"`.
+
 ## Release Automation with Gemini
 
 To initiate a new release, the user will instruct Gemini to start the process (e.g., "リリースを開始して"). Gemini will then perform the following steps:
