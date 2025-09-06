@@ -56,10 +56,11 @@ set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIP
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
 
 find_package(CURL REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/curl" NO_DEFAULT_PATH)
-find_package(wolfssl CONFIG REQUIRED)
-find_package(cpr CONFIG REQUIRED)
-find_package(semver CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
+find_package(wolfssl CONFIG REQUIRED NO_DEFAULT_PATH)
+find_package(cpr CONFIG REQUIRED NO_DEFAULT_PATH)
+find_package(semver CONFIG REQUIRED NO_DEFAULT_PATH)
+find_package(nlohmann_json CONFIG REQUIRED NO_DEFAULT_PATH)
+find_package(OpenCV REQUIRED NO_DEFAULT_PATH)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}_impl PRIVATE NOMINMAX)
 
