@@ -285,11 +285,12 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 {
 	struct Preset defaultPreset = Preset::getStrongDefault();
 
-	obs_data_set_default_int(data, "extractionMode", (long long)defaultPreset.extractionMode);
+	obs_data_set_default_int(data, "extractionMode", static_cast<long long>(defaultPreset.extractionMode));
 
-	obs_data_set_default_int(data, "medianFilteringKernelSize", (long long)defaultPreset.medianFilteringKernelSize);
+	obs_data_set_default_int(data, "medianFilteringKernelSize",
+				 static_cast<long long>(defaultPreset.medianFilteringKernelSize));
 
-	obs_data_set_default_int(data, "motionMapKernelSize", (long long)defaultPreset.motionMapKernelSize);
+	obs_data_set_default_int(data, "motionMapKernelSize", static_cast<long long>(defaultPreset.motionMapKernelSize));
 
 	obs_data_set_default_double(data, "motionAdaptiveFilteringStrength",
 				    defaultPreset.motionAdaptiveFilteringStrength);
@@ -305,13 +306,13 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 	obs_data_set_default_double(data, "hysteresisLowThreshold", defaultPreset.hysteresisLowThreshold);
 
 	obs_data_set_default_int(data, "morphologyOpeningErosionKernelSize",
-				 defaultPreset.morphologyOpeningErosionKernelSize);
+				 static_cast<long long>(defaultPreset.morphologyOpeningErosionKernelSize));
 	obs_data_set_default_int(data, "morphologyOpeningDilationKernelSize",
-				 defaultPreset.morphologyOpeningDilationKernelSize);
+				 static_cast<long long>(defaultPreset.morphologyOpeningDilationKernelSize));
 	obs_data_set_default_int(data, "morphologyClosingDilationKernelSize",
-				 defaultPreset.morphologyClosingDilationKernelSize);
+				 static_cast<long long>(defaultPreset.morphologyClosingDilationKernelSize));
 	obs_data_set_default_int(data, "morphologyClosingErosionKernelSize",
-				 defaultPreset.morphologyClosingErosionKernelSize);
+				 static_cast<long long>(defaultPreset.morphologyClosingErosionKernelSize));
 }
 
 obs_properties_t *ShowDrawFilterContext::getProperties()
