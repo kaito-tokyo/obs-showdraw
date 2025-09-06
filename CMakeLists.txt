@@ -52,14 +52,15 @@ if(NOT _vcpkg_result EQUAL 0)
   message(FATAL_ERROR "vcpkg install failed")
 endif()
 
-set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/vcpkg_installed/${VCPKG_TARGET_TRIPLET}")
+set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed")
+list(PREPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
-find_package(CURL REQUIRED PATHS "${VCPKG_INSTALLED_DIR}/share/curl" NO_DEFAULT_PATH)
+find_package(CURL REQUIRED)
 find_package(wolfssl CONFIG REQUIRED)
 find_package(cpr CONFIG REQUIRED)
 find_package(semver CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(OpenCV CONFIG REQUIRED)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}_impl PRIVATE NOMINMAX)
 
