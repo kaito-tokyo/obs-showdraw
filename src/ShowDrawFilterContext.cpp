@@ -262,9 +262,9 @@ obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 					obs_module_text("sobelMagnitudeFinalizationScalingFactorDb"), -20.0, 20.0, 0.01);
 
 	obs_properties_add_float_slider(props, "hysteresisHighThreshold", obs_module_text("hysteresisHighThreshold"),
-					0.0, std::sqrt(20.0), 0.01);
+					0.0, 1.0, 0.01);
 	obs_properties_add_float_slider(props, "hysteresisLowThreshold", obs_module_text("hysteresisLowThreshold"), 0.0,
-					std::sqrt(20.0), 0.01);
+					1.0, 0.01);
 
 	obs_properties_add_int_slider(props, "morphologyOpeningErosionKernelSize",
 				      obs_module_text("morphologyOpeningErosionKernelSize"), 1, 31, 2);
@@ -295,6 +295,8 @@ void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 	runningPreset.sobelMagnitudeFinalizationUseLog = obs_data_get_bool(settings, "sobelMagnitudeFinalizationUseLog");
 	runningPreset.sobelMagnitudeFinalizationScalingFactorDb =
 		obs_data_get_double(settings, "sobelMagnitudeFinalizationScalingFactorDb");
+	sobelMagnitudeFinalizationScalingFactor =
+		std::pow(10.0, runningPreset.sobelMagnitudeFinalizationScalingFactorDb / 10.0);
 
 	runningPreset.hysteresisHighThreshold = obs_data_get_double(settings, "hysteresisHighThreshold");
 	runningPreset.hysteresisLowThreshold = obs_data_get_double(settings, "hysteresisLowThreshold");

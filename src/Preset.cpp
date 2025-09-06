@@ -112,11 +112,11 @@ std::optional<std::string> Preset::validate() const noexcept
 		return obs_module_text("configHelperInvalidMotionAdaptiveFilteringMotionThreshold");
 	}
 
-	if (hysteresisHighThreshold < 0.0 || hysteresisHighThreshold > std::sqrt(20.0)) {
+	if (hysteresisHighThreshold < 0.0 || hysteresisHighThreshold > 1.0) {
 		return obs_module_text("configHelperInvalidHysteresisHighThreshold");
 	}
 
-	if (hysteresisLowThreshold < 0.0 || hysteresisLowThreshold > std::sqrt(20.0)) {
+	if (hysteresisLowThreshold < 0.0 || hysteresisLowThreshold > 1.0) {
 		return obs_module_text("configHelperInvalidHysteresisLowThreshold");
 	}
 
@@ -243,8 +243,8 @@ Preset Preset::getStrongDefault() noexcept
 	preset.motionMapKernelSize = 3;
 	preset.motionAdaptiveFilteringStrength = 0.5;
 	preset.motionAdaptiveFilteringMotionThreshold = 0.3;
-	preset.sobelMagnitudeFinalizationUseLog = false;
-	preset.sobelMagnitudeFinalizationScalingFactorDb = 0.0;
+	preset.sobelMagnitudeFinalizationUseLog = true;
+	preset.sobelMagnitudeFinalizationScalingFactorDb = 10.0;
 	preset.hysteresisHighThreshold = 0.2;
 	preset.hysteresisLowThreshold = 0.1;
 	preset.morphologyOpeningErosionKernelSize = 1;
