@@ -25,22 +25,23 @@ uniform float lowThreshold;
 #define TAN_22_5 0.41421356f
 #define TAN_67_5 2.41421356f
 
-sampler_state def_sampler {
-	Filter   = Linear;
+sampler_state def_sampler
+{
+	Filter = Linear;
 	AddressU = Clamp;
 	AddressV = Clamp;
 };
 
 struct VertInOut {
 	float4 pos : POSITION;
-	float2 uv  : TEXCOORD0;
+	float2 uv : TEXCOORD0;
 };
 
 VertInOut VSDefault(VertInOut vert_in)
 {
 	VertInOut vert_out;
 	vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
-	vert_out.uv  = vert_in.uv;
+	vert_out.uv = vert_in.uv;
 	return vert_out;
 }
 
@@ -70,39 +71,71 @@ float4 PSExtractLuminance(VertInOut vert_in) : TARGET
 	return float4(luma, luma, luma, 1.0);
 }
 
-#define MEDIAN_SWAP(a,b) { float temp=a; a=min(a,b); b=max(temp,b); }
+#define MEDIAN_SWAP(a, b) { float temp=a; a=min(a,b); b=max(temp,b); }
 
-float median3(float v0, float v1, float v2) {
-    float a = min(v0, v1);
-    float b = max(v0, v1);
-    return max(a, min(b, v2));}
-
-float median5(float v0, float v1, float v2, float v3, float v4) {
-    MEDIAN_SWAP(v0, v1); MEDIAN_SWAP(v3, v4); MEDIAN_SWAP(v0, v3);
-    MEDIAN_SWAP(v1, v4); MEDIAN_SWAP(v1, v2); MEDIAN_SWAP(v2, v3);
-    MEDIAN_SWAP(v1, v2);
-    return v2;
+float median3(float v0, float v1, float v2)
+{
+	float a = min(v0, v1);
+	float b = max(v0, v1);
+	return max(a, min(b, v2));
 }
 
-float median7(float v0, float v1, float v2, float v3, float v4, float v5, float v6) {
-    MEDIAN_SWAP(v1, v2); MEDIAN_SWAP(v3, v4); MEDIAN_SWAP(v5, v6);
-    MEDIAN_SWAP(v0, v1); MEDIAN_SWAP(v2, v3); MEDIAN_SWAP(v4, v5);
-    MEDIAN_SWAP(v1, v2); MEDIAN_SWAP(v3, v4); MEDIAN_SWAP(v5, v6);
-    MEDIAN_SWAP(v0, v3); MEDIAN_SWAP(v1, v4); MEDIAN_SWAP(v2, v5);
-    MEDIAN_SWAP(v3, v6); MEDIAN_SWAP(v1, v3); MEDIAN_SWAP(v2, v4);
-    MEDIAN_SWAP(v3, v5); MEDIAN_SWAP(v2, v3);
-    return v3;
+float median5(float v0, float v1, float v2, float v3, float v4)
+{
+	MEDIAN_SWAP(v0, v1);
+	MEDIAN_SWAP(v3, v4);
+	MEDIAN_SWAP(v0, v3);
+	MEDIAN_SWAP(v1, v4);
+	MEDIAN_SWAP(v1, v2);
+	MEDIAN_SWAP(v2, v3);
+	MEDIAN_SWAP(v1, v2);
+	return v2;
 }
 
-float median9(float v0,float v1,float v2,float v3,float v4,float v5,float v6,float v7,float v8) {
-    MEDIAN_SWAP(v1, v2); MEDIAN_SWAP(v4, v5); MEDIAN_SWAP(v7, v8);
-    MEDIAN_SWAP(v0, v1); MEDIAN_SWAP(v3, v4); MEDIAN_SWAP(v6, v7);
-    MEDIAN_SWAP(v1, v2); MEDIAN_SWAP(v4, v5); MEDIAN_SWAP(v7, v8);
-    MEDIAN_SWAP(v0, v3); MEDIAN_SWAP(v5, v8); MEDIAN_SWAP(v4, v7);
-    MEDIAN_SWAP(v3, v6); MEDIAN_SWAP(v1, v4); MEDIAN_SWAP(v2, v5);
-    MEDIAN_SWAP(v4, v7); MEDIAN_SWAP(v4, v2); MEDIAN_SWAP(v6, v4);
-    MEDIAN_SWAP(v4, v2);
-    return v4;
+float median7(float v0, float v1, float v2, float v3, float v4, float v5, float v6)
+{
+	MEDIAN_SWAP(v1, v2);
+	MEDIAN_SWAP(v3, v4);
+	MEDIAN_SWAP(v5, v6);
+	MEDIAN_SWAP(v0, v1);
+	MEDIAN_SWAP(v2, v3);
+	MEDIAN_SWAP(v4, v5);
+	MEDIAN_SWAP(v1, v2);
+	MEDIAN_SWAP(v3, v4);
+	MEDIAN_SWAP(v5, v6);
+	MEDIAN_SWAP(v0, v3);
+	MEDIAN_SWAP(v1, v4);
+	MEDIAN_SWAP(v2, v5);
+	MEDIAN_SWAP(v3, v6);
+	MEDIAN_SWAP(v1, v3);
+	MEDIAN_SWAP(v2, v4);
+	MEDIAN_SWAP(v3, v5);
+	MEDIAN_SWAP(v2, v3);
+	return v3;
+}
+
+float median9(float v0, float v1, float v2, float v3, float v4, float v5, float v6, float v7, float v8)
+{
+	MEDIAN_SWAP(v1, v2);
+	MEDIAN_SWAP(v4, v5);
+	MEDIAN_SWAP(v7, v8);
+	MEDIAN_SWAP(v0, v1);
+	MEDIAN_SWAP(v3, v4);
+	MEDIAN_SWAP(v6, v7);
+	MEDIAN_SWAP(v1, v2);
+	MEDIAN_SWAP(v4, v5);
+	MEDIAN_SWAP(v7, v8);
+	MEDIAN_SWAP(v0, v3);
+	MEDIAN_SWAP(v5, v8);
+	MEDIAN_SWAP(v4, v7);
+	MEDIAN_SWAP(v3, v6);
+	MEDIAN_SWAP(v1, v4);
+	MEDIAN_SWAP(v2, v5);
+	MEDIAN_SWAP(v4, v7);
+	MEDIAN_SWAP(v4, v2);
+	MEDIAN_SWAP(v6, v4);
+	MEDIAN_SWAP(v4, v2);
+	return v4;
 }
 
 //
@@ -125,12 +158,13 @@ float4 PSMedianFiltering(VertInOut vert_in) : TARGET
 		float p[9];
 		for (int y = -radius; y <= radius; y++) {
 			for (int x = -radius; x <= radius; x++) {
-				p[(y+radius)*3 + (x+radius)] = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+				p[(y + radius) * 3 + (x + radius)] =
+					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
 			}
 		}
 		float h_medians[3];
 		for (int i = 0; i < 3; i++) {
-			h_medians[i] = median3(p[i*3+0], p[i*3+1], p[i*3+2]);
+			h_medians[i] = median3(p[i * 3 + 0], p[i * 3 + 1], p[i * 3 + 2]);
 		}
 		final_median = median3(h_medians[0], h_medians[1], h_medians[2]);
 	} else if (kernelSize == 5) {
@@ -138,12 +172,13 @@ float4 PSMedianFiltering(VertInOut vert_in) : TARGET
 		float p[25];
 		for (int y = -radius; y <= radius; y++) {
 			for (int x = -radius; x <= radius; x++) {
-				p[(y+radius)*5 + (x+radius)] = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+				p[(y + radius) * 5 + (x + radius)] =
+					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
 			}
 		}
 		float h_medians[5];
 		for (int i = 0; i < 5; i++) {
-			h_medians[i] = median5(p[i*5+0], p[i*5+1], p[i*5+2], p[i*5+3], p[i*5+4]);
+			h_medians[i] = median5(p[i * 5 + 0], p[i * 5 + 1], p[i * 5 + 2], p[i * 5 + 3], p[i * 5 + 4]);
 		}
 		final_median = median5(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4]);
 	} else if (kernelSize == 7) {
@@ -151,27 +186,33 @@ float4 PSMedianFiltering(VertInOut vert_in) : TARGET
 		float p[49];
 		for (int y = -radius; y <= radius; y++) {
 			for (int x = -radius; x <= radius; x++) {
-				p[(y+radius)*7 + (x+radius)] = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+				p[(y + radius) * 7 + (x + radius)] =
+					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
 			}
 		}
 		float h_medians[7];
 		for (int i = 0; i < 7; i++) {
-			h_medians[i] = median7(p[i*7+0], p[i*7+1], p[i*7+2], p[i*7+3], p[i*7+4], p[i*7+5], p[i*7+6]);
+			h_medians[i] = median7(p[i * 7 + 0], p[i * 7 + 1], p[i * 7 + 2], p[i * 7 + 3], p[i * 7 + 4],
+					       p[i * 7 + 5], p[i * 7 + 6]);
 		}
-		final_median = median7(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4], h_medians[5], h_medians[6]);
+		final_median = median7(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4],
+				       h_medians[5], h_medians[6]);
 	} else if (kernelSize == 9) {
 		int radius = 4;
 		float p[81];
 		for (int y = -radius; y <= radius; y++) {
 			for (int x = -radius; x <= radius; x++) {
-				p[(y+radius)*9 + (x+radius)] = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
+				p[(y + radius) * 9 + (x + radius)] =
+					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
 			}
 		}
 		float h_medians[9];
 		for (int i = 0; i < 9; i++) {
-			h_medians[i] = median9(p[i*9+0], p[i*9+1], p[i*9+2], p[i*9+3], p[i*9+4], p[i*9+5], p[i*9+6], p[i*9+7], p[i*9+8]);
+			h_medians[i] = median9(p[i * 9 + 0], p[i * 9 + 1], p[i * 9 + 2], p[i * 9 + 3], p[i * 9 + 4],
+					       p[i * 9 + 5], p[i * 9 + 6], p[i * 9 + 7], p[i * 9 + 8]);
 		}
-		final_median = median9(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4], h_medians[5], h_medians[6], h_medians[7], h_medians[8]);
+		final_median = median9(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4],
+				       h_medians[5], h_medians[6], h_medians[7], h_medians[8]);
 	} else {
 		return image.Sample(def_sampler, vert_in.uv);
 	}
@@ -238,14 +279,14 @@ float4 PSApplySobel(VertInOut vert_in) : TARGET
 
 	float luma[9];
 	luma[0] = image.Sample(def_sampler, uv + texel_size * float2(-1.0f, -1.0f)).r;
-	luma[1] = image.Sample(def_sampler, uv + texel_size * float2( 0.0f, -1.0f)).r;
-	luma[2] = image.Sample(def_sampler, uv + texel_size * float2( 1.0f, -1.0f)).r;
-	luma[3] = image.Sample(def_sampler, uv + texel_size * float2(-1.0f,  0.0f)).r;
+	luma[1] = image.Sample(def_sampler, uv + texel_size * float2(0.0f, -1.0f)).r;
+	luma[2] = image.Sample(def_sampler, uv + texel_size * float2(1.0f, -1.0f)).r;
+	luma[3] = image.Sample(def_sampler, uv + texel_size * float2(-1.0f, 0.0f)).r;
 	luma[4] = image.Sample(def_sampler, uv).r;
-	luma[5] = image.Sample(def_sampler, uv + texel_size * float2( 1.0f,  0.0f)).r;
-	luma[6] = image.Sample(def_sampler, uv + texel_size * float2(-1.0f,  1.0f)).r;
-	luma[7] = image.Sample(def_sampler, uv + texel_size * float2( 0.0f,  1.0f)).r;
-	luma[8] = image.Sample(def_sampler, uv + texel_size * float2( 1.0f,  1.0f)).r;
+	luma[5] = image.Sample(def_sampler, uv + texel_size * float2(1.0f, 0.0f)).r;
+	luma[6] = image.Sample(def_sampler, uv + texel_size * float2(-1.0f, 1.0f)).r;
+	luma[7] = image.Sample(def_sampler, uv + texel_size * float2(0.0f, 1.0f)).r;
+	luma[8] = image.Sample(def_sampler, uv + texel_size * float2(1.0f, 1.0f)).r;
 
 	float gx = -luma[0] - 2.0f * luma[3] - luma[6] + luma[2] + 2.0f * luma[5] + luma[8];
 	float gy = -luma[0] - 2.0f * luma[1] - luma[2] + luma[6] + 2.0f * luma[7] + luma[8];
@@ -310,8 +351,7 @@ float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
 	float neighbor_encoded_magnitude1 = image.Sample(def_sampler, vert_in.uv + offset).r;
 	float neighbor_encoded_magnitude2 = image.Sample(def_sampler, vert_in.uv - offset).r;
 
-	if (encoded_magnitude < neighbor_encoded_magnitude1 || encoded_magnitude < neighbor_encoded_magnitude2)
-	{
+	if (encoded_magnitude < neighbor_encoded_magnitude1 || encoded_magnitude < neighbor_encoded_magnitude2) {
 		encoded_magnitude = 0.0f;
 	}
 
@@ -358,14 +398,15 @@ float4 PSHysteresisPropagate(VertInOut vert_in) : TARGET
 
 	for (int y = -1; y <= 1; y++) {
 		for (int x = -1; x <= 1; x++) {
-			if (x == 0 && y == 0) continue;
+			if (x == 0 && y == 0)
+				continue;
 			float neighbor_val = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
 			if (neighbor_val == 1.0f) {
 				return float4(1.0, 1.0, 1.0, 1.0);
 			}
 		}
 	}
-    
+
 	return float4(center_val, center_val, center_val, 1.0f);
 }
 
@@ -379,7 +420,7 @@ float4 PSHysteresisPropagate(VertInOut vert_in) : TARGET
 float4 PSHysteresisFinalize(VertInOut vert_in) : TARGET
 {
 	float val = image.Sample(def_sampler, vert_in.uv).r;
-    
+
 	if (val < 1.0f) {
 		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 	}
@@ -458,7 +499,7 @@ technique Draw
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSDraw(vert_in);
+		pixel_shader = PSDraw(vert_in);
 	}
 }
 
@@ -467,7 +508,7 @@ technique ExtractLuminance
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSExtractLuminance(vert_in);
+		pixel_shader = PSExtractLuminance(vert_in);
 	}
 }
 
@@ -476,7 +517,7 @@ technique MedianFiltering
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSMedianFiltering(vert_in);
+		pixel_shader = PSMedianFiltering(vert_in);
 	}
 }
 
@@ -485,7 +526,7 @@ technique CalculateMotionMap
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSCalculateMotionMap(vert_in);
+		pixel_shader = PSCalculateMotionMap(vert_in);
 	}
 }
 
@@ -494,7 +535,7 @@ technique MotionAdaptiveFiltering
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSMotionAdaptiveFiltering(vert_in);
+		pixel_shader = PSMotionAdaptiveFiltering(vert_in);
 	}
 }
 
@@ -503,7 +544,7 @@ technique ApplySobel
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSApplySobel(vert_in);
+		pixel_shader = PSApplySobel(vert_in);
 	}
 }
 
@@ -512,7 +553,7 @@ technique FinalizeSobelMagnitude
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSFinalizeSobelMagnitude(vert_in);
+		pixel_shader = PSFinalizeSobelMagnitude(vert_in);
 	}
 }
 
@@ -521,7 +562,7 @@ technique SuppressNonMaximum
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSSuppressNonMaximum(vert_in);
+		pixel_shader = PSSuppressNonMaximum(vert_in);
 	}
 }
 
@@ -530,7 +571,7 @@ technique HysteresisClassify
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSHysteresisClassify(vert_in);
+		pixel_shader = PSHysteresisClassify(vert_in);
 	}
 }
 
@@ -539,7 +580,7 @@ technique HysteresisPropagate
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSHysteresisPropagate(vert_in);
+		pixel_shader = PSHysteresisPropagate(vert_in);
 	}
 }
 
@@ -548,7 +589,7 @@ technique HysteresisFinalize
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSHysteresisFinalize(vert_in);
+		pixel_shader = PSHysteresisFinalize(vert_in);
 	}
 }
 
@@ -557,7 +598,7 @@ technique Erosion
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSErosion(vert_in);
+		pixel_shader = PSErosion(vert_in);
 	}
 }
 
@@ -566,7 +607,7 @@ technique Dilation
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSDilation(vert_in);
+		pixel_shader = PSDilation(vert_in);
 	}
 }
 
@@ -575,6 +616,6 @@ technique Scaling
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSScaling(vert_in);
+		pixel_shader = PSScaling(vert_in);
 	}
 }
