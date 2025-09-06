@@ -40,6 +40,9 @@ void showdraw_video_tick(void *data, float seconds);
 void showdraw_video_render(void *data, gs_effect_t *effect);
 struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame);
 
+void showdraw_module_load(void);
+void showdraw_module_unload(void);
+
 #ifdef __cplusplus
 }
 
@@ -105,13 +108,13 @@ private:
 
 	double sobelMagnitudeFinalizationScalingFactor = 1.0;
 
-	gs_texture_t *textureSource;
-	gs_texture_t *textureTarget;
-	gs_texture_t *textureTemporary1;
-	gs_texture_t *textureTemporary2;
-	gs_texture_t *texturePreviousLuminance;
-	gs_texture_t *textureMotionMap;
-	gs_texture_t *textureFinalSobelMagnitude;
+	std::shared_ptr<gs_texture_t> textureSource = nullptr;
+	std::shared_ptr<gs_texture_t> textureTarget = nullptr;
+	std::shared_ptr<gs_texture_t> textureTemporary1 = nullptr;
+	std::shared_ptr<gs_texture_t> textureTemporary2 = nullptr;
+	std::shared_ptr<gs_texture_t> texturePreviousLuminance = nullptr;
+	std::shared_ptr<gs_texture_t> textureMotionMap = nullptr;
+	std::shared_ptr<gs_texture_t> textureFinalSobelMagnitude = nullptr;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
 };

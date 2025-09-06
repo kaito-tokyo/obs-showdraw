@@ -59,16 +59,19 @@ try {
 	}
 
 	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
-	obs_enter_graphics();
-	try {
-		delete self;
-	} catch (std::exception &) {
-		obs_leave_graphics();
-		throw;
+	delete self;
+
+	{
+		graphics_context_guard guard;
+		kaito_tokyo::obs_bridge_utils::gs_unique::drain();
 	}
-	obs_leave_graphics();
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to destroy showdraw context: %s", e.what());
+
+	{
+		graphics_context_guard guard;
+		kaito_tokyo::obs_bridge_utils::gs_unique::drain();
+	}
 }
 
 uint32_t showdraw_get_width(void *data)
@@ -218,6 +221,19 @@ try {
 	obs_log(LOG_ERROR, "Failed to render video in showdraw context: %s", e.what());
 }
 
+void showdraw_module_load()
+{
+	// Nothing to do
+}
+
+void showdraw_module_unload()
+try {
+	graphics_context_guard guard;
+	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to unload showdraw module: %s", e.what());
+}
+
 struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame)
 try {
 	if (!data) {
@@ -246,19 +262,21 @@ void applyEffectPass(gs_technique_t *technique, gs_texture_t *sourceTexture) noe
 	gs_technique_end(technique);
 }
 
-void applyLuminanceExtractionPass(std::shared_ptr<DrawingEffect> drawingEffect, gs_texture_t *targetTexture,
-				  gs_texture_t *sourceTexture) noexcept
+void applyLuminanceExtractionPass(std::shared_ptr<DrawingEffect> drawingEffect,
+				  std::shared_ptr<gs_texture_t> targetTexture,
+				  std::shared_ptr<gs_texture_t> sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
 
-	applyEffectPass(drawingEffect->techExtractLuminance, sourceTexture);
+	applyEffectPass(drawingEffect->techExtractLuminance, sourceTexture.get());
 }
 
 void applyMedianFilteringPass(std::shared_ptr<DrawingEffect> drawingEffect, float texelWidth, float texelHeight,
-			      int kernelSize, gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
-			      gs_texture_t *sourceTexture) noexcept
+			      int kernelSize, std::shared_ptr<gs_texture_t> targetTexture,
+			      std::shared_ptr<gs_texture_t> targetIntermediateTexture,
+			      std::shared_ptr<gs_texture_t> sourceTexture) noexcept
 {
 	gs_technique_t *techHorizontal, *techVertical;
 	switch (kernelSize) {
@@ -280,184 +298,188 @@ void applyMedianFilteringPass(std::shared_ptr<DrawingEffect> drawingEffect, floa
 		break;
 	default:
 		obs_log(LOG_WARNING, "Invalid median filtering kernel size: %d", kernelSize);
-		gs_copy_texture(targetTexture, sourceTexture);
+		gs_copy_texture(targetTexture.get(), sourceTexture.get());
 		return;
 	}
 
-	gs_set_render_target(targetIntermediateTexture, nullptr);
+	gs_set_render_target(targetIntermediateTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
 	gs_effect_set_int(drawingEffect->intKernelSize, kernelSize);
 
-	applyEffectPass(techHorizontal, sourceTexture);
+	applyEffectPass(techHorizontal, sourceTexture.get());
 
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, targetIntermediateTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, targetIntermediateTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 	gs_effect_set_int(drawingEffect->intKernelSize, kernelSize);
 
-	applyEffectPass(techVertical, targetIntermediateTexture);
+	applyEffectPass(techVertical, targetIntermediateTexture.get());
 }
 
 void applyMotionAdaptiveFilteringPass(std::shared_ptr<DrawingEffect> drawingEffect, float texelWidth, float texelHeight,
 				      int kernelSize, float strength, float motionThreshold,
-				      gs_texture_t *targetTexture, gs_texture_t *targetMotionMapTexture,
-				      gs_texture_t *sourceTexture,
-				      gs_texture_t *sourcePreviousLuminanceTexture) noexcept
+				      std::shared_ptr<gs_texture_t> targetTexture,
+				      std::shared_ptr<gs_texture_t> targetMotionMapTexture,
+				      std::shared_ptr<gs_texture_t> targetIntermediateTexture,
+				      std::shared_ptr<gs_texture_t> sourceTexture,
+				      std::shared_ptr<gs_texture_t> sourcePreviousLuminanceTexture) noexcept
 {
 	// Calculate horizontal motion map
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetIntermediateTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
-	gs_effect_set_texture(drawingEffect->textureImage1, sourcePreviousLuminanceTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
+	gs_effect_set_texture(drawingEffect->textureImage1, sourcePreviousLuminanceTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
 	gs_effect_set_int(drawingEffect->intKernelSize, kernelSize);
 
-	applyEffectPass(drawingEffect->techCalculateHorizontalMotionMap, sourceTexture);
+	applyEffectPass(drawingEffect->techCalculateHorizontalMotionMap, sourceTexture.get());
 
 	// Calculate vertical motion map
-	gs_set_render_target(targetMotionMapTexture, nullptr);
+	gs_set_render_target(targetMotionMapTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, targetTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, targetIntermediateTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 	gs_effect_set_int(drawingEffect->intKernelSize, kernelSize);
 
-	applyEffectPass(drawingEffect->techCalculateVerticalMotionMap, targetTexture);
+	applyEffectPass(drawingEffect->techCalculateVerticalMotionMap, targetIntermediateTexture.get());
 
 	// Apply motion adaptive filtering
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
-	gs_effect_set_texture(drawingEffect->textureImage1, sourcePreviousLuminanceTexture);
-	gs_effect_set_texture(drawingEffect->textureMotionMap, targetMotionMapTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
+	gs_effect_set_texture(drawingEffect->textureImage1, sourcePreviousLuminanceTexture.get());
+	gs_effect_set_texture(drawingEffect->textureMotionMap, targetMotionMapTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatStrength, strength);
 	gs_effect_set_float(drawingEffect->floatMotionThreshold, motionThreshold);
 
-	applyEffectPass(drawingEffect->techMotionAdaptiveFiltering, sourceTexture);
+	applyEffectPass(drawingEffect->techMotionAdaptiveFiltering, sourceTexture.get());
 }
 
 void applySobelPass(std::shared_ptr<DrawingEffect> drawingEffect, float texelWidth, float texelHeight,
-		    gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
+		    std::shared_ptr<gs_texture_t> targetTexture, std::shared_ptr<gs_texture_t> sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 
-	applyEffectPass(drawingEffect->techApplySobel, sourceTexture);
+	applyEffectPass(drawingEffect->techApplySobel, sourceTexture.get());
 }
 
 void applyFinalizeSobelMagnitudePass(std::shared_ptr<DrawingEffect> drawingEffect, bool useLog, float scalingFactor,
-				     gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
+				     std::shared_ptr<gs_texture_t> targetTexture,
+				     std::shared_ptr<gs_texture_t> sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
 
 	gs_effect_set_bool(drawingEffect->boolUseLog, useLog);
 	gs_effect_set_float(drawingEffect->floatScalingFactor, scalingFactor);
 
-	applyEffectPass(drawingEffect->techFinalizeSobelMagnitude, sourceTexture);
+	applyEffectPass(drawingEffect->techFinalizeSobelMagnitude, sourceTexture.get());
 }
 
 void applySuppressNonMaximumPass(std::shared_ptr<DrawingEffect> drawingEffect, float texelWidth, float texelHeight,
-				 gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
+				 std::shared_ptr<gs_texture_t> targetTexture,
+				 std::shared_ptr<gs_texture_t> sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 
-	applyEffectPass(drawingEffect->techSuppressNonMaximum, sourceTexture);
+	applyEffectPass(drawingEffect->techSuppressNonMaximum, sourceTexture.get());
 }
 
 void applyHysteresisClassifyPass(std::shared_ptr<DrawingEffect> drawingEffect, float texelWidth, float texelHeight,
-				 float highThreshold, float lowThreshold, gs_texture_t *targetTexture,
-				 gs_texture_t *sourceTexture) noexcept
+				 float highThreshold, float lowThreshold, std::shared_ptr<gs_texture_t> targetTexture,
+				 std::shared_ptr<gs_texture_t> sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 	gs_effect_set_float(drawingEffect->floatHighThreshold, highThreshold);
 	gs_effect_set_float(drawingEffect->floatLowThreshold, lowThreshold);
 
-	applyEffectPass(drawingEffect->techHysteresisClassify, sourceTexture);
+	applyEffectPass(drawingEffect->techHysteresisClassify, sourceTexture.get());
 }
 
 void applyHysteresisPropagatePass(std::shared_ptr<DrawingEffect> drawingEffect, float texelWidth, float texelHeight,
-				  gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
+				  std::shared_ptr<gs_texture_t> targetTexture,
+				  std::shared_ptr<gs_texture_t> sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 
-	applyEffectPass(drawingEffect->techHysteresisPropagate, sourceTexture);
+	applyEffectPass(drawingEffect->techHysteresisPropagate, sourceTexture.get());
 }
 
 void applyHysteresisFinalizePass(std::shared_ptr<DrawingEffect> drawingEffect, float texelWidth, float texelHeight,
-				 gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
+				 std::shared_ptr<gs_texture_t> targetTexture,
+				 std::shared_ptr<gs_texture_t> sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 
-	applyEffectPass(drawingEffect->techHysteresisFinalize, sourceTexture);
+	applyEffectPass(drawingEffect->techHysteresisFinalize, sourceTexture.get());
 }
 
 void applyMorphologyPass(std::shared_ptr<DrawingEffect> drawingEffect, gs_technique_t *horizontalTechnique,
 			 gs_technique_t *verticalTechnique, float texelWidth, float texelHeight, int kernelSize,
-			 gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
-			 gs_texture_t *sourceTexture) noexcept
+			 std::shared_ptr<gs_texture_t> targetTexture,
+			 std::shared_ptr<gs_texture_t> targetIntermediateTexture,
+			 std::shared_ptr<gs_texture_t> sourceTexture) noexcept
 {
 	// Horizontal pass
-	gs_set_render_target(targetIntermediateTexture, nullptr);
+	gs_set_render_target(targetIntermediateTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
 	gs_effect_set_int(drawingEffect->intKernelSize, kernelSize);
 
-	applyEffectPass(horizontalTechnique, sourceTexture);
+	applyEffectPass(horizontalTechnique, sourceTexture.get());
 
 	// Vertical pass
-	gs_set_render_target(targetTexture, nullptr);
+	gs_set_render_target(targetTexture.get(), nullptr);
 
-	gs_effect_set_texture(drawingEffect->textureImage, targetIntermediateTexture);
+	gs_effect_set_texture(drawingEffect->textureImage, targetIntermediateTexture.get());
 
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 	gs_effect_set_int(drawingEffect->intKernelSize, kernelSize);
 
-	applyEffectPass(verticalTechnique, targetIntermediateTexture);
+	applyEffectPass(verticalTechnique, targetIntermediateTexture.get());
 }
 
-void drawFinalImage(std::shared_ptr<DrawingEffect> drawingEffect, gs_texture_t *targetTexture,
-		    gs_texture_t *sourceTexture) noexcept
+void drawFinalImage(std::shared_ptr<DrawingEffect> drawingEffect, std::shared_ptr<gs_texture_t> sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
 
-	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
-
-	applyEffectPass(drawingEffect->techDraw, sourceTexture);
+	applyEffectPass(drawingEffect->techDraw, sourceTexture.get());
 }
 } // namespace
 
@@ -494,18 +516,6 @@ void ShowDrawFilterContext::afterCreate(obs_data_t *settings, obs_source_t *sour
 ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 {
 	slog(LOG_INFO) << "Destroying showdraw filter context";
-
-	try {
-		drawingEffect.reset();
-		gs_texture_destroy(textureSource);
-		gs_texture_destroy(textureTarget);
-		gs_texture_destroy(textureTemporary1);
-		gs_texture_destroy(texturePreviousLuminance);
-		gs_texture_destroy(textureMotionMap);
-		gs_texture_destroy(textureFinalSobelMagnitude);
-	} catch (const std::exception &e) {
-		obs_log(LOG_ERROR, "Failed to destroy showdraw graphics resources: %s", e.what());
-	}
 }
 
 uint32_t ShowDrawFilterContext::getWidth() const noexcept
@@ -740,7 +750,7 @@ void ShowDrawFilterContext::videoRender()
 		throw skip_video_filter_exception();
 	}
 
-	gs_set_render_target(textureSource, NULL);
+	gs_set_render_target(textureSource.get(), NULL);
 
 	gs_viewport_push();
 	gs_projection_push();
@@ -767,16 +777,16 @@ void ShowDrawFilterContext::videoRender()
 							 runningPreset.motionMapKernelSize,
 							 runningPreset.motionAdaptiveFilteringStrength,
 							 runningPreset.motionAdaptiveFilteringMotionThreshold,
-							 textureTarget, textureMotionMap, textureSource,
-							 texturePreviousLuminance);
+							 textureTarget, textureMotionMap, textureTemporary2,
+							 textureSource, texturePreviousLuminance);
 			std::swap(textureSource, textureTarget);
 		}
 
-		gs_copy_texture(texturePreviousLuminance, textureSource);
+		gs_copy_texture(texturePreviousLuminance.get(), textureSource.get());
 	}
 
 	if (extractionMode >= ExtractionMode::SobelMagnitude) {
-		gs_texture_t *&textureComplexSobel = textureTemporary1;
+		std::shared_ptr<gs_texture_t> textureComplexSobel = textureTemporary1;
 
 		applySobelPass(_drawingEffect, texelWidth, texelHeight, textureComplexSobel, textureSource);
 
@@ -816,8 +826,8 @@ void ShowDrawFilterContext::videoRender()
 			std::swap(textureSource, textureTarget);
 		}
 
-		std::swap(textureFinalSobelMagnitude, textureSource);
-		std::swap(textureSource, textureComplexSobel);
+		gs_copy_texture(textureFinalSobelMagnitude.get(), textureSource.get());
+		gs_copy_texture(textureSource.get(), textureComplexSobel.get());
 	}
 
 	if (extractionMode >= ExtractionMode::EdgeDetection) {
@@ -843,12 +853,13 @@ void ShowDrawFilterContext::videoRender()
 	gs_projection_pop();
 	gs_matrix_pop();
 
+	gs_set_render_target(defaultRenderTarget, nullptr);
 	if (extractionMode == ExtractionMode::MotionMapCalculation) {
-		drawFinalImage(_drawingEffect, defaultRenderTarget, textureMotionMap);
+		drawFinalImage(_drawingEffect, textureMotionMap);
 	} else if (extractionMode == ExtractionMode::SobelMagnitude) {
-		drawFinalImage(_drawingEffect, defaultRenderTarget, textureFinalSobelMagnitude);
+		drawFinalImage(_drawingEffect, textureFinalSobelMagnitude);
 	} else {
-		drawFinalImage(_drawingEffect, defaultRenderTarget, textureSource);
+		drawFinalImage(_drawingEffect, textureSource);
 	}
 }
 
@@ -910,16 +921,13 @@ try {
 	throw;
 }
 
-void ensureTexture(gs_texture_t *&texture, uint32_t width, uint32_t height)
+void ensureTexture(std::shared_ptr<gs_texture_t> &texture, uint32_t width, uint32_t height)
 {
-	if (!texture || gs_texture_get_width(texture) != width || gs_texture_get_height(texture) != height) {
-		if (texture) {
-			gs_texture_destroy(texture);
-		}
-		texture = gs_texture_create(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
-		if (!texture) {
-			throw std::bad_alloc();
-		}
+	if (!texture || gs_texture_get_width(texture.get()) != width ||
+	    gs_texture_get_height(texture.get()) != height) {
+		unique_gs_texture_t newTexture =
+			make_unique_gs_texture(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
+		texture = std::shared_ptr<gs_texture_t>(std::move(newTexture));
 	}
 }
 
@@ -928,6 +936,7 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTexture(textureSource, width, height);
 	ensureTexture(textureTarget, width, height);
 	ensureTexture(textureTemporary1, width, height);
+	ensureTexture(textureTemporary2, width, height);
 	ensureTexture(texturePreviousLuminance, width, height);
 	ensureTexture(textureMotionMap, width, height);
 	ensureTexture(textureFinalSobelMagnitude, width, height);
