@@ -551,8 +551,7 @@ void ShowDrawFilterContext::videoRender()
 			std::swap(textureSource, textureTarget);
 		}
 
-		std::swap(textureFinalSobelMagnitude, textureSource);
-		std::swap(textureSource, textureComplexSobel);
+		gs_copy_texture(textureFinalSobelMagnitude, textureSource);
 	}
 
 	if (extractionMode >= ExtractionMode::EdgeDetection) {
