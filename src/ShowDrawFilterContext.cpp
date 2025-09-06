@@ -176,6 +176,10 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold",
 				    defaultPreset.motionAdaptiveFilteringMotionThreshold);
 
+	obs_data_set_default_bool(data, "sobelMagnitudeFinalizationUseLog", defaultPreset.sobelMagnitudeFinalizationUseLog);
+	obs_data_set_default_double(data, "sobelMagnitudeFinalizationScalingFactorDb",
+				    defaultPreset.sobelMagnitudeFinalizationScalingFactorDb);
+
 	obs_data_set_default_double(data, "hysteresisHighThreshold", defaultPreset.hysteresisHighThreshold);
 	obs_data_set_default_double(data, "hysteresisLowThreshold", defaultPreset.hysteresisLowThreshold);
 
@@ -187,8 +191,6 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 				 defaultPreset.morphologyClosingDilationKernelSize);
 	obs_data_set_default_int(data, "morphologyClosingErosionKernelSize",
 				 defaultPreset.morphologyClosingErosionKernelSize);
-
-	obs_data_set_default_double(data, "scalingFactorDb", defaultPreset.scalingFactorDb);
 }
 
 obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
@@ -224,10 +226,10 @@ obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 				  static_cast<long long>(ExtractionMode::Passthrough));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeLuminanceExtraction"),
 				  static_cast<long long>(ExtractionMode::LuminanceExtraction));
+	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeSobelMagnitude"),
+				  static_cast<long long>(ExtractionMode::SobelMagnitude));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeEdgeDetection"),
 				  static_cast<long long>(ExtractionMode::EdgeDetection));
-	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeScaling"),
-				  static_cast<long long>(ExtractionMode::Scaling));
 
 	obs_property_t *propMedianFilteringKernelSize = obs_properties_add_list(
 		props, "medianFilteringKernelSize", obs_module_text("medianFilteringKernelSize"), OBS_COMBO_TYPE_LIST,
@@ -254,6 +256,11 @@ obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 	obs_properties_add_float_slider(props, "motionAdaptiveFilteringMotionThreshold",
 					obs_module_text("motionAdaptiveFilteringMotionThreshold"), 0.0, 1.0, 0.01);
 
+	obs_properties_add_bool(props, "sobelMagnitudeFinalizationUseLog",
+				obs_module_text("sobelMagnitudeFinalizationUseLog"));
+	obs_properties_add_float_slider(props, "sobelMagnitudeFinalizationScalingFactorDb",
+					obs_module_text("sobelMagnitudeFinalizationScalingFactorDb"), -20.0, 20.0, 0.01);
+
 	obs_properties_add_float_slider(props, "hysteresisHighThreshold", obs_module_text("hysteresisHighThreshold"),
 					0.0, std::sqrt(20.0), 0.01);
 	obs_properties_add_float_slider(props, "hysteresisLowThreshold", obs_module_text("hysteresisLowThreshold"), 0.0,
@@ -268,8 +275,6 @@ obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 				      obs_module_text("morphologyClosingDilationKernelSize"), 1, 31, 2);
 	obs_properties_add_int_slider(props, "morphologyClosingErosionKernelSize",
 				      obs_module_text("morphologyClosingErosionKernelSize"), 1, 31, 2);
-
-	obs_properties_add_float_slider(props, "scalingFactorDb", obs_module_text("scalingFactor"), -20.0, 20.0, 0.01);
 
 	return props;
 }
@@ -287,6 +292,10 @@ void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 	runningPreset.motionAdaptiveFilteringMotionThreshold =
 		obs_data_get_double(settings, "motionAdaptiveFilteringMotionThreshold");
 
+	runningPreset.sobelMagnitudeFinalizationUseLog = obs_data_get_bool(settings, "sobelMagnitudeFinalizationUseLog");
+	runningPreset.sobelMagnitudeFinalizationScalingFactorDb =
+		obs_data_get_double(settings, "sobelMagnitudeFinalizationScalingFactorDb");
+
 	runningPreset.hysteresisHighThreshold = obs_data_get_double(settings, "hysteresisHighThreshold");
 	runningPreset.hysteresisLowThreshold = obs_data_get_double(settings, "hysteresisLowThreshold");
 
@@ -298,9 +307,6 @@ void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 		obs_data_get_int(settings, "morphologyClosingDilationKernelSize");
 	runningPreset.morphologyClosingErosionKernelSize =
 		obs_data_get_int(settings, "morphologyClosingErosionKernelSize");
-
-	runningPreset.scalingFactorDb = obs_data_get_double(settings, "scalingFactorDb");
-	scaling_factor = pow(10.0, runningPreset.scalingFactorDb / 10.0);
 }
 
 void ShowDrawFilterContext::videoRender() noexcept
@@ -344,7 +350,7 @@ void ShowDrawFilterContext::videoRender() noexcept
 	}
 
 	ExtractionMode extractionMode = runningPreset.extractionMode == ExtractionMode::Default
-						? ExtractionMode::Scaling
+						? DefaultExtractionMode
 						: runningPreset.extractionMode;
 
 	const float texelWidth = 1.0f / (float)width;
@@ -383,9 +389,13 @@ void ShowDrawFilterContext::videoRender() noexcept
 		}
 	}
 
-	if (extractionMode >= ExtractionMode::EdgeDetection) {
+	if (extractionMode >= ExtractionMode::SobelMagnitude) {
 		applySobelPass(texelWidth, texelHeight);
 
+		applyFinalizeSobelMagnitudePass();
+	}
+
+	if (extractionMode >= ExtractionMode::EdgeDetection) {
 		applySuppressNonMaximumPass(texelWidth, texelHeight);
 
 		applyHysteresisClassifyPass(texelWidth, texelHeight, runningPreset.hysteresisHighThreshold,
@@ -418,16 +428,16 @@ void ShowDrawFilterContext::videoRender() noexcept
 		}
 	}
 
-	if (extractionMode >= ExtractionMode::Scaling) {
-		applyScalingPass();
-	}
-
 	gs_viewport_pop();
 	gs_projection_pop();
 	gs_matrix_pop();
 	gs_set_render_target(default_render_target, NULL);
 
-	drawFinalImage();
+	if (extractionMode == ExtractionMode::SobelMagnitude) {
+		drawFinalImage(textureFinalSobelMagnitude);
+	} else {
+		drawFinalImage(textureSource);
+	}
 }
 
 obs_source_t *ShowDrawFilterContext::getFilter() const noexcept
@@ -493,6 +503,13 @@ bool ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height) noex
 		ensureTexture(texturePreviousLuminance, width, height);
 	} catch (const std::bad_alloc &) {
 		slog(LOG_ERROR) << "Failed to create previous luminance texture";
+		return false;
+	}
+
+	try {
+		ensureTexture(textureFinalSobelMagnitude, width, height);
+	} catch (const std::bad_alloc &) {
+		slog(LOG_ERROR) << "Failed to create final sobel magnitude texture";
 		return false;
 	}
 
@@ -579,6 +596,18 @@ void ShowDrawFilterContext::applySobelPass(const float texelWidth, const float t
 	std::swap(textureSource, textureTarget);
 }
 
+void ShowDrawFilterContext::applyFinalizeSobelMagnitudePass() noexcept
+{
+	gs_set_render_target(textureFinalSobelMagnitude, nullptr);
+
+	gs_effect_set_texture(drawingEffect->textureImage, textureSource);
+
+	gs_effect_set_bool(drawingEffect->boolUseLog, runningPreset.sobelMagnitudeFinalizationUseLog);
+	gs_effect_set_float(drawingEffect->floatScalingFactor, (float)sobelMagnitudeFinalizationScalingFactor);
+
+	applyEffectPass(drawingEffect->techFinalizeSobelMagnitude, textureSource);
+}
+
 void ShowDrawFilterContext::applySuppressNonMaximumPass(const float texelWidth, const float texelHeight) noexcept
 {
 	gs_set_render_target(textureTarget, nullptr);
@@ -654,22 +683,9 @@ void ShowDrawFilterContext::applyMorphologyPass(const float texelWidth, const fl
 	std::swap(textureSource, textureTarget);
 }
 
-void ShowDrawFilterContext::applyScalingPass() noexcept
+void ShowDrawFilterContext::drawFinalImage(gs_texture_t *drawingTexture) noexcept
 {
-	gs_set_render_target(textureTarget, nullptr);
-
-	gs_effect_set_texture(drawingEffect->textureImage, textureSource);
-
-	gs_effect_set_float(drawingEffect->floatScalingFactor, (float)scaling_factor);
-
-	applyEffectPass(drawingEffect->techScaling, textureSource);
-
-	std::swap(textureSource, textureTarget);
-}
-
-void ShowDrawFilterContext::drawFinalImage() noexcept
-{
-	gs_effect_set_texture(drawingEffect->textureImage, textureSource);
+	gs_effect_set_texture(drawingEffect->textureImage, drawingTexture);
 
 	size_t passes;
 	passes = gs_technique_begin(drawingEffect->techDraw);

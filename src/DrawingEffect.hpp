@@ -41,10 +41,11 @@ public:
 	gs_eparam_t *floatStrength = nullptr;
 	gs_eparam_t *floatMotionThreshold = nullptr;
 
+	gs_eparam_t *boolUseLog = nullptr;
+	gs_eparam_t *floatScalingFactor = nullptr;
+
 	gs_eparam_t *floatHighThreshold = nullptr;
 	gs_eparam_t *floatLowThreshold = nullptr;
-
-	gs_eparam_t *floatScalingFactor = nullptr;
 
 	gs_technique_t *techDraw = nullptr;
 	gs_technique_t *techExtractLuminance = nullptr;
@@ -52,6 +53,7 @@ public:
 	gs_technique_t *techCalculateMotionMap = nullptr;
 	gs_technique_t *techMotionAdaptiveFiltering = nullptr;
 	gs_technique_t *techApplySobel = nullptr;
+	gs_technique_t *techFinalizeSobelMagnitude = nullptr;
 	gs_technique_t *techSuppressNonMaximum = nullptr;
 	gs_technique_t *techHysteresisClassify = nullptr;
 	gs_technique_t *techHysteresisPropagate = nullptr;

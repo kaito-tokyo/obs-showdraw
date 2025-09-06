@@ -13,8 +13,8 @@ uniform float strength;
 uniform float motionThreshold;
 
 // Sobel magnitude finalization parameter
+uniform bool useLog;
 uniform float scalingFactor;
-uniform bool applyLog;
 
 // Canny edge detection parameters
 uniform float highThreshold;
@@ -304,13 +304,13 @@ float4 PSApplySobel(VertInOut vert_in) : TARGET
 // Role:      Adjusts the gradient magnitude with a scaling factor or logarithmic transformation.
 // Prerequisite: PSSuppressNonMaximum (or any other shader that outputs a grayscale magnitude).
 // Input:     A gradient magnitude in 'image.r'.
-// Uniforms:  applyLog, scalingFactor.
+// Uniforms:  useLog, scalingFactor.
 // Output:    A grayscale image with the adjusted magnitude in the .rgb channels.
 //
 float4 PSFinalizeSobelMagnitude(VertInOut vert_in) : TARGET
 {
 	float magnitude = image.Sample(def_sampler, vert_in.uv).r;
-	if (applyLog) {
+	if (useLog) {
 		magnitude = log(1.0f + magnitude) / log(2.0f);
 	}
 	magnitude = saturate(magnitude * scalingFactor);

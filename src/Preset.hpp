@@ -32,9 +32,11 @@ enum class ExtractionMode {
 	Default = 0,
 	Passthrough = 100,
 	LuminanceExtraction = 200,
-	EdgeDetection = 300,
-	Scaling = 400
+	SobelMagnitude = 300,
+	EdgeDetection = 400,
 };
+
+constexpr ExtractionMode DefaultExtractionMode = ExtractionMode::SobelMagnitude;
 
 struct Preset {
 public:
@@ -49,6 +51,9 @@ public:
 	double motionAdaptiveFilteringStrength;
 	double motionAdaptiveFilteringMotionThreshold;
 
+	bool sobelMagnitudeFinalizationUseLog;
+	double sobelMagnitudeFinalizationScalingFactorDb;
+
 	double hysteresisHighThreshold;
 	double hysteresisLowThreshold;
 
@@ -57,8 +62,6 @@ public:
 
 	std::int64_t morphologyClosingDilationKernelSize;
 	std::int64_t morphologyClosingErosionKernelSize;
-
-	double scalingFactorDb;
 
 	bool isSystem() const noexcept;
 	bool isUser() const noexcept;
