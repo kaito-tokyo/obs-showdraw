@@ -54,6 +54,10 @@ jobs:
             --site "${{ steps.pages.outputs.origin }}" \
             --base "${{ steps.pages.outputs.base_path }}"
         working-directory: "${{ env.BUILD_PATH }}"
+        env:
+          EVENT_NAME: "${{ github.event_name }}"
+          EVENT_PAYLOAD: "${{ toJson(github.event) }}"
+
 
       - name: "Upload artifact"
         uses: "actions/upload-pages-artifact@v4"
