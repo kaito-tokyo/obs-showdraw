@@ -290,7 +290,8 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 	obs_data_set_default_int(data, "medianFilteringKernelSize",
 				 static_cast<long long>(defaultPreset.medianFilteringKernelSize));
 
-	obs_data_set_default_int(data, "motionMapKernelSize", static_cast<long long>(defaultPreset.motionMapKernelSize));
+	obs_data_set_default_int(data, "motionMapKernelSize",
+				 static_cast<long long>(defaultPreset.motionMapKernelSize));
 
 	obs_data_set_default_double(data, "motionAdaptiveFilteringStrength",
 				    defaultPreset.motionAdaptiveFilteringStrength);
