@@ -57,6 +57,8 @@ public:
 	double hysteresisHighThreshold;
 	double hysteresisLowThreshold;
 
+	std::int64_t hysteresisPropagationIterations;
+
 	std::int64_t morphologyOpeningErosionKernelSize;
 	std::int64_t morphologyOpeningDilationKernelSize;
 
