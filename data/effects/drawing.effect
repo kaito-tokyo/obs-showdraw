@@ -138,86 +138,126 @@ float median9(float v0, float v1, float v2, float v3, float v4, float v5, float 
 	return v4;
 }
 
+//==================================================================================
+// Separable Median Filter - Horizontal Pass
+//==================================================================================
+
 //
-// Role:      Applies a separable median filter to reduce noise.
-// Prerequisite: PSExtractLuminance (or any other shader that outputs a grayscale image).
-// Input:     A single-channel image in 'image.r' (e.g., a luminance map).
-// Uniforms:  kernelSize, texelWidth, texelHeight.
-// Output:    A grayscale image with the median-filtered value in the .rgb channels.
+// Role:      [Separable Pass 1/2] Applies a 1D horizontal median filter. This is the
+//            first pass of a two-pass separable median filter used to reduce noise.
+// Prerequisite: A grayscale image (e.g., a luminance map).
+// Input:     A single-channel image from 'image.r'.
+// Uniforms:  texelWidth.
+// Output:    An intermediate image with horizontal medians applied, intended for the vertical pass.
 //
-float4 PSMedianFiltering(VertInOut vert_in) : TARGET
+float4 PSHorizontalMedian3(VertInOut vert_in) : TARGET
 {
-	float2 texel_size = float2(texelWidth, texelHeight);
-	float2 uv = vert_in.uv;
-	float final_median;
-
-	if (kernelSize == 1) {
-		final_median = image.Sample(def_sampler, uv).r;
-	} else if (kernelSize == 3) {
-		int radius = 1;
-		float p[9];
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				p[(y + radius) * 3 + (x + radius)] =
-					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-			}
-		}
-		float h_medians[3];
-		for (int i = 0; i < 3; i++) {
-			h_medians[i] = median3(p[i * 3 + 0], p[i * 3 + 1], p[i * 3 + 2]);
-		}
-		final_median = median3(h_medians[0], h_medians[1], h_medians[2]);
-	} else if (kernelSize == 5) {
-		int radius = 2;
-		float p[25];
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				p[(y + radius) * 5 + (x + radius)] =
-					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-			}
-		}
-		float h_medians[5];
-		for (int i = 0; i < 5; i++) {
-			h_medians[i] = median5(p[i * 5 + 0], p[i * 5 + 1], p[i * 5 + 2], p[i * 5 + 3], p[i * 5 + 4]);
-		}
-		final_median = median5(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4]);
-	} else if (kernelSize == 7) {
-		int radius = 3;
-		float p[49];
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				p[(y + radius) * 7 + (x + radius)] =
-					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-			}
-		}
-		float h_medians[7];
-		for (int i = 0; i < 7; i++) {
-			h_medians[i] = median7(p[i * 7 + 0], p[i * 7 + 1], p[i * 7 + 2], p[i * 7 + 3], p[i * 7 + 4],
-					       p[i * 7 + 5], p[i * 7 + 6]);
-		}
-		final_median = median7(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4],
-				       h_medians[5], h_medians[6]);
-	} else if (kernelSize == 9) {
-		int radius = 4;
-		float p[81];
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				p[(y + radius) * 9 + (x + radius)] =
-					image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-			}
-		}
-		float h_medians[9];
-		for (int i = 0; i < 9; i++) {
-			h_medians[i] = median9(p[i * 9 + 0], p[i * 9 + 1], p[i * 9 + 2], p[i * 9 + 3], p[i * 9 + 4],
-					       p[i * 9 + 5], p[i * 9 + 6], p[i * 9 + 7], p[i * 9 + 8]);
-		}
-		final_median = median9(h_medians[0], h_medians[1], h_medians[2], h_medians[3], h_medians[4],
-				       h_medians[5], h_medians[6], h_medians[7], h_medians[8]);
-	} else {
-		return image.Sample(def_sampler, vert_in.uv);
+	float samples[3];
+	float2 texelStep = float2(texelWidth, 0.0f);
+	float2 startUV = vert_in.uv - texelStep * 1;
+	for (int i = 0; i < 3; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
 	}
+	float medianValue = median3(samples[0], samples[1], samples[2]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
+}
 
-	return float4(final_median, final_median, final_median, 1.0);
+float4 PSHorizontalMedian5(VertInOut vert_in) : TARGET
+{
+	float samples[5];
+	float2 texelStep = float2(texelWidth, 0.0f);
+	float2 startUV = vert_in.uv - texelStep * 2;
+	for (int i = 0; i < 5; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median5(samples[0], samples[1], samples[2], samples[3], samples[4]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+float4 PSHorizontalMedian7(VertInOut vert_in) : TARGET
+{
+	float samples[7];
+	float2 texelStep = float2(texelWidth, 0.0f);
+	float2 startUV = vert_in.uv - texelStep * 3;
+	for (int i = 0; i < 7; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median7(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+float4 PSHorizontalMedian9(VertInOut vert_in) : TARGET
+{
+	float samples[9];
+	float2 texelStep = float2(texelWidth, 0.0f);
+	float2 startUV = vert_in.uv - texelStep * 4;
+	for (int i = 0; i < 9; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median9(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6],
+				    samples[7], samples[8]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+//==================================================================================
+// Separable Median Filter - Vertical Pass
+//==================================================================================
+
+//
+// Role:      [Separable Pass 2/2] Applies a 1D vertical median filter on the result
+//            of the horizontal pass to complete the noise reduction.
+// Prerequisite: The intermediate texture generated by the corresponding horizontal median pass.
+// Input:     An intermediate image from 'image.r'.
+// Uniforms:  texelHeight.
+// Output:    The final median-filtered grayscale image.
+//
+float4 PSVerticalMedian3(VertInOut vert_in) : TARGET
+{
+	float samples[3];
+	float2 texelStep = float2(0.0f, texelHeight);
+	float2 startUV = vert_in.uv - texelStep * 1;
+	for (int i = 0; i < 3; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median3(samples[0], samples[1], samples[2]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+float4 PSVerticalMedian5(VertInOut vert_in) : TARGET
+{
+	float samples[5];
+	float2 texelStep = float2(0.0f, texelHeight);
+	float2 startUV = vert_in.uv - texelStep * 2;
+	for (int i = 0; i < 5; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median5(samples[0], samples[1], samples[2], samples[3], samples[4]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+float4 PSVerticalMedian7(VertInOut vert_in) : TARGET
+{
+	float samples[7];
+	float2 texelStep = float2(0.0f, texelHeight);
+	float2 startUV = vert_in.uv - texelStep * 3;
+	for (int i = 0; i < 7; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median7(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
+}
+
+float4 PSVerticalMedian9(VertInOut vert_in) : TARGET
+{
+	float samples[9];
+	float2 texelStep = float2(0.0f, texelHeight);
+	float2 startUV = vert_in.uv - texelStep * 4;
+	for (int i = 0; i < 9; ++i) {
+		samples[i] = image.Sample(def_sampler, startUV + texelStep * i).r;
+	}
+	float medianValue = median9(samples[0], samples[1], samples[2], samples[3], samples[4], samples[5], samples[6],
+				    samples[7], samples[8]);
+	return float4(medianValue, medianValue, medianValue, 1.0f);
 }
 
 //
@@ -231,38 +271,102 @@ float4 PSCalculateMotionMap(VertInOut vert_in) : TARGET
 {
 	float2 texel_size = float2(texelWidth, texelHeight);
 	float2 uv = vert_in.uv;
-	float sad = 0.0;
+	float mad = 0.0;
 	int radius = kernelSize / 2;
 
 	for (int y = -radius; y <= radius; y++) {
 		for (int x = -radius; x <= radius; x++) {
 			float luma = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
 			float luma1 = image1.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-			sad += abs(luma - luma1);
+			mad += abs(luma - luma1);
 		}
 	}
 
-	sad /= float(kernelSize * kernelSize);
+	mad = saturate(mad / float(kernelSize * kernelSize));
 
-	return float4(sad, sad, sad, 1.0);
+	return float4(mad, mad, mad, 1.0);
 }
 
 //
-// Role:      Performs motion adaptive filtering by blending between two frames based on pixel-wise difference.
-// Prerequisite: Two grayscale images.
-// Input:     'image.r' (e.g., noisy current frame), 'image1.r' (e.g., filtered previous frame).
-// Uniforms:  motionThreshold, strength.
-// Output:    A grayscale image with the adaptively filtered value in the .rgb channels.
+// Role:      [Separable Pass 1/2] Calculates the HORIZONTAL AVERAGE of absolute differences
+//            for the motion map.
+// Prerequisite: Two separate luminance maps (current and previous frames).
+// Input:     'image.r' (current frame luminance), 'image1.r' (previous frame luminance).
+// Uniforms:  kernelSize, texelWidth.
+// Output:    The horizontal average of absolute differences, stored in .rgb.
+//            NOTE: This output is normalized by the kernel width and is safely within [0,1].
+//
+float4 PSCalculateHorizontalMotionMap(VertInOut vert_in) : TARGET
+{
+        float2 texel_step = float2(texelWidth, 0.0f);
+        float2 uv = vert_in.uv;
+        
+        float h_sad = 0.0;
+        int radius = kernelSize / 2;
+        float2 start_uv = uv - texel_step * radius;
+
+        for (int x = 0; x < kernelSize; x++) {
+                float2 current_uv = start_uv + texel_step * x;
+                float luma  = image.Sample(def_sampler, current_uv).r;
+                float luma1 = image1.Sample(def_sampler, current_uv).r;
+                h_sad += abs(luma - luma1);
+        }
+
+        float h_aad = saturate(h_sad / float(kernelSize));
+
+        return float4(h_aad, h_aad, h_aad, 1.0);
+}
+
+//
+// Role:      [Separable Pass 2/2] Calculates the VERTICAL AVERAGE of the horizontal
+//            averages to finalize the motion map.
+// Prerequisite: The intermediate texture generated by the horizontal pass.
+// Input:     'image.r' (The result from the horizontal pass, i.e., horizontal averages).
+// Uniforms:  kernelSize, texelHeight.
+// Output:    The final, normalized motion map.
+//
+float4 PSCalculateVerticalMotionMap(VertInOut vert_in) : TARGET
+{
+        float2 texel_step = float2(0.0f, texelHeight);
+        float2 uv = vert_in.uv;
+
+        float total_aad = 0.0;
+        int radius = kernelSize / 2;
+        float2 start_uv = uv - texel_step * radius;
+        
+        for (int y = 0; y < kernelSize; y++) {
+                float2 current_uv = start_uv + texel_step * y;
+                float h_aad = image.Sample(def_sampler, current_uv).r;
+                total_aad += h_aad;
+        }
+
+        float final_aad = saturate(total_aad / float(kernelSize));
+
+        return float4(final_aad, final_aad, final_aad, 1.0);
+}
+
+//
+// Role:      Performs motion-adaptive temporal filtering by blending the current frame
+//            with the previous frame, using a pre-calculated motion map to control
+//            the blend strength. This is highly effective for reducing noise in
+//            static or low-motion areas of a video stream.
+// Prerequisite: Requires a motion map, typically generated by the 'PSCalculateMotionMap'
+//               pass, along with the current and previous frames.
+// Input:     'image.r': The current (potentially noisy) grayscale frame.
+//            'image1.r': The previously filtered grayscale frame (temporal accumulator).
+//            'motionMap.r': A map where pixel intensity indicates the amount of motion.
+// Uniforms:  strength, motionThreshold.
+// Output:    A grayscale image with temporal noise reduction applied, stored in .rgb.
 //
 float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
 {
-	float luma = image.Sample(def_sampler, vert_in.uv).r;
-	float luma1 = image1.Sample(def_sampler, vert_in.uv).r;
-	float diff = abs(luma - luma1);
-	float motionFactor = smoothstep(0.0, motionThreshold, diff);
-	float blendFactor = strength * motionFactor;
-	float finalLuma = lerp(luma1, luma, blendFactor);
-	return float4(finalLuma, finalLuma, finalLuma, 1.0);
+        float luma = image.Sample(def_sampler, vert_in.uv).r;
+        float luma1 = image1.Sample(def_sampler, vert_in.uv).r;
+        float motion = motionMap.Sample(def_sampler, vert_in.uv).r;
+        float motionFactor = smoothstep(0.0, motionThreshold, motion);
+        float blendFactor = strength * motionFactor;
+        float finalLuma = lerp(luma1, luma, blendFactor);
+        return float4(finalLuma, finalLuma, finalLuma, 1.0);
 }
 
 //
@@ -344,7 +448,7 @@ float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
 		// If gradient is in the 2nd or 4th quadrant (e.g., top-right to bottom-left edge),
 		// flip the y-component of the offset.
 		if ((gx > 0.0f && gy < 0.0f) || (gx < 0.0f && gy > 0.0f)) {
-			offset.y = -1.0f;
+			offset.y = -texelHeight;
 		}
 	}
 
@@ -428,70 +532,103 @@ float4 PSHysteresisFinalize(VertInOut vert_in) : TARGET
 	return float4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
+//==================================================================================
+// Separable Erosion
+//==================================================================================
+
 //
-// Role:      Performs morphological erosion on a grayscale image.
-// Prerequisite: PSHysteresisFinalize (or any other shader that outputs a single-channel image).
-// Input:     A single-channel image in 'image.r' (e.g., a binary edge map).
-// Uniforms:  kernelSize, texelWidth, texelHeight.
-// Output:    An eroded grayscale image in the .rgb channels.
+// Role:      [Separable Pass 1/2] Performs HORIZONTAL morphological erosion.
+// Prerequisite: A single-channel image (e.g., a binary edge map).
+// Input:     A single-channel image in 'image.r'.
+// Uniforms:  kernelSize, texelWidth.
+// Output:    An intermediate texture with horizontal erosion applied.
 //
-float4 PSErosion(VertInOut vert_in) : TARGET
+float4 PSHorizontalErosion(VertInOut vert_in) : TARGET
 {
-	float2 texel_size = float2(texelWidth, texelHeight);
-	float2 uv = vert_in.uv;
-	float min_val = 1.0;
-	int radius = kernelSize / 2;
+        float2 texel_step = float2(texelWidth, 0.0f);
+        float2 uv = vert_in.uv;
+        float min_val = 1.0;
+        int radius = kernelSize / 2;
+        float2 start_uv = uv - texel_step * radius;
 
-	if (radius > 0) {
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				min_val = min(min_val, image.Sample(def_sampler, uv + texel_size * float2(x, y)).r);
-			}
-		}
-	} else {
-		min_val = image.Sample(def_sampler, uv).r;
-	}
+        for (int x = 0; x < kernelSize; x++) {
+                min_val = min(min_val, image.Sample(def_sampler, start_uv + texel_step * x).r);
+        }
 
-	return float4(min_val, min_val, min_val, 1.0);
+        return float4(min_val, min_val, min_val, 1.0);
 }
 
 //
-// Role:      Performs morphological dilation on a grayscale image.
-// Prerequisite: PSHysteresisFinalize (or any other shader that outputs a single-channel image).
-// Input:     A single-channel image in 'image.r' (e.g., a binary edge map).
-// Uniforms:  kernelSize, texelWidth, texelHeight.
-// Output:    A dilated grayscale image in the .rgb channels.
+// Role:      [Separable Pass 2/2] Performs VERTICAL morphological erosion on the
+//            result of the horizontal pass.
+// Prerequisite: The intermediate texture from the horizontal erosion pass.
+// Input:     The intermediate image from 'image.r'.
+// Uniforms:  kernelSize, texelHeight.
+// Output:    The final eroded grayscale image.
 //
-float4 PSDilation(VertInOut vert_in) : TARGET
+float4 PSVerticalErosion(VertInOut vert_in) : TARGET
 {
-	float2 texel_size = float2(texelWidth, texelHeight);
-	float2 uv = vert_in.uv;
-	float max_val = 0.0;
-	int radius = kernelSize / 2;
+        float2 texel_step = float2(0.0f, texelHeight);
+        float2 uv = vert_in.uv;
+        float min_val = 1.0;
+        int radius = kernelSize / 2;
+        float2 start_uv = uv - texel_step * radius;
 
-	if (radius > 0) {
-		for (int y = -radius; y <= radius; y++) {
-			for (int x = -radius; x <= radius; x++) {
-				max_val = max(max_val, image.Sample(def_sampler, uv + texel_size * float2(x, y)).r);
-			}
-		}
-	} else {
-		max_val = image.Sample(def_sampler, uv).r;
-	}
+        for (int y = 0; y < kernelSize; y++) {
+                min_val = min(min_val, image.Sample(def_sampler, start_uv + texel_step * y).r);
+        }
 
-	return float4(max_val, max_val, max_val, 1.0);
+        return float4(min_val, min_val, min_val, 1.0);
+}
+
+
+//==================================================================================
+// Separable Dilation
+//==================================================================================
+
+//
+// Role:      [Separable Pass 1/2] Performs HORIZONTAL morphological dilation.
+// Prerequisite: A single-channel image (e.g., a binary edge map).
+// Input:     A single-channel image in 'image.r'.
+// Uniforms:  kernelSize, texelWidth.
+// Output:    An intermediate texture with horizontal dilation applied.
+//
+float4 PSHorizontalDilation(VertInOut vert_in) : TARGET
+{
+        float2 texel_step = float2(texelWidth, 0.0f);
+        float2 uv = vert_in.uv;
+        float max_val = 0.0;
+        int radius = kernelSize / 2;
+        float2 start_uv = uv - texel_step * radius;
+
+        for (int x = 0; x < kernelSize; x++) {
+                max_val = max(max_val, image.Sample(def_sampler, start_uv + texel_step * x).r);
+        }
+
+        return float4(max_val, max_val, max_val, 1.0);
 }
 
 //
-// Role:      Scales the brightness of an image by a uniform factor. A general-purpose utility.
-// Prerequisite: Any preceding shader.
-// Input:     A color or grayscale image from the 'image' texture.
-// Uniforms:  scalingFactor.
-// Output:    The scaled color or grayscale image.
+// Role:      [Separable Pass 2/2] Performs VERTICAL morphological dilation on the
+//            result of the horizontal pass.
+// Prerequisite: The intermediate texture from the horizontal dilation pass.
+// Input:     The intermediate image from 'image.r'.
+// Uniforms:  kernelSize, texelHeight.
+// Output:    The final dilated grayscale image.
 //
-float4 PSScaling(VertInOut vert_in) : TARGET
+float4 PSVerticalDilation(VertInOut vert_in) : TARGET
 {
-	return float4(image.Sample(def_sampler, vert_in.uv).rgb * scalingFactor, 1.0);
+        float2 texel_step = float2(0.0f, texelHeight);
+        float2 uv = vert_in.uv;
+        float max_val = 0.0;
+        int radius = kernelSize / 2;
+        float2 start_uv = uv - texel_step * radius;
+
+        for (int y = 0; y < kernelSize; y++) {
+                max_val = max(max_val, image.Sample(def_sampler, start_uv + texel_step * y).r);
+        }
+
+        return float4(max_val, max_val, max_val, 1.0);
 }
 
 technique Draw
@@ -512,21 +649,93 @@ technique ExtractLuminance
 	}
 }
 
-technique MedianFiltering
+technique HorizontalMedian3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSMedianFiltering(vert_in);
+		pixel_shader = PSHorizontalMedian3(vert_in);
 	}
 }
 
-technique CalculateMotionMap
+technique HorizontalMedian5
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSCalculateMotionMap(vert_in);
+		pixel_shader = PSHorizontalMedian5(vert_in);
+	}
+}
+
+technique HorizontalMedian7
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSHorizontalMedian7(vert_in);
+	}
+}
+
+technique HorizontalMedian9
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSHorizontalMedian9(vert_in);
+	}
+}
+
+technique VerticalMedian3
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSVerticalMedian3(vert_in);
+	}
+}
+
+technique VerticalMedian5
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSVerticalMedian5(vert_in);
+	}
+}
+
+technique VerticalMedian7
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSVerticalMedian7(vert_in);
+	}
+}
+
+technique VerticalMedian9
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSVerticalMedian9(vert_in);
+	}
+}
+
+technique CalculateHorizontalMotionMap
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSCalculateHorizontalMotionMap(vert_in);
+	}
+}
+
+technique CalculateVerticalMotionMap
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSCalculateVerticalMotionMap(vert_in);
 	}
 }
 
@@ -593,29 +802,38 @@ technique HysteresisFinalize
 	}
 }
 
-technique Erosion
+technique HorizontalErosion
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSErosion(vert_in);
+		pixel_shader = PSHorizontalErosion(vert_in);
 	}
 }
 
-technique Dilation
+technique VerticalErosion
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSDilation(vert_in);
+		pixel_shader = PSVerticalErosion(vert_in);
 	}
 }
 
-technique Scaling
+technique HorizontalDilation
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSScaling(vert_in);
+		pixel_shader = PSHorizontalDilation(vert_in);
+	}
+}
+
+technique VerticalDilation
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSVerticalDilation(vert_in);
 	}
 }

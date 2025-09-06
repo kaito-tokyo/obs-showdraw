@@ -40,6 +40,9 @@ void showdraw_video_tick(void *data, float seconds);
 void showdraw_video_render(void *data, gs_effect_t *effect);
 struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame);
 
+void showdraw_module_load(void);
+void showdraw_module_unload(void);
+
 #ifdef __cplusplus
 }
 
@@ -53,6 +56,11 @@ struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_fra
 
 namespace kaito_tokyo {
 namespace obs_showdraw {
+
+class skip_video_filter_exception : public std::exception {
+public:
+	const char *what() const noexcept override { return "skip video filter"; }
+};
 
 class ShowDrawFilterContext : public std::enable_shared_from_this<ShowDrawFilterContext> {
 public:
@@ -86,37 +94,27 @@ public:
 	std::optional<LatestVersion> getLatestVersion() const;
 
 private:
+	void reloadDrawingEffectInGraphics();
 	void ensureTextures(uint32_t width, uint32_t height);
-
-	void applyLuminanceExtractionPass() noexcept;
-	void applyMedianFilteringPass(const float texelWidth, const float texelHeight) noexcept;
-	void applyMotionAdaptiveFilteringPass(const float texelWidth, const float texelHeight) noexcept;
-	void applySobelPass(const float texelWidth, const float texelHeight) noexcept;
-	void applyFinalizeSobelMagnitudePass() noexcept;
-	void applySuppressNonMaximumPass(const float texelWidth, const float texelHeight) noexcept;
-	void applyHysteresisClassifyPass(const float texelWidth, const float texelHeight, const float highThreshold,
-					 const float lowThreshold) noexcept;
-	void applyHysteresisPropagatePass(const float texelWidth, const float texelHeight) noexcept;
-	void applyHysteresisFinalizePass(const float texelWidth, const float texelHeight) noexcept;
-	void applyMorphologyPass(const float texelWidth, const float texelHeight, gs_technique_t *technique,
-				 int kernelSize) noexcept;
-	void applyScalingPass() noexcept;
-	void drawFinalImage(gs_texture_t *drawingTexture) noexcept;
 
 	obs_data_t *settings;
 	obs_source_t *filter;
 	uint32_t width;
 	uint32_t height;
-	std::unique_ptr<DrawingEffect> drawingEffect;
+	float texelWidth;
+	float texelHeight;
+	std::shared_ptr<DrawingEffect> drawingEffect;
 	Preset runningPreset;
 
 	double sobelMagnitudeFinalizationScalingFactor = 1.0;
 
-	gs_texture_t *textureSource;
-	gs_texture_t *textureTarget;
-	gs_texture_t *textureMotionMap;
-	gs_texture_t *texturePreviousLuminance;
-	gs_texture_t *textureFinalSobelMagnitude;
+	std::shared_ptr<gs_texture_t> textureSource = nullptr;
+	std::shared_ptr<gs_texture_t> textureTarget = nullptr;
+	std::shared_ptr<gs_texture_t> textureTemporary1 = nullptr;
+	std::shared_ptr<gs_texture_t> textureTemporary2 = nullptr;
+	std::shared_ptr<gs_texture_t> texturePreviousLuminance = nullptr;
+	std::shared_ptr<gs_texture_t> textureMotionMap = nullptr;
+	std::shared_ptr<gs_texture_t> textureFinalSobelMagnitude = nullptr;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
 };
