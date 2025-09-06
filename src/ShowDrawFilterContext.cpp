@@ -176,7 +176,8 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold",
 				    defaultPreset.motionAdaptiveFilteringMotionThreshold);
 
-	obs_data_set_default_bool(data, "sobelMagnitudeFinalizationUseLog", defaultPreset.sobelMagnitudeFinalizationUseLog);
+	obs_data_set_default_bool(data, "sobelMagnitudeFinalizationUseLog",
+				  defaultPreset.sobelMagnitudeFinalizationUseLog);
 	obs_data_set_default_double(data, "sobelMagnitudeFinalizationScalingFactorDb",
 				    defaultPreset.sobelMagnitudeFinalizationScalingFactorDb);
 
@@ -261,7 +262,8 @@ obs_properties_t *ShowDrawFilterContext::getProperties() noexcept
 	obs_properties_add_bool(props, "sobelMagnitudeFinalizationUseLog",
 				obs_module_text("sobelMagnitudeFinalizationUseLog"));
 	obs_properties_add_float_slider(props, "sobelMagnitudeFinalizationScalingFactorDb",
-					obs_module_text("sobelMagnitudeFinalizationScalingFactorDb"), -20.0, 20.0, 0.01);
+					obs_module_text("sobelMagnitudeFinalizationScalingFactorDb"), -20.0, 20.0,
+					0.01);
 
 	obs_properties_add_float_slider(props, "hysteresisHighThreshold", obs_module_text("hysteresisHighThreshold"),
 					0.0, 1.0, 0.01);
@@ -294,7 +296,8 @@ void ShowDrawFilterContext::update(obs_data_t *settings) noexcept
 	runningPreset.motionAdaptiveFilteringMotionThreshold =
 		obs_data_get_double(settings, "motionAdaptiveFilteringMotionThreshold");
 
-	runningPreset.sobelMagnitudeFinalizationUseLog = obs_data_get_bool(settings, "sobelMagnitudeFinalizationUseLog");
+	runningPreset.sobelMagnitudeFinalizationUseLog =
+		obs_data_get_bool(settings, "sobelMagnitudeFinalizationUseLog");
 	runningPreset.sobelMagnitudeFinalizationScalingFactorDb =
 		obs_data_get_double(settings, "sobelMagnitudeFinalizationScalingFactorDb");
 	sobelMagnitudeFinalizationScalingFactor =

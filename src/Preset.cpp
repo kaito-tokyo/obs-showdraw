@@ -59,7 +59,8 @@ obs_data_t *Preset::loadIntoObsData(obs_data_t *data) const noexcept
 	obs_data_set_double(data, "motionAdaptiveFilteringStrength", motionAdaptiveFilteringStrength);
 	obs_data_set_double(data, "motionAdaptiveFilteringMotionThreshold", motionAdaptiveFilteringMotionThreshold);
 	obs_data_set_bool(data, "sobelMagnitudeFinalizationUseLog", sobelMagnitudeFinalizationUseLog);
-	obs_data_set_double(data, "sobelMagnitudeFinalizationScalingFactorDb", sobelMagnitudeFinalizationScalingFactorDb);
+	obs_data_set_double(data, "sobelMagnitudeFinalizationScalingFactorDb",
+			    sobelMagnitudeFinalizationScalingFactorDb);
 	obs_data_set_double(data, "hysteresisHighThreshold", hysteresisHighThreshold);
 	obs_data_set_double(data, "hysteresisLowThreshold", hysteresisLowThreshold);
 	obs_data_set_int(data, "morphologyOpeningErosionKernelSize", morphologyOpeningErosionKernelSize);
@@ -152,9 +153,11 @@ Preset Preset::fromObsData(obs_data_t *data) noexcept
 	preset.medianFilteringKernelSize = obs_data_get_int(data, "medianFilteringKernelSize");
 	preset.motionMapKernelSize = obs_data_get_int(data, "motionMapKernelSize");
 	preset.motionAdaptiveFilteringStrength = obs_data_get_double(data, "motionAdaptiveFilteringStrength");
-	preset.motionAdaptiveFilteringMotionThreshold = obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold");
+	preset.motionAdaptiveFilteringMotionThreshold =
+		obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold");
 	preset.sobelMagnitudeFinalizationUseLog = obs_data_get_bool(data, "sobelMagnitudeFinalizationUseLog");
-	preset.sobelMagnitudeFinalizationScalingFactorDb = obs_data_get_double(data, "sobelMagnitudeFinalizationScalingFactorDb");
+	preset.sobelMagnitudeFinalizationScalingFactorDb =
+		obs_data_get_double(data, "sobelMagnitudeFinalizationScalingFactorDb");
 	preset.hysteresisHighThreshold = obs_data_get_double(data, "hysteresisHighThreshold");
 	preset.hysteresisLowThreshold = obs_data_get_double(data, "hysteresisLowThreshold");
 	preset.morphologyOpeningErosionKernelSize = obs_data_get_int(data, "morphologyOpeningErosionKernelSize");
