@@ -548,30 +548,30 @@ void ShowDrawFilterContext::videoRender()
 		applyFinalizeSobelMagnitudePass(textureSource, textureComplexSobel);
 
 		if (runningPreset.morphologyOpeningErosionKernelSize > 1) {
-			applyMorphologyPass(drawingEffect->techErosion,
+			applyMorphologyPass(drawingEffect->techHorizontalErosion, drawingEffect->techVerticalErosion,
 					    (int)runningPreset.morphologyOpeningErosionKernelSize, textureTarget,
-					    textureSource);
+					    textureTemporary2, textureSource);
 			std::swap(textureSource, textureTarget);
 		}
 
 		if (runningPreset.morphologyOpeningDilationKernelSize > 1) {
-			applyMorphologyPass(drawingEffect->techDilation,
+			applyMorphologyPass(drawingEffect->techHorizontalDilation, drawingEffect->techVerticalDilation,
 					    (int)runningPreset.morphologyOpeningDilationKernelSize, textureTarget,
-					    textureSource);
+					    textureTemporary2, textureSource);
 			std::swap(textureSource, textureTarget);
 		}
 
 		if (runningPreset.morphologyClosingDilationKernelSize > 1) {
-			applyMorphologyPass(drawingEffect->techDilation,
+			applyMorphologyPass(drawingEffect->techHorizontalDilation, drawingEffect->techVerticalDilation,
 					    (int)runningPreset.morphologyClosingDilationKernelSize, textureTarget,
-					    textureSource);
+					    textureTemporary2, textureSource);
 			std::swap(textureSource, textureTarget);
 		}
 
 		if (runningPreset.morphologyClosingErosionKernelSize > 1) {
-			applyMorphologyPass(drawingEffect->techErosion,
+			applyMorphologyPass(drawingEffect->techHorizontalErosion, drawingEffect->techVerticalErosion,
 					    (int)runningPreset.morphologyClosingErosionKernelSize, textureTarget,
-					    textureSource);
+					    textureTemporary2, textureSource);
 			std::swap(textureSource, textureTarget);
 		}
 
@@ -857,18 +857,30 @@ void ShowDrawFilterContext::applyHysteresisFinalizePass(gs_texture_t *targetText
 	applyEffectPass(drawingEffect->techHysteresisFinalize, sourceTexture);
 }
 
-void ShowDrawFilterContext::applyMorphologyPass(gs_technique_t *technique, int kernelSize, gs_texture_t *targetTexture,
+void ShowDrawFilterContext::applyMorphologyPass(gs_technique_t *horizontalTechnique, gs_technique_t *verticalTechnique,
+						int kernelSize, gs_texture_t *targetTexture,
+						gs_texture_t *targetIntermediateTexture,
 						gs_texture_t *sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	// Horizontal pass
+	gs_set_render_target(targetIntermediateTexture, nullptr);
 
 	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
 
 	gs_effect_set_float(drawingEffect->floatTexelWidth, texelWidth);
+	gs_effect_set_int(drawingEffect->intKernelSize, kernelSize);
+
+	applyEffectPass(horizontalTechnique, sourceTexture);
+
+	// Vertical pass
+	gs_set_render_target(targetTexture, nullptr);
+
+	gs_effect_set_texture(drawingEffect->textureImage, targetIntermediateTexture);
+
 	gs_effect_set_float(drawingEffect->floatTexelHeight, texelHeight);
 	gs_effect_set_int(drawingEffect->intKernelSize, kernelSize);
 
-	applyEffectPass(technique, sourceTexture);
+	applyEffectPass(verticalTechnique, targetIntermediateTexture);
 }
 
 void ShowDrawFilterContext::drawFinalImage(gs_texture_t *drawingTexture) noexcept

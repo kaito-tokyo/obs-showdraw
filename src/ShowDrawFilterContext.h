@@ -105,7 +105,8 @@ private:
 	void applyHysteresisClassifyPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
 	void applyHysteresisPropagatePass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
 	void applyHysteresisFinalizePass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-	void applyMorphologyPass(gs_technique_t *technique, int kernelSize, gs_texture_t *targetTexture,
+	void applyMorphologyPass(gs_technique_t *horizontalTechnique, gs_technique_t *verticalTechnique, int kernelSize,
+				 gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
 				 gs_texture_t *sourceTexture) noexcept;
 	void applyScalingPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
 	void drawFinalImage(gs_texture_t *drawingTexture) noexcept;
@@ -124,6 +125,7 @@ private:
 	gs_texture_t *textureSource;
 	gs_texture_t *textureTarget;
 	gs_texture_t *textureTemporary1;
+	gs_texture_t *textureTemporary2;
 	gs_texture_t *texturePreviousLuminance;
 	gs_texture_t *textureMotionMap;
 	gs_texture_t *textureFinalSobelMagnitude;

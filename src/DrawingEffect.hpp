@@ -53,8 +53,8 @@ public:
 	gs_eparam_t *const floatHighThreshold;
 	gs_eparam_t *const floatLowThreshold;
 
-	gs_technique_t *const techDraw;
 	gs_technique_t *const techExtractLuminance;
+
 	gs_technique_t *const techHorizontalMedian3;
 	gs_technique_t *const techHorizontalMedian5;
 	gs_technique_t *const techHorizontalMedian7;
@@ -63,18 +63,24 @@ public:
 	gs_technique_t *const techVerticalMedian5;
 	gs_technique_t *const techVerticalMedian7;
 	gs_technique_t *const techVerticalMedian9;
+
 	gs_technique_t *const techCalculateHorizontalMotionMap;
 	gs_technique_t *const techCalculateVerticalMotionMap;
 	gs_technique_t *const techMotionAdaptiveFiltering;
+
 	gs_technique_t *const techApplySobel;
 	gs_technique_t *const techFinalizeSobelMagnitude;
 	gs_technique_t *const techSuppressNonMaximum;
 	gs_technique_t *const techHysteresisClassify;
 	gs_technique_t *const techHysteresisPropagate;
 	gs_technique_t *const techHysteresisFinalize;
-	gs_technique_t *const techErosion;
-	gs_technique_t *const techDilation;
-	gs_technique_t *const techScaling;
+
+	gs_technique_t *const techHorizontalErosion;
+	gs_technique_t *const techVerticalErosion;
+	gs_technique_t *const techHorizontalDilation;
+	gs_technique_t *const techVerticalDilation;
+
+	gs_technique_t *const techDraw;
 };
 
 } // namespace obs_showdraw
