@@ -22,6 +22,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
+#include <string>
 
 #include <obs.h>
 
