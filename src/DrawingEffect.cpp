@@ -86,6 +86,7 @@ DrawingEffect::DrawingEffect()
 		floatHighThreshold = getEffectParam(effect, "highThreshold");
 		floatLowThreshold = getEffectParam(effect, "lowThreshold");
 
+		boolUseLog = getEffectParam(effect, "useLog");
 		floatScalingFactor = getEffectParam(effect, "scalingFactor");
 
 		techDraw = getEffectTech(effect, "Draw");
@@ -94,6 +95,7 @@ DrawingEffect::DrawingEffect()
 		techCalculateMotionMap = getEffectTech(effect, "CalculateMotionMap");
 		techMotionAdaptiveFiltering = getEffectTech(effect, "MotionAdaptiveFiltering");
 		techApplySobel = getEffectTech(effect, "ApplySobel");
+		techFinalizeSobelMagnitude = getEffectTech(effect, "FinalizeSobelMagnitude");
 		techSuppressNonMaximum = getEffectTech(effect, "SuppressNonMaximum");
 		techHysteresisClassify = getEffectTech(effect, "HysteresisClassify");
 		techHysteresisPropagate = getEffectTech(effect, "HysteresisPropagate");

@@ -72,6 +72,7 @@ private:
 	void applyMedianFilteringPass(const float texelWidth, const float texelHeight) noexcept;
 	void applyMotionAdaptiveFilteringPass(const float texelWidth, const float texelHeight) noexcept;
 	void applySobelPass(const float texelWidth, const float texelHeight) noexcept;
+	void applyFinalizeSobelMagnitudePass() noexcept;
 	void applySuppressNonMaximumPass(const float texelWidth, const float texelHeight) noexcept;
 	void applyHysteresisClassifyPass(const float texelWidth, const float texelHeight, const float highThreshold,
 					 const float lowThreshold) noexcept;
@@ -80,19 +81,20 @@ private:
 	void applyMorphologyPass(const float texelWidth, const float texelHeight, gs_technique_t *technique,
 				 int kernelSize) noexcept;
 	void applyScalingPass() noexcept;
-	void drawFinalImage() noexcept;
+	void drawFinalImage(gs_texture_t *drawingTexture) noexcept;
 
 	obs_data_t *settings;
 	obs_source_t *filter;
 	std::unique_ptr<DrawingEffect> drawingEffect;
 	Preset runningPreset;
 
-	double scaling_factor;
+	double sobelMagnitudeFinalizationScalingFactor = 1.0;
 
 	gs_texture_t *textureSource;
 	gs_texture_t *textureTarget;
 	gs_texture_t *textureMotionMap;
 	gs_texture_t *texturePreviousLuminance;
+	gs_texture_t *textureFinalSobelMagnitude;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
 };
