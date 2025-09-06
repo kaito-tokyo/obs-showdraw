@@ -349,6 +349,8 @@ obs_properties_t *ShowDrawFilterContext::getProperties()
 				  static_cast<long long>(ExtractionMode::Passthrough));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeLuminanceExtraction"),
 				  static_cast<long long>(ExtractionMode::LuminanceExtraction));
+	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeMotionMapCalculation"),
+				  static_cast<long long>(ExtractionMode::MotionMapCalculation));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeSobelMagnitude"),
 				  static_cast<long long>(ExtractionMode::SobelMagnitude));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeEdgeDetection"),
@@ -581,7 +583,9 @@ void ShowDrawFilterContext::videoRender()
 	gs_matrix_pop();
 	gs_set_render_target(default_render_target, NULL);
 
-	if (extractionMode == ExtractionMode::SobelMagnitude) {
+	if (extractionMode == ExtractionMode::MotionMapCalculation) {
+		drawFinalImage(textureMotionMap);
+	} else if (extractionMode == ExtractionMode::SobelMagnitude) {
 		drawFinalImage(textureFinalSobelMagnitude);
 	} else {
 		drawFinalImage(textureSource);
