@@ -12,12 +12,13 @@ uniform texture2d motionMap;
 uniform float strength;
 uniform float motionThreshold;
 
+// Sobel magnitude finalization parameter
+uniform float scalingFactor;
+uniform bool applyLog;
+
 // Canny edge detection parameters
 uniform float highThreshold;
 uniform float lowThreshold;
-
-// Scaling parameters
-uniform float scalingFactor;
 
 #define PI 3.14159265359f
 #define SQRT_20 4.472136f
@@ -43,11 +44,23 @@ VertInOut VSDefault(VertInOut vert_in)
 	return vert_out;
 }
 
+//
+// Role:      Simply draws the source texture.
+// Prerequisite: Original Source (e.g., video input from OBS).
+// Input:     The original color image from the 'image' texture.
+// Output:    The same color image as the input.
+//
 float4 PSDraw(VertInOut vert_in) : TARGET
 {
 	return image.Sample(def_sampler, vert_in.uv);
 }
 
+//
+// Role:      Converts a color image to a grayscale luminance map. This is the starting point for most subsequent operations.
+// Prerequisite: Original Source (e.g., video input from OBS).
+// Input:     The original color image from the 'image' texture.
+// Output:    A grayscale image with the luminance value stored in the .rgb channels (r=g=b).
+//
 float4 PSExtractLuminance(VertInOut vert_in) : TARGET
 {
 	float4 color = image.Sample(def_sampler, vert_in.uv);
@@ -90,6 +103,12 @@ float median9(float v0,float v1,float v2,float v3,float v4,float v5,float v6,flo
     return v4;
 }
 
+//
+// Role:      Applies a separable median filter to reduce noise.
+// Prerequisite: PSExtractLuminance (or any other shader that outputs a grayscale image).
+// Input:     A single-channel image in 'image.r' (e.g., a luminance map).
+// Output:    A grayscale image with the median-filtered value in the .rgb channels.
+//
 float4 PSMedianFiltering(VertInOut vert_in) : TARGET
 {
 	float2 texel_size = float2(texelWidth, texelHeight);
@@ -157,6 +176,12 @@ float4 PSMedianFiltering(VertInOut vert_in) : TARGET
 	return float4(final_median, final_median, final_median, 1.0);
 }
 
+//
+// Role:      Calculates a motion map by comparing two frames to detect areas of movement.
+// Prerequisite: Two separate luminance maps (e.g., from two PSExtractLuminance passes on different frames).
+// Input:     'image.r' (current frame luminance), 'image1.r' (previous frame luminance).
+// Output:    A motion map with the amount of motion (SAD: Sum of Absolute Differences) in the .rgb channels.
+//
 float4 PSCalculateMotionMap(VertInOut vert_in) : TARGET
 {
 	float2 texel_size = float2(texelWidth, texelHeight);
@@ -177,6 +202,12 @@ float4 PSCalculateMotionMap(VertInOut vert_in) : TARGET
 	return float4(sad, sad, sad, 1.0);
 }
 
+//
+// Role:      Performs motion adaptive filtering by blending between two frames based on pixel-wise difference.
+// Prerequisite: Two grayscale images.
+// Input:     'image.r' (e.g., noisy current frame), 'image1.r' (e.g., filtered previous frame).
+// Output:    A grayscale image with the adaptively filtered value in the .rgb channels.
+//
 float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
 {
 	float luma = image.Sample(def_sampler, vert_in.uv).r;
@@ -188,6 +219,12 @@ float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
 	return float4(finalLuma, finalLuma, finalLuma, 1.0);
 }
 
+//
+// Role:      [Canny Step 1] Applies the Sobel operator to calculate the gradient magnitude and direction.
+// Prerequisite: PSExtractLuminance or PSMedianFiltering.
+// Input:     A grayscale image in 'image.r'.
+// Output:    .r = Gradient Magnitude (normalized), .g = Gx (encoded to [0,1]), .b = Gy (encoded to [0,1]).
+//
 float4 PSApplySobel(VertInOut vert_in) : TARGET
 {
 	float2 texel_size = float2(texelWidth, texelHeight);
@@ -204,14 +241,40 @@ float4 PSApplySobel(VertInOut vert_in) : TARGET
 	luma[7] = image.Sample(def_sampler, uv + texel_size * float2( 0.0f,  1.0f)).r;
 	luma[8] = image.Sample(def_sampler, uv + texel_size * float2( 1.0f,  1.0f)).r;
 
-	float sobelX = -luma[0] - 2.0f * luma[3] - luma[6] + luma[2] + 2.0f * luma[5] + luma[8];
-	float sobelY = -luma[0] - 2.0f * luma[1] - luma[2] + luma[6] + 2.0f * luma[7] + luma[8];
+	float gx = -luma[0] - 2.0f * luma[3] - luma[6] + luma[2] + 2.0f * luma[5] + luma[8];
+	float gy = -luma[0] - 2.0f * luma[1] - luma[2] + luma[6] + 2.0f * luma[7] + luma[8];
+	float magnitude = sqrt(gx * gx + gy * gy);
 
-	float magnitude = sqrt(sobelX * sobelX + sobelY * sobelY);
+	// Normalize by a typical maximum gradient magnitude
+	magnitude = saturate(magnitude / SQRT_20);
+	gx = saturate(gx / 8.0f + 0.5f);
+	gy = saturate(gy / 8.0f + 0.5f);
 
-	return float4(magnitude / SQRT_20, sobelX / 8.0f + 0.5f, sobelY / 8.0f + 0.5f, 1.0f);
+	return float4(magnitude, gx, gy, 1.0f);
 }
 
+//
+// Role:      Adjusts the gradient magnitude with a scaling factor or logarithmic transformation.
+// Prerequisite: PSSuppressNonMaximum (or any other shader that outputs a grayscale magnitude).
+// Input:     A gradient magnitude in 'image.r'.
+// Output:    A grayscale image with the adjusted magnitude in the .rgb channels.
+//
+float4 PSFinalizeSobelMagnitude(VertInOut vert_in) : TARGET
+{
+	float magnitude = image.Sample(def_sampler, vert_in.uv).r;
+	if (applyLog) {
+		magnitude = log(1.0f + magnitude) / log(2.0f);
+	}
+	magnitude = saturate(magnitude * scalingFactor);
+	return float4(magnitude, magnitude, magnitude, 1.0f);
+}
+
+//
+// Role:      [Canny Step 2] Performs non-maximum suppression to thin edges.
+// Prerequisite: PSApplySobel.
+// Input:     Encoded Sobel data from 'image' (.r=Magnitude, .g=Gx, .b=Gy).
+// Output:    A grayscale image with thinned edges in the .rgb channels. Non-maximal pixels are set to 0.
+//
 float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
 {
 	float4 encoded = image.Sample(def_sampler, vert_in.uv);
@@ -229,6 +292,8 @@ float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
 		offset = float2(0.0f, texelHeight);
 	} else {
 		offset = float2(texelWidth, texelHeight);
+		// If gradient is in the 2nd or 4th quadrant (e.g., top-right to bottom-left edge),
+		// flip the y-component of the offset.
 		if ((gx > 0.0f && gy < 0.0f) || (gx < 0.0f && gy > 0.0f)) {
 			offset.y = -1.0f;
 		}
@@ -245,19 +310,31 @@ float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
 	return float4(encoded_magnitude, encoded_magnitude, encoded_magnitude, 1.0f);
 }
 
+//
+// Role:      [Canny Step 3] Classifies pixels into strong (1.0), weak (0.5), or non-edges (0.0) using two thresholds.
+// Prerequisite: PSSuppressNonMaximum (or PSFinalizeSobelMagnitude if it was used for adjustment).
+// Input:     A thinned, grayscale edge map in 'image.r'.
+// Output:    A classification map in the .rgb channels (1.0 for strong, 0.5 for weak, 0.0 for non-edge).
+//
 float4 PSHysteresisClassify(VertInOut vert_in) : TARGET
 {
 	float encoded_magnitude = image.Sample(def_sampler, vert_in.uv).r;
 
-	if (encoded_magnitude >= highThreshold / SQRT_20) {
+	if (encoded_magnitude >= highThreshold) {
 		return float4(1.0, 1.0, 1.0, 1.0);
-	} else if (encoded_magnitude >= lowThreshold / SQRT_20) {
+	} else if (encoded_magnitude >= lowThreshold) {
 		return float4(0.5, 0.5, 0.5, 1.0);
 	} else {
 		return float4(0.0, 0.0, 0.0, 1.0);
 	}
 }
 
+//
+// Role:      [Canny Step 4] Connects edges by promoting weak edges (0.5) to strong ones (1.0) if they are adjacent to a strong edge.
+// Prerequisite: PSHysteresisClassify.
+// Input:     A classification map in 'image.r'.
+// Output:    An updated classification map in the .rgb channels.
+//
 float4 PSHysteresisPropagate(VertInOut vert_in) : TARGET
 {
 	float2 texel_size = float2(texelWidth, texelHeight);
@@ -273,15 +350,21 @@ float4 PSHysteresisPropagate(VertInOut vert_in) : TARGET
 		for (int x = -1; x <= 1; x++) {
 			if (x == 0 && y == 0) continue;
 			float neighbor_val = image.Sample(def_sampler, uv + texel_size * float2(x, y)).r;
-		        if (neighbor_val == 1.0f) {
-        			return float4(1.0, 1.0, 1.0, 1.0);
-        		}
+			if (neighbor_val == 1.0f) {
+				return float4(1.0, 1.0, 1.0, 1.0);
+			}
 		}
 	}
     
 	return float4(center_val, center_val, center_val, 1.0f);
 }
 
+//
+// Role:      [Canny Step 5] Finalizes the edge map by removing any remaining weak edges.
+// Prerequisite: PSHysteresisPropagate.
+// Input:     A propagated classification map in 'image.r'.
+// Output:    The final binary edge map in the .rgb channels (1.0 for edges, 0.0 for non-edges).
+//
 float4 PSHysteresisFinalize(VertInOut vert_in) : TARGET
 {
 	float val = image.Sample(def_sampler, vert_in.uv).r;
@@ -293,6 +376,12 @@ float4 PSHysteresisFinalize(VertInOut vert_in) : TARGET
 	return float4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
+//
+// Role:      Performs morphological erosion on a grayscale image.
+// Prerequisite: PSHysteresisFinalize (or any other shader that outputs a single-channel image).
+// Input:     A single-channel image in 'image.r' (e.g., a binary edge map).
+// Output:    An eroded grayscale image in the .rgb channels.
+//
 float4 PSErosion(VertInOut vert_in) : TARGET
 {
 	float2 texel_size = float2(texelWidth, texelHeight);
@@ -313,6 +402,12 @@ float4 PSErosion(VertInOut vert_in) : TARGET
 	return float4(min_val, min_val, min_val, 1.0);
 }
 
+//
+// Role:      Performs morphological dilation on a grayscale image.
+// Prerequisite: PSHysteresisFinalize (or any other shader that outputs a single-channel image).
+// Input:     A single-channel image in 'image.r' (e.g., a binary edge map).
+// Output:    A dilated grayscale image in the .rgb channels.
+//
 float4 PSDilation(VertInOut vert_in) : TARGET
 {
 	float2 texel_size = float2(texelWidth, texelHeight);
@@ -333,6 +428,12 @@ float4 PSDilation(VertInOut vert_in) : TARGET
 	return float4(max_val, max_val, max_val, 1.0);
 }
 
+//
+// Role:      Scales the brightness of an image by a uniform factor. A general-purpose utility.
+// Prerequisite: Any preceding shader.
+// Input:     A color or grayscale image from the 'image' texture.
+// Output:    The scaled color or grayscale image.
+//
 float4 PSScaling(VertInOut vert_in) : TARGET
 {
 	return float4(image.Sample(def_sampler, vert_in.uv).rgb * scalingFactor, 1.0);
@@ -389,6 +490,15 @@ technique ApplySobel
 	{
 		vertex_shader = VSDefault(vert_in);
 		pixel_shader  = PSApplySobel(vert_in);
+	}
+}
+
+technique FinalizeSobelMagnitude
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSFinalizeSobelMagnitude(vert_in);
 	}
 }
 
