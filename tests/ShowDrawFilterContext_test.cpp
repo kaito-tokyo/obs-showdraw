@@ -15,7 +15,7 @@ using kaito_tokyo::obs_showdraw::LatestVersion;
 TEST(ShowDrawFilterContextTest, GetLatestVersion)
 {
 	ShowDrawFilterContext context(nullptr, nullptr);
-	context.afterCreate();
+	context.afterCreate(nullptr, nullptr);
 	ASSERT_EQ(context.getLatestVersion(), std::nullopt);
 
 	std::this_thread::sleep_for(std::chrono::seconds(1));
