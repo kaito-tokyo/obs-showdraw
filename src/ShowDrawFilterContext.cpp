@@ -770,7 +770,8 @@ void ShowDrawFilterContext::applyFinalizeSobelMagnitudePass(gs_texture_t *target
 	gs_effect_set_texture(drawingEffect->textureImage, sourceTexture);
 
 	gs_effect_set_bool(drawingEffect->boolUseLog, runningPreset.sobelMagnitudeFinalizationUseLog);
-	gs_effect_set_float(drawingEffect->floatScalingFactor, (float)sobelMagnitudeFinalizationScalingFactor);
+	gs_effect_set_float(drawingEffect->floatScalingFactor,
+			    static_cast<float>(sobelMagnitudeFinalizationScalingFactor));
 
 	applyEffectPass(drawingEffect->techFinalizeSobelMagnitude, sourceTexture);
 }
