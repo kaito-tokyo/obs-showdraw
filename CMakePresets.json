@@ -176,14 +176,14 @@
       "configurePreset": "macos-testing",
       "displayName": "macOS Universal Testing",
       "description": "macOS build for Universal architectures for Testing",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "macos-testing-ci",
       "configurePreset": "macos-testing-ci",
       "displayName": "macOS Universal Testing CI",
       "description": "macOS CI build for Universal architectures for Testing",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "windows-x64",
@@ -204,14 +204,14 @@
       "configurePreset": "windows-testing-x64",
       "displayName": "Windows x64 Testing",
       "description": "Windows build for x64 for Testing",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "windows-testing-ci-x64",
       "configurePreset": "windows-testing-ci-x64",
       "displayName": "Windows x64 Testing CI",
       "description": "Windows CI build for x64 for Testing",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "ubuntu-x86_64",
@@ -232,46 +232,46 @@
       "configurePreset": "ubuntu-testing-x86_64",
       "displayName": "Ubuntu x86_64 Testing",
       "description": "Ubuntu build for x86_64 for Testing",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "ubuntu-testing-ci-x86_64",
       "configurePreset": "ubuntu-testing-ci-x86_64",
       "displayName": "Ubuntu x86_64 Testing CI",
       "description": "Ubuntu CI build for x86_64 for Testing",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     }
   ],
   "testPresets": [
     {
       "name": "macos-testing",
       "configurePreset": "macos-testing",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "macos-testing-ci",
       "configurePreset": "macos-testing-ci",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "windows-testing-x64",
       "configurePreset": "windows-testing-x64",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "windows-testing-ci-x64",
       "configurePreset": "windows-testing-ci-x64",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "ubuntu-testing-x86_64",
       "configurePreset": "ubuntu-testing-x86_64",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     },
     {
       "name": "ubuntu-testing-ci-x86_64",
       "configurePreset": "ubuntu-testing-ci-x86_64",
-      "configuration": "RelWithDebInfo"
+      "configuration": "Debug"
     }
   ]
 }
