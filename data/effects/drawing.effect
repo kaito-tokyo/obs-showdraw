@@ -48,6 +48,7 @@ VertInOut VSDefault(VertInOut vert_in)
 // Role:      Simply draws the source texture.
 // Prerequisite: Original Source (e.g., video input from OBS).
 // Input:     The original color image from the 'image' texture.
+// Uniforms:  None.
 // Output:    The same color image as the input.
 //
 float4 PSDraw(VertInOut vert_in) : TARGET
@@ -59,6 +60,7 @@ float4 PSDraw(VertInOut vert_in) : TARGET
 // Role:      Converts a color image to a grayscale luminance map. This is the starting point for most subsequent operations.
 // Prerequisite: Original Source (e.g., video input from OBS).
 // Input:     The original color image from the 'image' texture.
+// Uniforms:  None.
 // Output:    A grayscale image with the luminance value stored in the .rgb channels (r=g=b).
 //
 float4 PSExtractLuminance(VertInOut vert_in) : TARGET
@@ -107,6 +109,7 @@ float median9(float v0,float v1,float v2,float v3,float v4,float v5,float v6,flo
 // Role:      Applies a separable median filter to reduce noise.
 // Prerequisite: PSExtractLuminance (or any other shader that outputs a grayscale image).
 // Input:     A single-channel image in 'image.r' (e.g., a luminance map).
+// Uniforms:  kernelSize, texelWidth, texelHeight.
 // Output:    A grayscale image with the median-filtered value in the .rgb channels.
 //
 float4 PSMedianFiltering(VertInOut vert_in) : TARGET
@@ -180,6 +183,7 @@ float4 PSMedianFiltering(VertInOut vert_in) : TARGET
 // Role:      Calculates a motion map by comparing two frames to detect areas of movement.
 // Prerequisite: Two separate luminance maps (e.g., from two PSExtractLuminance passes on different frames).
 // Input:     'image.r' (current frame luminance), 'image1.r' (previous frame luminance).
+// Uniforms:  kernelSize, texelWidth, texelHeight.
 // Output:    A motion map with the amount of motion (SAD: Sum of Absolute Differences) in the .rgb channels.
 //
 float4 PSCalculateMotionMap(VertInOut vert_in) : TARGET
@@ -206,6 +210,7 @@ float4 PSCalculateMotionMap(VertInOut vert_in) : TARGET
 // Role:      Performs motion adaptive filtering by blending between two frames based on pixel-wise difference.
 // Prerequisite: Two grayscale images.
 // Input:     'image.r' (e.g., noisy current frame), 'image1.r' (e.g., filtered previous frame).
+// Uniforms:  motionThreshold, strength.
 // Output:    A grayscale image with the adaptively filtered value in the .rgb channels.
 //
 float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
@@ -223,6 +228,7 @@ float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
 // Role:      [Canny Step 1] Applies the Sobel operator to calculate the gradient magnitude and direction.
 // Prerequisite: PSExtractLuminance or PSMedianFiltering.
 // Input:     A grayscale image in 'image.r'.
+// Uniforms:  texelWidth, texelHeight.
 // Output:    .r = Gradient Magnitude (normalized), .g = Gx (encoded to [0,1]), .b = Gy (encoded to [0,1]).
 //
 float4 PSApplySobel(VertInOut vert_in) : TARGET
@@ -257,6 +263,7 @@ float4 PSApplySobel(VertInOut vert_in) : TARGET
 // Role:      Adjusts the gradient magnitude with a scaling factor or logarithmic transformation.
 // Prerequisite: PSSuppressNonMaximum (or any other shader that outputs a grayscale magnitude).
 // Input:     A gradient magnitude in 'image.r'.
+// Uniforms:  applyLog, scalingFactor.
 // Output:    A grayscale image with the adjusted magnitude in the .rgb channels.
 //
 float4 PSFinalizeSobelMagnitude(VertInOut vert_in) : TARGET
@@ -273,6 +280,7 @@ float4 PSFinalizeSobelMagnitude(VertInOut vert_in) : TARGET
 // Role:      [Canny Step 2] Performs non-maximum suppression to thin edges.
 // Prerequisite: PSApplySobel.
 // Input:     Encoded Sobel data from 'image' (.r=Magnitude, .g=Gx, .b=Gy).
+// Uniforms:  texelWidth, texelHeight.
 // Output:    A grayscale image with thinned edges in the .rgb channels. Non-maximal pixels are set to 0.
 //
 float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
@@ -314,6 +322,7 @@ float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
 // Role:      [Canny Step 3] Classifies pixels into strong (1.0), weak (0.5), or non-edges (0.0) using two thresholds.
 // Prerequisite: PSSuppressNonMaximum (or PSFinalizeSobelMagnitude if it was used for adjustment).
 // Input:     A thinned, grayscale edge map in 'image.r'.
+// Uniforms:  highThreshold, lowThreshold.
 // Output:    A classification map in the .rgb channels (1.0 for strong, 0.5 for weak, 0.0 for non-edge).
 //
 float4 PSHysteresisClassify(VertInOut vert_in) : TARGET
@@ -333,6 +342,7 @@ float4 PSHysteresisClassify(VertInOut vert_in) : TARGET
 // Role:      [Canny Step 4] Connects edges by promoting weak edges (0.5) to strong ones (1.0) if they are adjacent to a strong edge.
 // Prerequisite: PSHysteresisClassify.
 // Input:     A classification map in 'image.r'.
+// Uniforms:  texelWidth, texelHeight.
 // Output:    An updated classification map in the .rgb channels.
 //
 float4 PSHysteresisPropagate(VertInOut vert_in) : TARGET
@@ -363,6 +373,7 @@ float4 PSHysteresisPropagate(VertInOut vert_in) : TARGET
 // Role:      [Canny Step 5] Finalizes the edge map by removing any remaining weak edges.
 // Prerequisite: PSHysteresisPropagate.
 // Input:     A propagated classification map in 'image.r'.
+// Uniforms:  None.
 // Output:    The final binary edge map in the .rgb channels (1.0 for edges, 0.0 for non-edges).
 //
 float4 PSHysteresisFinalize(VertInOut vert_in) : TARGET
@@ -380,6 +391,7 @@ float4 PSHysteresisFinalize(VertInOut vert_in) : TARGET
 // Role:      Performs morphological erosion on a grayscale image.
 // Prerequisite: PSHysteresisFinalize (or any other shader that outputs a single-channel image).
 // Input:     A single-channel image in 'image.r' (e.g., a binary edge map).
+// Uniforms:  kernelSize, texelWidth, texelHeight.
 // Output:    An eroded grayscale image in the .rgb channels.
 //
 float4 PSErosion(VertInOut vert_in) : TARGET
@@ -406,6 +418,7 @@ float4 PSErosion(VertInOut vert_in) : TARGET
 // Role:      Performs morphological dilation on a grayscale image.
 // Prerequisite: PSHysteresisFinalize (or any other shader that outputs a single-channel image).
 // Input:     A single-channel image in 'image.r' (e.g., a binary edge map).
+// Uniforms:  kernelSize, texelWidth, texelHeight.
 // Output:    A dilated grayscale image in the .rgb channels.
 //
 float4 PSDilation(VertInOut vert_in) : TARGET
@@ -432,6 +445,7 @@ float4 PSDilation(VertInOut vert_in) : TARGET
 // Role:      Scales the brightness of an image by a uniform factor. A general-purpose utility.
 // Prerequisite: Any preceding shader.
 // Input:     A color or grayscale image from the 'image' texture.
+// Uniforms:  scalingFactor.
 // Output:    The scaled color or grayscale image.
 //
 float4 PSScaling(VertInOut vert_in) : TARGET
