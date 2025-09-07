@@ -12,7 +12,7 @@ set -euo pipefail
 readonly CMAKE_SOURCE_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." &> /dev/null && pwd)
 
 # vcpkg root directory (uses VCPKG_ROOT env var, falling back to VCPG_INSTALL_ROOT)
-readonly VCPKG_ROOT="${VCPKG_ROOT:-$VCPKG_INSTALL_ROOT}"
+readonly VCPKG_ROOT="${VCPKG_ROOT:-$VCPKG_INSTALLATION_ROOT}"
 
 # Names of the triplets for each architecture
 readonly TRIPLET_ARM64="arm64-osx-obs"
