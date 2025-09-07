@@ -858,10 +858,8 @@ void ShowDrawFilterContext::videoRender()
 		applyHysteresisFinalizePass(_drawingEffect, texelWidth, texelHeight, textureTarget, textureSource);
 		std::swap(textureSource, textureTarget);
 
-		gs_copy_texture(textureCannyEdge.get(), textureSource.get());
-
-		int write_idx = (stagesurfCannyEdgeIndex + 1) % 2;
-		gs_stage_texture(stagesurfCannyEdge[write_idx].get(), textureCannyEdge.get());
+		gs_copy_texture(bufferedTextureCannyEdge->getTexture(), textureSource.get());
+		bufferedTextureCannyEdge->stage();
 	}
 
 	gs_viewport_pop();
@@ -877,15 +875,19 @@ void ShowDrawFilterContext::videoRender()
 		drawFinalImage(_drawingEffect, textureSource);
 	}
 
-	unique_gs_stagesurf_t &readSurf = stagesurfCannyEdge[stagesurfCannyEdgeIndex];
-	uint8_t *data = nullptr;
-	uint32_t linesize = 0;
-	obs_leave_graphics();
-	if (gs_stagesurface_map(readSurf.get(), &data, &linesize)) {
-		slog(LOG_INFO) << linesize;
-		gs_stagesurface_unmap(readSurf.get());
+	if (extractionMode >= ExtractionMode::EdgeDetection) {
+		if (bufferedTextureCannyEdge->sync()) {
+			auto &buffer = bufferedTextureCannyEdge->getBuffer();
+			size_t count = 0;
+			for (size_t i = 0; i < buffer.size(); i += 4) {
+				if (buffer[i + 0] != 0 || buffer[i + 1] != 0 || buffer[i + 2] != 0) {
+					count++;
+				}
+			}
+		}
 	}
-	obs_enter_graphics();
+
+	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
 }
 
 obs_source_frame *ShowDrawFilterContext::filterVideo(struct obs_source_frame *frame)
@@ -929,14 +931,13 @@ try {
 
 	char *rawErrorString = nullptr;
 	gs_effect_t *rawEffect = gs_effect_create_from_file(effectPath.get(), &rawErrorString);
+	unique_gs_effect_t effect(rawEffect);
 	unique_bfree_t errorString(rawErrorString);
 
-	if (!rawEffect) {
+	if (!effect) {
 		const char *msg = errorString ? errorString.get() : "(unknown error)";
 		throw std::runtime_error(std::string("gs_effect_create_from_file failed: ") + msg);
 	}
-
-	unique_gs_effect_t effect(rawEffect);
 
 	auto newDrawingEffect = std::make_shared<DrawingEffect>(std::move(effect));
 
@@ -956,6 +957,14 @@ void ensureTexture(std::shared_ptr<gs_texture_t> &texture, uint32_t width, uint3
 	}
 }
 
+void ensureBufferedTexture(std::unique_ptr<BufferedTexture> &bufferedTexture, uint32_t width, uint32_t height)
+{
+	if (!bufferedTexture || bufferedTexture->width != width ||
+	    bufferedTexture->height != height) {
+		bufferedTexture = std::make_unique<BufferedTexture>(width, height);
+	}
+}
+
 void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 {
 	ensureTexture(textureSource, width, height);
@@ -965,7 +974,7 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTexture(texturePreviousLuminance, width, height);
 	ensureTexture(textureMotionMap, width, height);
 	ensureTexture(textureFinalSobelMagnitude, width, height);
-	ensureTexture(textureCannyEdge, width, height);
+	ensureBufferedTexture(bufferedTextureCannyEdge, width, height);
 }
 
 } // namespace obs_showdraw

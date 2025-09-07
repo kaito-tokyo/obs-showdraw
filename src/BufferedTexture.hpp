@@ -27,18 +27,19 @@ namespace obs_showdraw {
 
 class BufferedTexture {
 public:
-	BufferedTexture(std::uint32_t width, std::uint32_t height, gs_color_format format = GS_BGRA,
-			std::uint32_t flags = GS_RENDER_TARGET);
+	BufferedTexture(std::uint32_t width, std::uint32_t height,
+			std::uint32_t flags = GS_RENDER_TARGET, gs_color_format format = GS_BGRA);
 
 	gs_texture_t *getTexture() const;
 	void stage();
 	bool sync();
 	const std::vector<std::uint8_t> &getBuffer() const noexcept;
 
-private:
 	const std::uint32_t width;
 	const std::uint32_t height;
 	const std::uint32_t bufferLinesize;
+
+private:
 	std::vector<uint8_t> buffer;
 	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t texture;
 	std::array<kaito_tokyo::obs_bridge_utils::unique_gs_stagesurf_t, 2> stagesurfs;

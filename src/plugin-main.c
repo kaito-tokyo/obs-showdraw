@@ -41,7 +41,8 @@ struct obs_source_info showdraw_filter = {.id = "showdraw",
 					  .hide = showdraw_hide,
 					  .video_tick = showdraw_video_tick,
 					  .video_render = showdraw_video_render,
-					  .filter_video = showdraw_filter_video};
+					  .filter_video = showdraw_filter_video
+					};
 
 bool obs_module_load()
 {
