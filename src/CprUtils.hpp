@@ -27,6 +27,9 @@ namespace obs_showdraw {
 
 inline CURLcode ssl_ctx_callback(CURL *curl, void *ssl_ctx, void *userptr)
 {
+    (void)curl;
+    (void)userptr;
+
     WOLFSSL_CTX* ctx = (WOLFSSL_CTX*)ssl_ctx;
 
     if (wolfSSL_CTX_load_system_CA_certs(ctx) != WOLFSSL_SUCCESS) {
