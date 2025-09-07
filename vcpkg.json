@@ -8,17 +8,17 @@
       "name": "curl",
       "default-features": false,
       "features": [
-        "wolfssl"
+        "sspi"
       ],
-      "platform": "(uwp & !windows) | !mingw"
+      "platform": "(windows & !uwp) | mingw"
     },
     {
       "name": "curl",
       "default-features": false,
       "features": [
-        "sspi"
+        "wolfssl"
       ],
-      "platform": "(windows & !uwp) | mingw"
+      "platform": "(uwp & !windows) & !mingw"
     },
     "nlohmann-json",
     "wolfssl",
