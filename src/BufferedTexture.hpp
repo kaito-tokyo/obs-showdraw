@@ -19,6 +19,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #pragma once
 
 #include <array>
+#include <cstdint>
+#include <vector>
 
 #include <obs-bridge-utils/obs-bridge-utils.hpp>
 
@@ -27,8 +29,8 @@ namespace obs_showdraw {
 
 class BufferedTexture {
 public:
-	BufferedTexture(std::uint32_t width, std::uint32_t height,
-			std::uint32_t flags = GS_RENDER_TARGET, gs_color_format format = GS_BGRA);
+	BufferedTexture(std::uint32_t width, std::uint32_t height, std::uint32_t flags = GS_RENDER_TARGET,
+			gs_color_format format = GS_BGRA);
 
 	gs_texture_t *getTexture() const;
 	void stage();
