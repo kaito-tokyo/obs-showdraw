@@ -16,24 +16,21 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
-#include <gtest/gtest.h>
-#include "obs_test_environment.hpp"
-
-#include "ShowDrawFilterContext.h"
-#include "UpdateChecker.hpp"
-
 #include <thread>
 #include <chrono>
 
 #include <obs-bridge-utils/obs-bridge-utils.hpp>
 
+#include "ShowDrawFilterContext.h"
+#include "UpdateChecker.hpp"
+
+#define TEST_LIBOBS_ONLY
+#include "obs_test_environment.hpp"
+
 using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
 
 using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
 using kaito_tokyo::obs_showdraw::LatestVersion;
-
-::testing::Environment *const obs_env =
-	::testing::AddGlobalTestEnvironment(new kaito_tokyo::obs_showdraw_testing::ObsTestEnvironment());
 
 TEST(ShowDrawFilterContextTest, GetLatestVersion)
 {

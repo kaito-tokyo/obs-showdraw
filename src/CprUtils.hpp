@@ -16,15 +16,37 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
-#include "Preset.hpp"
+#pragma once
 
-#define TEST_LIBOBS_ONLY
-#include "obs_test_environment.hpp"
+#include <cpr/session.h>
+#include <wolfssl/options.h>
+#include <wolfssl/ssl.h>
 
-using kaito_tokyo::obs_showdraw::Preset;
+namespace kaito_tokyo {
+namespace obs_showdraw {
 
-TEST(PresetTest, ValidateDefault)
+inline CURLcode ssl_ctx_callback(CURL *curl, void *ssl_ctx, void *userptr)
 {
-	Preset preset = Preset::getStrongDefault();
-	EXPECT_EQ(preset.validate(), std::nullopt);
+	(void)curl;
+	(void)userptr;
+
+	WOLFSSL_CTX *ctx = (WOLFSSL_CTX *)ssl_ctx;
+
+	if (wolfSSL_CTX_load_system_CA_certs(ctx) != WOLFSSL_SUCCESS) {
+		return CURLE_SSL_CACERT_BADFILE;
+	}
+
+	return CURLE_OK;
 }
+
+class MyCprSession : public ::cpr::Session {
+public:
+	MyCprSession()
+	{
+		CURL *curl = GetCurlHolder()->handle;
+		curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, ssl_ctx_callback);
+	}
+};
+
+} // namespace obs_showdraw
+} // namespace kaito_tokyo
