@@ -17,6 +17,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include <iostream>
+#include <thread>
 
 #include <obs-module.h>
 #include <opencv2/opencv.hpp>
@@ -34,43 +35,30 @@ using namespace kaito_tokyo::obs_showdraw;
 
 TEST(DrawingEffectShaderTest, Draw)
 {
-	cv::Mat loaded_image = cv::imread(CMAKE_SOURCE_DIR "/tests/fixtures/red.png", cv::IMREAD_UNCHANGED);
-	ASSERT_FALSE(loaded_image.empty()) << "Failed to load source image";
-
-	cv::Mat source_image;
-	if (loaded_image.channels() == 3) {
-		cv::cvtColor(loaded_image, source_image, cv::COLOR_BGR2BGRA);
-	} else {
-		source_image = loaded_image;
-	}
-	cv::resize(source_image, source_image, cv::Size(WIDTH, HEIGHT));
+    cv::Scalar redColor(0, 0, 255, 255);
+	cv::Mat sourceImage(HEIGHT, WIDTH, CV_8UC4, redColor);
 
 	graphics_context_guard guard;
-	std::cout << "Loading shader from: " << CMAKE_SOURCE_DIR "/data/effects/drawing.effect" << std::endl;
 	auto effect = make_unique_gs_effect_from_file(CMAKE_SOURCE_DIR "/data/effects/drawing.effect");
-	ASSERT_NE(effect, nullptr);
 
 	DrawingEffect drawingEffect(std::move(effect));
 
-	// Create source texture
-	const uint8_t *source_data[] = {source_image.data};
-	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t source_texture{
-		gs_texture_create(WIDTH, HEIGHT, GS_BGRA, 1, source_data, 0)};
-	ASSERT_NE(source_texture, nullptr);
+	const uint8_t *data = sourceImage.data;
+	auto sourceTexture = make_unique_gs_texture(WIDTH, HEIGHT, GS_BGRA, 1, &data, 0);
 
-	kaito_tokyo::obs_showdraw::BufferedTexture render_target(WIDTH, HEIGHT);
+	kaito_tokyo::obs_showdraw::BufferedTexture targetBufferedTexture(WIDTH, HEIGHT);
 
-	drawingEffect.drawFinalImage(render_target.getTexture(), source_texture.get());
+	drawingEffect.drawFinalImage(targetBufferedTexture.getTexture(), sourceTexture.get());
 
-	render_target.stage();
-	ASSERT_TRUE(render_target.sync());
+	targetBufferedTexture.stage();
+	ASSERT_TRUE(targetBufferedTexture.sync());
+	ASSERT_TRUE(targetBufferedTexture.sync());
 
-	const auto &rendered_buffer = render_target.getBuffer();
-	cv::Mat rendered_image(HEIGHT, WIDTH, CV_8UC4, (void *)rendered_buffer.data(),
-			       render_target.bufferLinesize);
+	cv::Mat targetImage(HEIGHT, WIDTH, CV_8UC4, (void *)targetBufferedTexture.getBuffer().data(),
+			       targetBufferedTexture.bufferLinesize);
 
 	cv::Mat diff;
-	cv::absdiff(rendered_image, source_image, diff);
+	cv::absdiff(sourceImage, targetImage, diff);
 	cv::Scalar sum = cv::sum(diff);
 
 	EXPECT_EQ(sum[0], 0) << "B channel differs";
