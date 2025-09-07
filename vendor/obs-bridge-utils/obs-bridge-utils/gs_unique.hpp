@@ -26,7 +26,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs.h>
 
-#include "obs-bridge-utils/unique_bfree.hpp"
+#include <obs-bridge-utils/unique_bfree.hpp>
 
 namespace kaito_tokyo {
 namespace obs_bridge_utils {
