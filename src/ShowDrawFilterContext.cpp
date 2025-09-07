@@ -959,8 +959,7 @@ void ensureTexture(std::shared_ptr<gs_texture_t> &texture, uint32_t width, uint3
 
 void ensureBufferedTexture(std::unique_ptr<BufferedTexture> &bufferedTexture, uint32_t width, uint32_t height)
 {
-	if (!bufferedTexture || bufferedTexture->width != width ||
-	    bufferedTexture->height != height) {
+	if (!bufferedTexture || bufferedTexture->width != width || bufferedTexture->height != height) {
 		bufferedTexture = std::make_unique<BufferedTexture>(width, height);
 	}
 }

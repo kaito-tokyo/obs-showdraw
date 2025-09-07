@@ -57,13 +57,15 @@ std::uint32_t getBytesPerPixel(enum gs_color_format format)
 namespace kaito_tokyo {
 namespace obs_showdraw {
 
-BufferedTexture::BufferedTexture(std::uint32_t _width, std::uint32_t _height, std::uint32_t flags, gs_color_format format)
+BufferedTexture::BufferedTexture(std::uint32_t _width, std::uint32_t _height, std::uint32_t flags,
+				 gs_color_format format)
 	: width{_width},
 	  height{_height},
 	  bufferLinesize{_width * getBytesPerPixel(format)},
 	  buffer(_height * bufferLinesize),
 	  texture{make_unique_gs_texture(_width, _height, format, 1, nullptr, flags)},
-	  stagesurfs{make_unique_gs_stagesurf(_width, _height, format), make_unique_gs_stagesurf(_width, _height, format)}
+	  stagesurfs{make_unique_gs_stagesurf(_width, _height, format),
+		     make_unique_gs_stagesurf(_width, _height, format)}
 {
 }
 
@@ -86,7 +88,7 @@ bool BufferedTexture::sync()
 	std::uint32_t linesize = 0;
 
 	if (!gs_stagesurface_map(stagesurf, &data, &linesize) || !data || linesize < bufferLinesize) {
-    	gs_stagesurface_unmap(stagesurf);
+		gs_stagesurface_unmap(stagesurf);
 		return false;
 	}
 
