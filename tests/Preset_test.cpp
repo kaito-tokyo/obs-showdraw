@@ -17,10 +17,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include <gtest/gtest.h>
+#include "obs_test_environment.hpp"
 
 #include "Preset.hpp"
 
 using kaito_tokyo::obs_showdraw::Preset;
+
+::testing::Environment *const obs_env = ::testing::AddGlobalTestEnvironment(new kaito_tokyo::obs_showdraw_testing::ObsTestEnvironment());
 
 TEST(PresetTest, ValidateDefault)
 {
