@@ -51,6 +51,12 @@ inline std::deque<gs_texture_t *> &get_textures_deque()
 	return textures_to_delete;
 }
 
+inline std::deque<gs_stagesurf_t *> &get_stagesurfs_deque()
+{
+	static std::deque<gs_stagesurf_t *> stagesurfs_to_delete;
+	return stagesurfs_to_delete;
+}
+
 inline void schedule_effect_to_delete(gs_effect_t *effect)
 {
 	if (effect) {
@@ -64,6 +70,14 @@ inline void schedule_texture_to_delete(gs_texture_t *texture)
 	if (texture) {
 		std::lock_guard lock(get_mutex());
 		get_textures_deque().push_back(texture);
+	}
+}
+
+inline void schedule_stagesurfs_to_delete(gs_stagesurf_t *surface)
+{
+	if (surface) {
+		std::lock_guard lock(get_mutex());
+		get_stagesurfs_deque().push_back(surface);
 	}
 }
 
@@ -124,6 +138,21 @@ inline unique_gs_texture_t make_unique_gs_texture(uint32_t width, uint32_t heigh
 		throw std::runtime_error("gs_texture_create failed");
 	}
 	return unique_gs_texture_t(rawTexture);
+}
+
+struct gs_stagesurface_deleter {
+	void operator()(gs_stagesurf_t *surface) const { gs_unique::schedule_stagesurfs_to_delete(surface); }
+};
+
+using unique_gs_stagesurf_t = std::unique_ptr<gs_stagesurf_t, gs_stagesurface_deleter>;
+
+inline unique_gs_stagesurf_t make_unique_gs_stagesurf(uint32_t width, uint32_t height, enum gs_color_format color_format)
+{
+	gs_stagesurf_t *rawSurface = gs_stagesurface_create(width, height, color_format);
+	if (!rawSurface) {
+		throw std::runtime_error("gs_stagesurface_create failed");
+	}
+	return unique_gs_stagesurf_t(rawSurface);
 }
 
 class graphics_context_guard {

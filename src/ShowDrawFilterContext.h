@@ -46,8 +46,9 @@ void showdraw_module_unload(void);
 #ifdef __cplusplus
 }
 
-#include <memory>
+#include <array>
 #include <future>
+#include <memory>
 #include <optional>
 
 #include "DrawingEffect.hpp"
@@ -115,6 +116,10 @@ private:
 	std::shared_ptr<gs_texture_t> texturePreviousLuminance = nullptr;
 	std::shared_ptr<gs_texture_t> textureMotionMap = nullptr;
 	std::shared_ptr<gs_texture_t> textureFinalSobelMagnitude = nullptr;
+	std::shared_ptr<gs_texture_t> textureCannyEdge = nullptr;
+
+	std::array<kaito_tokyo::obs_bridge_utils::unique_gs_stagesurf_t, 2> stagesurfCannyEdge = {};
+	long long stagesurfCannyEdgeIndex = 0;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
 };

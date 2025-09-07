@@ -55,12 +55,12 @@ endif()
 set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed")
 list(PREPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
-find_package(CURL REQUIRED)
-find_package(wolfssl CONFIG REQUIRED)
 find_package(cpr CONFIG REQUIRED)
-find_package(semver CONFIG REQUIRED)
+find_package(CURL REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenCV CONFIG REQUIRED)
+find_package(semver CONFIG REQUIRED)
+find_package(wolfssl CONFIG REQUIRED)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}_impl PRIVATE NOMINMAX)
 

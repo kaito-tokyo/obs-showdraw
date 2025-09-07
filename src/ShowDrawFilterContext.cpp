@@ -739,6 +739,16 @@ void ShowDrawFilterContext::videoRender()
 
 	ensureTextures(width, height);
 
+	if (!stagesurfCannyEdge[0] || gs_stagesurface_get_width(stagesurfCannyEdge[0].get()) != width
+	    || gs_stagesurface_get_height(stagesurfCannyEdge[0].get()) != height) {
+		stagesurfCannyEdge[0] = make_unique_gs_stagesurf(width, height, GS_BGRA);
+	}
+
+	if (!stagesurfCannyEdge[1] || gs_stagesurface_get_width(stagesurfCannyEdge[1].get()) != width
+	    || gs_stagesurface_get_height(stagesurfCannyEdge[1].get()) != height) {
+		stagesurfCannyEdge[1] = make_unique_gs_stagesurf(width, height, GS_BGRA);
+	}
+
 	ExtractionMode extractionMode = runningPreset.extractionMode == ExtractionMode::Default
 						? DefaultExtractionMode
 						: runningPreset.extractionMode;
@@ -847,6 +857,11 @@ void ShowDrawFilterContext::videoRender()
 
 		applyHysteresisFinalizePass(_drawingEffect, texelWidth, texelHeight, textureTarget, textureSource);
 		std::swap(textureSource, textureTarget);
+
+		gs_copy_texture(textureCannyEdge.get(), textureSource.get());
+
+		int write_idx = (stagesurfCannyEdgeIndex + 1) % 2;
+		gs_stage_texture(stagesurfCannyEdge[write_idx].get(), textureCannyEdge.get());
 	}
 
 	gs_viewport_pop();
@@ -861,6 +876,16 @@ void ShowDrawFilterContext::videoRender()
 	} else {
 		drawFinalImage(_drawingEffect, textureSource);
 	}
+
+	unique_gs_stagesurf_t &readSurf = stagesurfCannyEdge[stagesurfCannyEdgeIndex];
+	uint8_t *data = nullptr;
+	uint32_t linesize = 0;
+	obs_leave_graphics();
+	if (gs_stagesurface_map(readSurf.get(), &data, &linesize)) {
+		slog(LOG_INFO) << linesize;
+		gs_stagesurface_unmap(readSurf.get());
+	}
+	obs_enter_graphics();
 }
 
 obs_source_frame *ShowDrawFilterContext::filterVideo(struct obs_source_frame *frame)
@@ -940,6 +965,7 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTexture(texturePreviousLuminance, width, height);
 	ensureTexture(textureMotionMap, width, height);
 	ensureTexture(textureFinalSobelMagnitude, width, height);
+	ensureTexture(textureCannyEdge, width, height);
 }
 
 } // namespace obs_showdraw
