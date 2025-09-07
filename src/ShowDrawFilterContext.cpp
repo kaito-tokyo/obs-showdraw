@@ -542,8 +542,9 @@ void ShowDrawFilterContext::videoRender()
 
 		if (runningPreset.medianFilteringKernelSize > 1) {
 			_drawingEffect->applyMedianFilteringPass(texelWidth, texelHeight,
-								 runningPreset.medianFilteringKernelSize, textureTarget.get(),
-								 textureTemporary1.get(), textureSource.get());
+								 runningPreset.medianFilteringKernelSize,
+								 textureTarget.get(), textureTemporary1.get(),
+								 textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
@@ -551,8 +552,9 @@ void ShowDrawFilterContext::videoRender()
 			_drawingEffect->applyMotionAdaptiveFilteringPass(
 				texelWidth, texelHeight, runningPreset.motionMapKernelSize,
 				runningPreset.motionAdaptiveFilteringStrength,
-				runningPreset.motionAdaptiveFilteringMotionThreshold, textureTarget.get(), textureMotionMap.get(),
-				textureTemporary2.get(), textureSource.get(), texturePreviousLuminance.get());
+				runningPreset.motionAdaptiveFilteringMotionThreshold, textureTarget.get(),
+				textureMotionMap.get(), textureTemporary2.get(), textureSource.get(),
+				texturePreviousLuminance.get());
 			std::swap(textureSource, textureTarget);
 		}
 
@@ -565,42 +567,38 @@ void ShowDrawFilterContext::videoRender()
 		_drawingEffect->applySobelPass(texelWidth, texelHeight, textureComplexSobel.get(), textureSource.get());
 
 		_drawingEffect->applyFinalizeSobelMagnitudePass(runningPreset.sobelMagnitudeFinalizationUseLog,
-								sobelMagnitudeFinalizationScalingFactor, textureSource.get(),
-								textureComplexSobel.get());
+								sobelMagnitudeFinalizationScalingFactor,
+								textureSource.get(), textureComplexSobel.get());
 
 		if (runningPreset.morphologyOpeningErosionKernelSize > 1) {
-			_drawingEffect->applyMorphologyPass(_drawingEffect->techHorizontalErosion,
-							    _drawingEffect->techVerticalErosion, texelWidth,
-							    texelHeight,
-							    (int)runningPreset.morphologyOpeningErosionKernelSize,
-							    textureTarget.get(), textureTemporary2.get(), textureSource.get());
+			_drawingEffect->applyMorphologyPass(
+				_drawingEffect->techHorizontalErosion, _drawingEffect->techVerticalErosion, texelWidth,
+				texelHeight, (int)runningPreset.morphologyOpeningErosionKernelSize, textureTarget.get(),
+				textureTemporary2.get(), textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
 		if (runningPreset.morphologyOpeningDilationKernelSize > 1) {
-			_drawingEffect->applyMorphologyPass(_drawingEffect->techHorizontalDilation,
-							    _drawingEffect->techVerticalDilation, texelWidth,
-							    texelHeight,
-							    (int)runningPreset.morphologyOpeningDilationKernelSize,
-							    textureTarget.get(), textureTemporary2.get(), textureSource.get());
+			_drawingEffect->applyMorphologyPass(
+				_drawingEffect->techHorizontalDilation, _drawingEffect->techVerticalDilation,
+				texelWidth, texelHeight, (int)runningPreset.morphologyOpeningDilationKernelSize,
+				textureTarget.get(), textureTemporary2.get(), textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
 		if (runningPreset.morphologyClosingDilationKernelSize > 1) {
-			_drawingEffect->applyMorphologyPass(_drawingEffect->techHorizontalDilation,
-							    _drawingEffect->techVerticalDilation, texelWidth,
-							    texelHeight,
-							    (int)runningPreset.morphologyClosingDilationKernelSize,
-							    textureTarget.get(), textureTemporary2.get(), textureSource.get());
+			_drawingEffect->applyMorphologyPass(
+				_drawingEffect->techHorizontalDilation, _drawingEffect->techVerticalDilation,
+				texelWidth, texelHeight, (int)runningPreset.morphologyClosingDilationKernelSize,
+				textureTarget.get(), textureTemporary2.get(), textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
 		if (runningPreset.morphologyClosingErosionKernelSize > 1) {
-			_drawingEffect->applyMorphologyPass(_drawingEffect->techHorizontalErosion,
-							    _drawingEffect->techVerticalErosion, texelWidth,
-							    texelHeight,
-							    (int)runningPreset.morphologyClosingErosionKernelSize,
-							    textureTarget.get(), textureTemporary2.get(), textureSource.get());
+			_drawingEffect->applyMorphologyPass(
+				_drawingEffect->techHorizontalErosion, _drawingEffect->techVerticalErosion, texelWidth,
+				texelHeight, (int)runningPreset.morphologyClosingErosionKernelSize, textureTarget.get(),
+				textureTemporary2.get(), textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
@@ -609,7 +607,8 @@ void ShowDrawFilterContext::videoRender()
 	}
 
 	if (extractionMode >= ExtractionMode::EdgeDetection) {
-		_drawingEffect->applySuppressNonMaximumPass(texelWidth, texelHeight, textureTarget.get(), textureSource.get());
+		_drawingEffect->applySuppressNonMaximumPass(texelWidth, texelHeight, textureTarget.get(),
+							    textureSource.get());
 		std::swap(textureSource, textureTarget);
 
 		_drawingEffect->applyHysteresisClassifyPass(texelWidth, texelHeight,
@@ -624,7 +623,8 @@ void ShowDrawFilterContext::videoRender()
 			std::swap(textureSource, textureTarget);
 		}
 
-		_drawingEffect->applyHysteresisFinalizePass(texelWidth, texelHeight, textureTarget.get(), textureSource.get());
+		_drawingEffect->applyHysteresisFinalizePass(texelWidth, texelHeight, textureTarget.get(),
+							    textureSource.get());
 		std::swap(textureSource, textureTarget);
 
 		gs_copy_texture(bufferedTextureCannyEdge->getTexture(), textureSource.get());
