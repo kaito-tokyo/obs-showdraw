@@ -26,7 +26,7 @@ using namespace kaito_tokyo::obs_bridge_utils;
 
 namespace {
 
-std::size_t getBytesPerPixel(enum gs_color_format format)
+std::uint32_t getBytesPerPixel(enum gs_color_format format)
 {
 	switch (format) {
 	case GS_A8:
@@ -60,10 +60,10 @@ namespace obs_showdraw {
 BufferedTexture::BufferedTexture(uint32_t _width, uint32_t _height, gs_color_format format, uint32_t flags)
 	: width{_width},
 	  height{_height},
-	  bufferLinesize{width * getBytesPerPixel(format)},
-	  buffer(height * bufferLinesize),
-	  texture{make_unique_gs_texture(width, height, format, 1, nullptr, flags)},
-	  stagesurfs{make_unique_gs_stagesurf(width, height, format), make_unique_gs_stagesurf(width, height, format)}
+	  bufferLinesize{_width * getBytesPerPixel(format)},
+	  buffer(_height * bufferLinesize),
+	  texture{make_unique_gs_texture(_width, _height, format, 1, nullptr, flags)},
+	  stagesurfs{make_unique_gs_stagesurf(_width, _height, format), make_unique_gs_stagesurf(_width, _height, format)}
 {
 }
 
