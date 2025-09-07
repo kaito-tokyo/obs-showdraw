@@ -111,6 +111,7 @@ main() {
 
     log_info "Starting vcpkg builds for required architectures..."
     "${VCPKG_ROOT}/vcpkg" install --triplet "${TRIPLET_ARM64}" --x-install-root="${VCPKG_BUILD_OUTPUT_DIR}/${TRIPLET_ARM64}"
+    sleep 1
     "${VCPKG_ROOT}/vcpkg" install --triplet "${TRIPLET_X64}" --x-install-root="${VCPKG_BUILD_OUTPUT_DIR}/${TRIPLET_X64}"
     log_success "vcpkg builds completed."
 
