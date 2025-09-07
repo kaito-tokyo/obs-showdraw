@@ -16,7 +16,12 @@
     "neargye-semver",
     {
       "name": "opencv4",
-      "default-features": false
+      "default-features": false,
+      "features": [
+        "jpeg",
+        "png",
+        "webp"
+      ]
     }
   ]
 }

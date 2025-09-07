@@ -22,24 +22,46 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
+namespace kaito_tokyo {
+namespace obs_showdraw_testing {
+
 class ObsTestEnvironment : public ::testing::Environment {
 public:
 	void SetUp() override
 	{
-		// Initialize OBS
 		if (!obs_startup("en-US", nullptr, nullptr)) {
 			FAIL() << "OBS startup failed.";
 		}
 	}
 
-	void TearDown() override
-	{
-		// Shutdown OBS
-		obs_shutdown();
-	}
+	void TearDown() override { obs_shutdown(); }
 };
 
-// Register the environment
-// This will be called before main() and before any tests are run.
-// The return value of AddGlobalTestEnvironment is ignored.
-::testing::Environment *const obs_env = ::testing::AddGlobalTestEnvironment(new ObsTestEnvironment());
+class ObsTestWithVideoEnvironment : public ::testing::Environment {
+public:
+	void SetUp() override
+	{
+		if (!obs_startup("en-US", nullptr, nullptr)) {
+			FAIL() << "OBS startup failed.";
+		}
+
+		obs_video_info ovi;
+		ovi.adapter = 0;
+		ovi.graphics_module = "libobs-opengl.dylib";
+		ovi.output_format = VIDEO_FORMAT_RGBA;
+		ovi.fps_num = 30;
+		ovi.fps_den = 1;
+		ovi.base_width = 640;
+		ovi.base_height = 480;
+		ovi.output_width = 640;
+		ovi.output_height = 480;
+		if (obs_reset_video(&ovi) != OBS_VIDEO_SUCCESS) {
+			FAIL() << "obs_reset_video failed";
+		}
+	}
+
+	void TearDown() override { obs_shutdown(); }
+};
+
+} // namespace obs_showdraw_testing
+} // namespace kaito_tokyo
