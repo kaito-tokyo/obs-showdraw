@@ -63,7 +63,7 @@ find_package(semver CONFIG REQUIRED)
 find_package(wolfssl CONFIG REQUIRED)
 
 add_subdirectory(vendor/obs-bridge-utils)
-target_link_libraries(${CMAKE_PROJECT_NAME}_impl PUBLIC obs-bridge-utils)
+target_link_libraries(${CMAKE_PROJECT_NAME}_impl PUBLIC obs_bridge_utils)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}_impl PRIVATE NOMINMAX)
 
