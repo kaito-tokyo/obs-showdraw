@@ -27,25 +27,26 @@ namespace obs_showdraw {
 
 inline CURLcode ssl_ctx_callback(CURL *curl, void *ssl_ctx, void *userptr)
 {
-    (void)curl;
-    (void)userptr;
+	(void)curl;
+	(void)userptr;
 
-    WOLFSSL_CTX* ctx = (WOLFSSL_CTX*)ssl_ctx;
+	WOLFSSL_CTX *ctx = (WOLFSSL_CTX *)ssl_ctx;
 
-    if (wolfSSL_CTX_load_system_CA_certs(ctx) != WOLFSSL_SUCCESS) {
-        return CURLE_SSL_CACERT_BADFILE;
-    }
+	if (wolfSSL_CTX_load_system_CA_certs(ctx) != WOLFSSL_SUCCESS) {
+		return CURLE_SSL_CACERT_BADFILE;
+	}
 
-    return CURLE_OK;
+	return CURLE_OK;
 }
 
 class MyCprSession : public ::cpr::Session {
-  public:
-    MyCprSession() {
-        CURL *curl = GetCurlHolder()->handle;
-        curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, ssl_ctx_callback);
-    }
+public:
+	MyCprSession()
+	{
+		CURL *curl = GetCurlHolder()->handle;
+		curl_easy_setopt(curl, CURLOPT_SSL_CTX_FUNCTION, ssl_ctx_callback);
+	}
 };
 
-} // namespace kaito_tokyo
 } // namespace obs_showdraw
+} // namespace kaito_tokyo
