@@ -16,25 +16,25 @@ Simply apply it to your camera source, and it will instantly detect and enhance 
 
 ## Transform Your Streaming Experience with ShowDraw
 
-* **Enhance Viewer Immersion**
-    From the faintest pencil sketches to bold ink lines, every step of your creative process becomes crystal clear. Your audience will be more deeply drawn into your world of creation.
+- **Enhance Viewer Immersion**
+  From the faintest pencil sketches to bold ink lines, every step of your creative process becomes crystal clear. Your audience will be more deeply drawn into your world of creation.
 
-* **Spark More Engaging Conversations**
-    Fewer questions like "What's happening on the screen?" mean more conversations about your artwork itself.
+- **Spark More Engaging Conversations**
+  Fewer questions like "What's happening on the screen?" mean more conversations about your artwork itself.
 
-* **Showcase Your True Skill**
-    Convey the subtle nuances of your pen pressure and delicate strokes directly to your viewers, just as you intended.
+- **Showcase Your True Skill**
+  Convey the subtle nuances of your pen pressure and delicate strokes directly to your viewers, just as you intended.
 
 ## Feature Highlights
 
-* **✒️ Real-time Line Detection & Enhancement**
-    Instantly recognizes and sharpens the analog lines captured by your camera.
+- **✒️ Real-time Line Detection & Enhancement**
+  Instantly recognizes and sharpens the analog lines captured by your camera.
 
-* **⚙️ Intuitive & Powerful Customization**
-    Easily adjust line thickness, intensity, and detection thresholds with simple sliders. Find the perfect look for your art style, tools, and lighting conditions.
+- **⚙️ Intuitive & Powerful Customization**
+  Easily adjust line thickness, intensity, and detection thresholds with simple sliders. Find the perfect look for your art style, tools, and lighting conditions.
 
-* **🚀 Low-Impact, High-Performance Design**
-    Leveraging the power of your GPU, our optimized algorithm minimizes the load on your PC. No need to worry about dropped frames, even during high-resolution streams.
+- **🚀 Low-Impact, High-Performance Design**
+  Leveraging the power of your GPU, our optimized algorithm minimizes the load on your PC. No need to worry about dropped frames, even during high-resolution streams.
 
 ## How to Use
 

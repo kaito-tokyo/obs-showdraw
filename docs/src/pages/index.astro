@@ -1,11 +1,9 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { getLatestRelease } from "../lib/github";
 
-const response = await fetch(
-  "https://api.github.com/repos/kaito-tokyo/obs-showdraw/releases/latest",
-);
-const data = await response.json();
-const tagName = data.tag_name;
+const release = await getLatestRelease();
+const tagName = release.tag_name;
 ---
 
 <Layout title="ShowDraw - OBS線画強調プラグイン" lang="ja">
@@ -24,9 +22,18 @@ const tagName = data.tag_name;
     <a href="/plugin-description/en/">Learn more in English</a>
   </div>
   <div class="links">
-    <a href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-windows-x64.zip`>Windows</a>
-    <a href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-macos-universal.pkg`>Mac</a>
-    <a href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-x86_64-linux-gnu.deb`>Ubuntu</a>
+    <a
+      href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-windows-x64.zip`
+      >Windows</a
+    >
+    <a
+      href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-macos-universal.pkg`
+      >Mac</a
+    >
+    <a
+      href=`https://github.com/kaito-tokyo/obs-showdraw/releases/download/${tagName}/obs-showdraw-${tagName}-x86_64-linux-gnu.deb`
+      >Ubuntu</a
+    >
   </div>
 </Layout>
 
