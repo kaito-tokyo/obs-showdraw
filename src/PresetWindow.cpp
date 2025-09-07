@@ -37,7 +37,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <util/dstr.h>
 #include <obs-module.h>
 
-#include "obs-bridge-utils/obs-bridge-utils.hpp"
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
 #include "ShowDrawFilterContext.h"
 

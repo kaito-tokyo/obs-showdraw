@@ -26,7 +26,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 
-#include "obs-bridge-utils/obs-bridge-utils.hpp"
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
 #include "DrawingEffect.hpp"
 #include "Preset.hpp"

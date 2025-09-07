@@ -24,7 +24,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "plugin-support.h"
 #include <obs.h>
 
-#include "obs-bridge-utils/obs-bridge-utils.hpp"
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
 using kaito_tokyo::obs_bridge_utils::slog;
 
