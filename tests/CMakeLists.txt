@@ -26,10 +26,8 @@ endfunction()
 
 add_obs_showdraw_test(Preset_test)
 add_obs_showdraw_test(UpdateChecker_test semver::semver cpr::cpr
-                                       nlohmann_json::nlohmann_json
 )
 add_obs_showdraw_test(ShowDrawFilterContext_test semver::semver cpr::cpr
-                                                 nlohmann_json::nlohmann_json
 )
 add_obs_showdraw_test(DrawingEffect_shader_test opencv_core opencv_imgproc
                                                 opencv_imgcodecs
