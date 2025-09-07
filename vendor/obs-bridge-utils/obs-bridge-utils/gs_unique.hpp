@@ -26,7 +26,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs.h>
 
-#include "obs-bridge-utils/unique_bfree.hpp"
+#include <obs-bridge-utils/unique_bfree.hpp>
 
 namespace kaito_tokyo {
 namespace obs_bridge_utils {
@@ -51,6 +51,12 @@ inline std::deque<gs_texture_t *> &get_textures_deque()
 	return textures_to_delete;
 }
 
+inline std::deque<gs_stagesurf_t *> &get_stagesurfs_deque()
+{
+	static std::deque<gs_stagesurf_t *> stagesurfs_to_delete;
+	return stagesurfs_to_delete;
+}
+
 inline void schedule_effect_to_delete(gs_effect_t *effect)
 {
 	if (effect) {
@@ -67,10 +73,19 @@ inline void schedule_texture_to_delete(gs_texture_t *texture)
 	}
 }
 
+inline void schedule_stagesurfs_to_delete(gs_stagesurf_t *surface)
+{
+	if (surface) {
+		std::lock_guard lock(get_mutex());
+		get_stagesurfs_deque().push_back(surface);
+	}
+}
+
 inline void drain()
 {
 	std::deque<gs_effect_t *> _effects_to_delete;
 	std::deque<gs_texture_t *> _textures_to_delete;
+	std::deque<gs_stagesurf_t *> _stagesurfs_to_delete;
 	{
 		std::lock_guard lock(get_mutex());
 		if (!get_effects_deque().empty()) {
@@ -79,6 +94,9 @@ inline void drain()
 		if (!get_textures_deque().empty()) {
 			_textures_to_delete = std::move(get_textures_deque());
 		}
+		if (!get_stagesurfs_deque().empty()) {
+			_stagesurfs_to_delete = std::move(get_stagesurfs_deque());
+		}
 	}
 
 	for (gs_effect_t *effect : _effects_to_delete) {
@@ -86,6 +104,9 @@ inline void drain()
 	}
 	for (gs_texture_t *texture : _textures_to_delete) {
 		gs_texture_destroy(texture);
+	}
+	for (gs_stagesurf_t *surface : _stagesurfs_to_delete) {
+		gs_stagesurface_destroy(surface);
 	}
 }
 
@@ -124,6 +145,21 @@ inline unique_gs_texture_t make_unique_gs_texture(uint32_t width, uint32_t heigh
 		throw std::runtime_error("gs_texture_create failed");
 	}
 	return unique_gs_texture_t(rawTexture);
+}
+
+struct gs_stagesurf_deleter {
+	void operator()(gs_stagesurf_t *surface) const { gs_unique::schedule_stagesurfs_to_delete(surface); }
+};
+
+using unique_gs_stagesurf_t = std::unique_ptr<gs_stagesurf_t, gs_stagesurf_deleter>;
+
+inline unique_gs_stagesurf_t make_unique_gs_stagesurf(uint32_t width, uint32_t height, enum gs_color_format color_format)
+{
+	gs_stagesurf_t *rawSurface = gs_stagesurface_create(width, height, color_format);
+	if (!rawSurface) {
+		throw std::runtime_error("gs_stagesurface_create failed");
+	}
+	return unique_gs_stagesurf_t(rawSurface);
 }
 
 class graphics_context_guard {

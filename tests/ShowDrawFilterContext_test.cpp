@@ -5,7 +5,7 @@
 #include <thread>
 #include <chrono>
 
-#include "obs-bridge-utils/obs-bridge-utils.hpp"
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
 using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
 

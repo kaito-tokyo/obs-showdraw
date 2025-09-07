@@ -55,12 +55,15 @@ endif()
 set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed")
 list(PREPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
-find_package(CURL REQUIRED)
-find_package(wolfssl CONFIG REQUIRED)
 find_package(cpr CONFIG REQUIRED)
-find_package(semver CONFIG REQUIRED)
+find_package(CURL REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenCV CONFIG REQUIRED)
+find_package(semver CONFIG REQUIRED)
+find_package(wolfssl CONFIG REQUIRED)
+
+add_subdirectory(vendor/obs-bridge-utils)
+target_link_libraries(${CMAKE_PROJECT_NAME}_impl PUBLIC obs_bridge_utils)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}_impl PRIVATE NOMINMAX)
 
@@ -71,7 +74,13 @@ target_link_libraries(
 
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl
-  PRIVATE src/Preset.cpp src/UpdateChecker.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp
+  PRIVATE
+    src/BufferedTexture.cpp
+    src/Preset.cpp
+    src/UpdateChecker.cpp
+    src/PresetWindow.cpp
+    src/DrawingEffect.cpp
+    src/ShowDrawFilterContext.cpp
 )
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)

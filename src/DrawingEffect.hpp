@@ -20,7 +20,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs.h>
 
-#include "obs-bridge-utils/obs-bridge-utils.hpp"
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
 namespace kaito_tokyo {
 namespace obs_showdraw {

@@ -26,7 +26,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 
-#include "obs-bridge-utils/obs-bridge-utils.hpp"
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
 #include "DrawingEffect.hpp"
 #include "Preset.hpp"
@@ -739,6 +739,16 @@ void ShowDrawFilterContext::videoRender()
 
 	ensureTextures(width, height);
 
+	if (!stagesurfCannyEdge[0] || gs_stagesurface_get_width(stagesurfCannyEdge[0].get()) != width ||
+	    gs_stagesurface_get_height(stagesurfCannyEdge[0].get()) != height) {
+		stagesurfCannyEdge[0] = make_unique_gs_stagesurf(width, height, GS_BGRA);
+	}
+
+	if (!stagesurfCannyEdge[1] || gs_stagesurface_get_width(stagesurfCannyEdge[1].get()) != width ||
+	    gs_stagesurface_get_height(stagesurfCannyEdge[1].get()) != height) {
+		stagesurfCannyEdge[1] = make_unique_gs_stagesurf(width, height, GS_BGRA);
+	}
+
 	ExtractionMode extractionMode = runningPreset.extractionMode == ExtractionMode::Default
 						? DefaultExtractionMode
 						: runningPreset.extractionMode;
@@ -847,6 +857,9 @@ void ShowDrawFilterContext::videoRender()
 
 		applyHysteresisFinalizePass(_drawingEffect, texelWidth, texelHeight, textureTarget, textureSource);
 		std::swap(textureSource, textureTarget);
+
+		gs_copy_texture(bufferedTextureCannyEdge->getTexture(), textureSource.get());
+		bufferedTextureCannyEdge->stage();
 	}
 
 	gs_viewport_pop();
@@ -861,6 +874,20 @@ void ShowDrawFilterContext::videoRender()
 	} else {
 		drawFinalImage(_drawingEffect, textureSource);
 	}
+
+	if (extractionMode >= ExtractionMode::EdgeDetection) {
+		if (bufferedTextureCannyEdge->sync()) {
+			auto &buffer = bufferedTextureCannyEdge->getBuffer();
+			size_t count = 0;
+			for (size_t i = 0; i < buffer.size(); i += 4) {
+				if (buffer[i + 0] != 0 || buffer[i + 1] != 0 || buffer[i + 2] != 0) {
+					count++;
+				}
+			}
+		}
+	}
+
+	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
 }
 
 obs_source_frame *ShowDrawFilterContext::filterVideo(struct obs_source_frame *frame)
@@ -904,14 +931,13 @@ try {
 
 	char *rawErrorString = nullptr;
 	gs_effect_t *rawEffect = gs_effect_create_from_file(effectPath.get(), &rawErrorString);
+	unique_gs_effect_t effect(rawEffect);
 	unique_bfree_t errorString(rawErrorString);
 
-	if (!rawEffect) {
+	if (!effect) {
 		const char *msg = errorString ? errorString.get() : "(unknown error)";
 		throw std::runtime_error(std::string("gs_effect_create_from_file failed: ") + msg);
 	}
-
-	unique_gs_effect_t effect(rawEffect);
 
 	auto newDrawingEffect = std::make_shared<DrawingEffect>(std::move(effect));
 
@@ -931,6 +957,13 @@ void ensureTexture(std::shared_ptr<gs_texture_t> &texture, uint32_t width, uint3
 	}
 }
 
+void ensureBufferedTexture(std::unique_ptr<BufferedTexture> &bufferedTexture, uint32_t width, uint32_t height)
+{
+	if (!bufferedTexture || bufferedTexture->width != width || bufferedTexture->height != height) {
+		bufferedTexture = std::make_unique<BufferedTexture>(width, height);
+	}
+}
+
 void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 {
 	ensureTexture(textureSource, width, height);
@@ -940,6 +973,7 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTexture(texturePreviousLuminance, width, height);
 	ensureTexture(textureMotionMap, width, height);
 	ensureTexture(textureFinalSobelMagnitude, width, height);
+	ensureBufferedTexture(bufferedTextureCannyEdge, width, height);
 }
 
 } // namespace obs_showdraw
