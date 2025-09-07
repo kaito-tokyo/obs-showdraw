@@ -153,7 +153,8 @@ struct gs_stagesurf_deleter {
 
 using unique_gs_stagesurf_t = std::unique_ptr<gs_stagesurf_t, gs_stagesurf_deleter>;
 
-inline unique_gs_stagesurf_t make_unique_gs_stagesurf(uint32_t width, uint32_t height, enum gs_color_format color_format)
+inline unique_gs_stagesurf_t make_unique_gs_stagesurf(uint32_t width, uint32_t height,
+						      enum gs_color_format color_format)
 {
 	gs_stagesurf_t *rawSurface = gs_stagesurface_create(width, height, color_format);
 	if (!rawSurface) {

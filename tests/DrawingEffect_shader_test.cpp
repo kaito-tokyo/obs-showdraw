@@ -35,7 +35,7 @@ using namespace kaito_tokyo::obs_showdraw;
 
 TEST(DrawingEffectShaderTest, Draw)
 {
-    cv::Scalar redColor(0, 0, 255, 255);
+	cv::Scalar redColor(0, 0, 255, 255);
 	cv::Mat sourceImage(HEIGHT, WIDTH, CV_8UC4, redColor);
 
 	graphics_context_guard guard;
@@ -55,7 +55,7 @@ TEST(DrawingEffectShaderTest, Draw)
 	ASSERT_TRUE(targetBufferedTexture.sync());
 
 	cv::Mat targetImage(HEIGHT, WIDTH, CV_8UC4, (void *)targetBufferedTexture.getBuffer().data(),
-			       targetBufferedTexture.bufferLinesize);
+			    targetBufferedTexture.bufferLinesize);
 
 	cv::Mat diff;
 	cv::absdiff(sourceImage, targetImage, diff);
