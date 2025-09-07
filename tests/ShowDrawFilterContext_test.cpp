@@ -32,7 +32,8 @@ using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
 using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
 using kaito_tokyo::obs_showdraw::LatestVersion;
 
-::testing::Environment *const obs_env = ::testing::AddGlobalTestEnvironment(new kaito_tokyo::obs_showdraw_testing::ObsTestEnvironment());
+::testing::Environment *const obs_env =
+	::testing::AddGlobalTestEnvironment(new kaito_tokyo::obs_showdraw_testing::ObsTestEnvironment());
 
 TEST(ShowDrawFilterContextTest, GetLatestVersion)
 {
@@ -47,4 +48,3 @@ TEST(ShowDrawFilterContextTest, GetLatestVersion)
 	ASSERT_FALSE(latestVersion->isUpdateAvailable("999.999.999"));
 	ASSERT_FALSE(latestVersion->toString().empty());
 }
-

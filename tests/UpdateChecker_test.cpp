@@ -24,7 +24,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 using kaito_tokyo::obs_showdraw::LatestVersion;
 using kaito_tokyo::obs_showdraw::UpdateChecker;
 
-::testing::Environment *const obs_env = ::testing::AddGlobalTestEnvironment(new kaito_tokyo::obs_showdraw_testing::ObsTestEnvironment());
+::testing::Environment *const obs_env =
+	::testing::AddGlobalTestEnvironment(new kaito_tokyo::obs_showdraw_testing::ObsTestEnvironment());
 
 TEST(UpdateCheckerTest, Fetch)
 {

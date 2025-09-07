@@ -33,7 +33,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #define CMAKE_SOURCE_DIR "."
 #endif
 
-::testing::Environment *const obs_env = ::testing::AddGlobalTestEnvironment(new kaito_tokyo::obs_showdraw_testing::ObsTestEnvironment());
+::testing::Environment *const obs_env =
+	::testing::AddGlobalTestEnvironment(new kaito_tokyo::obs_showdraw_testing::ObsTestEnvironment());
 
 TEST(DrawingEffectShaderTest, Draw)
 {
@@ -91,7 +92,7 @@ TEST(DrawingEffectShaderTest, Draw)
 	// ASSERT_NE(data, nullptr);
 
 	// cv::Mat rendered_image(TEXTURE_HEIGHT, TEXTURE_WIDTH, CV_8UC4, data, linesize);
-	
+
 	// // OpenCV uses BGRA, but OBS renders RGBA. So we need to convert.
 	// cv::cvtColor(rendered_image, rendered_image, cv::COLOR_RGBA2BGRA);
 
@@ -100,7 +101,7 @@ TEST(DrawingEffectShaderTest, Draw)
 	// Load reference image
 	// char *fixture_path_str = obs_module_file(FIXTURE_PATH.c_str());
 	// cv::Mat reference_image = cv::imread(fixture_path_str, cv::IMREAD_UNCHANGED);
-    // bfree(fixture_path_str);
+	// bfree(fixture_path_str);
 	// ASSERT_FALSE(reference_image.empty()) << "Failed to load reference image: " << FIXTURE_PATH << ". Please create a 100x100 red PNG image at tests/fixtures/red.png";
 
 	// // Compare images

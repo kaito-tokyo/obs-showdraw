@@ -34,10 +34,7 @@ public:
 		}
 	}
 
-	void TearDown() override
-	{
-		obs_shutdown();
-	}
+	void TearDown() override { obs_shutdown(); }
 };
 
 class ObsTestWithVideoEnvironment : public ::testing::Environment {
@@ -63,10 +60,7 @@ public:
 		}
 	}
 
-	void TearDown() override
-	{
-		obs_shutdown();
-	}
+	void TearDown() override { obs_shutdown(); }
 };
 
 } // namespace obs_showdraw_testing
