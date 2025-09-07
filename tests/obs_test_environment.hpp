@@ -53,7 +53,13 @@ public:
 
 		obs_video_info ovi;
 		ovi.adapter = 0;
+#if defined(_WIN32)
+		ovi.graphics_module = "libobs-d3d11.dll";
+#elif defined(__APPLE__)
 		ovi.graphics_module = "libobs-opengl.dylib";
+#else
+		ovi.graphics_module = "libobs-opengl.so";
+#endif
 		ovi.output_format = VIDEO_FORMAT_BGRA;
 		ovi.fps_num = FPS;
 		ovi.fps_den = 1;
