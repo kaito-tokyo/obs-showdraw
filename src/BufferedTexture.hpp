@@ -18,17 +18,33 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <obs-bridge-utils/gs_unique.hpp>
+#include <array>
+
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
 
 namespace kaito_tokyo {
 namespace obs_showdraw {
 
 class BufferedTexture {
 public:
-    BufferedTexture();
+	BufferedTexture(std::uint32_t width, std::uint32_t height, gs_color_format format = GS_BGRA,
+			std::uint32_t flags = GS_RENDER_TARGET);
 
-    const uniqu
-}
+	gs_texture_t *getTexture() const;
+	void stage();
+	bool sync();
+	const std::vector<std::uint8_t> &getBuffer() const noexcept;
+
+private:
+	const std::uint32_t width;
+	const std::uint32_t height;
+	const std::uint32_t bufferLinesize;
+	std::vector<uint8_t> buffer;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t texture;
+	std::array<kaito_tokyo::obs_bridge_utils::unique_gs_stagesurf_t, 2> stagesurfs;
+
+	std::size_t writeIndex = 0;
+};
 
 } // namespace obs_showdraw
 } // namespace kaito_tokyo

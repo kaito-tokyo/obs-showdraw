@@ -739,13 +739,13 @@ void ShowDrawFilterContext::videoRender()
 
 	ensureTextures(width, height);
 
-	if (!stagesurfCannyEdge[0] || gs_stagesurface_get_width(stagesurfCannyEdge[0].get()) != width
-	    || gs_stagesurface_get_height(stagesurfCannyEdge[0].get()) != height) {
+	if (!stagesurfCannyEdge[0] || gs_stagesurface_get_width(stagesurfCannyEdge[0].get()) != width ||
+	    gs_stagesurface_get_height(stagesurfCannyEdge[0].get()) != height) {
 		stagesurfCannyEdge[0] = make_unique_gs_stagesurf(width, height, GS_BGRA);
 	}
 
-	if (!stagesurfCannyEdge[1] || gs_stagesurface_get_width(stagesurfCannyEdge[1].get()) != width
-	    || gs_stagesurface_get_height(stagesurfCannyEdge[1].get()) != height) {
+	if (!stagesurfCannyEdge[1] || gs_stagesurface_get_width(stagesurfCannyEdge[1].get()) != width ||
+	    gs_stagesurface_get_height(stagesurfCannyEdge[1].get()) != height) {
 		stagesurfCannyEdge[1] = make_unique_gs_stagesurf(width, height, GS_BGRA);
 	}
 
