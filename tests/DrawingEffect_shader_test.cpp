@@ -38,6 +38,8 @@ class DrawingEffectShaderTest : public ::testing::Test {
 protected:
 	void SetUp() override
 	{
+		graphics_context_guard guard;
+
 		effect = make_unique_gs_effect_from_file(CMAKE_SOURCE_DIR "/data/effects/drawing.effect");
 		drawingEffect = std::make_unique<DrawingEffect>(std::move(effect));
 
@@ -46,8 +48,6 @@ protected:
 
 		targetBufferedTexture = std::make_unique<kaito_tokyo::obs_showdraw::BufferedTexture>(WIDTH, HEIGHT);
 	}
-
-	graphics_context_guard guard;
 
 	cv::Mat sourceImage = cv::Mat(HEIGHT, WIDTH, CV_8UC4, cv::Scalar(0, 0, 255, 255));
 
@@ -59,6 +59,8 @@ protected:
 
 TEST_F(DrawingEffectShaderTest, Draw)
 {
+	graphics_context_guard guard;
+
 	drawingEffect->drawFinalImage(targetBufferedTexture->getTexture(), sourceTexture.get());
 
 	targetBufferedTexture->stage();
@@ -80,6 +82,8 @@ TEST_F(DrawingEffectShaderTest, Draw)
 
 TEST_F(DrawingEffectShaderTest, ExtractLuminance)
 {
+	graphics_context_guard guard;
+
 	drawingEffect->applyLuminanceExtractionPass(targetBufferedTexture->getTexture(), sourceTexture.get());
 
 	targetBufferedTexture->stage();
