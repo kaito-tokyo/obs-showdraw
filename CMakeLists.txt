@@ -43,13 +43,30 @@ else()
   message(FATAL_ERROR "VCPKG_ROOT or VCPKG_INSTALLATION_ROOT environment variable is not set")
 endif()
 
-execute_process(
-  COMMAND ${VCPKG_ROOT}/vcpkg install --triplet=${VCPKG_TARGET_TRIPLET}
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  RESULT_VARIABLE _vcpkg_result
-)
-if(NOT _vcpkg_result EQUAL 0)
-  message(FATAL_ERROR "vcpkg install failed")
+if(OS_MACOS)
+  message(STATUS "macOS detected. Running vcpkg setup script...")
+  execute_process(
+    COMMAND bash "${CMAKE_SOURCE_DIR}/vcpkg-scripts/install-macos.bash"
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    RESULT_VARIABLE _vcpkg_result
+    OUTPUT_VARIABLE _vcpkg_output
+    ERROR_VARIABLE _vcpkg_error
+  )
+  if(NOT _vcpkg_result EQUAL 0)
+    message(FATAL_ERROR "vcpkg macOS script failed:\n${_vcpkg_output}\n${_vcpkg_error}")
+  endif()
+else()
+  message(STATUS "Windows/Linux detected. Running 'vcpkg install'...")
+  execute_process(
+    COMMAND ${VCPKG_ROOT}/vcpkg install --triplet=${VCPKG_TARGET_TRIPLET}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    RESULT_VARIABLE _vcpkg_result
+    OUTPUT_VARIABLE _vcpkg_output
+    ERROR_VARIABLE _vcpkg_error
+  )
+  if(NOT _vcpkg_result EQUAL 0)
+    message(FATAL_ERROR "vcpkg install failed:\n${_vcpkg_output}\n${_vcpkg_error}")
+  endif()
 endif()
 
 set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed")

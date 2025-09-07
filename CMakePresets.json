@@ -33,7 +33,7 @@
         "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64",
         "CODESIGN_IDENTITY": "$penv{CODESIGN_IDENT}",
         "CODESIGN_TEAM": "$penv{CODESIGN_TEAM}",
-        "VCPKG_TARGET_TRIPLET": "universal-osx"
+        "VCPKG_TARGET_TRIPLET": "universal-osx-obs"
       }
     },
     {

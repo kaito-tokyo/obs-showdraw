@@ -13,6 +13,7 @@
 !/src
 !/tests
 !/vcpkg-overlay-ports
+!/vcpkg-scripts
 !/vcpkg-triplets
 !.clang-format
 !.gersemirc

@@ -19,8 +19,7 @@
       "default-features": false,
       "features": [
         "jpeg",
-        "png",
-        "webp"
+        "png"
       ]
     }
   ]
