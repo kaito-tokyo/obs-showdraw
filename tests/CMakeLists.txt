@@ -5,7 +5,7 @@ function(add_obs_showdraw_test test_name)
 
   target_include_directories(${test_name} PRIVATE ${CMAKE_SOURCE_DIR}/src)
   target_compile_definitions(${test_name} PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-  target_link_libraries(${test_name} PRIVATE GTest::gtest_main OBS::libobs ${CMAKE_PROJECT_NAME}_impl ${ARGN})
+  target_link_libraries(${test_name} PRIVATE GTest::gtest_main plugin-support OBS::libobs ${CMAKE_PROJECT_NAME}_impl ${ARGN})
 
   set_target_properties(
     ${test_name}
