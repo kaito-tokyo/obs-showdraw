@@ -16,15 +16,12 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
-#include <gtest/gtest.h>
-#include "obs_test_environment.hpp"
-
 #include "Preset.hpp"
 
-using kaito_tokyo::obs_showdraw::Preset;
+#define TEST_LIBOBS_ONLY
+#include "obs_test_environment.hpp"
 
-::testing::Environment *const obs_env =
-	::testing::AddGlobalTestEnvironment(new kaito_tokyo::obs_showdraw_testing::ObsTestEnvironment());
+using kaito_tokyo::obs_showdraw::Preset;
 
 TEST(PresetTest, ValidateDefault)
 {

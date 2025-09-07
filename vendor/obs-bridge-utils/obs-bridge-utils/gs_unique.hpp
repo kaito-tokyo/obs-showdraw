@@ -121,14 +121,14 @@ using unique_gs_effect_t = std::unique_ptr<gs_effect_t, gs_effect_deleter>;
 inline unique_gs_effect_t make_unique_gs_effect_from_file(const char *file)
 {
 	char *raw_error_string = nullptr;
-	gs_effect_t *rawEffect = gs_effect_create_from_file(file, &raw_error_string);
+	gs_effect_t *raw_effect = gs_effect_create_from_file(file, &raw_error_string);
 	unique_bfree_t error_string(raw_error_string);
 
-	if (!rawEffect) {
+	if (!raw_effect) {
 		throw std::runtime_error(std::string("gs_effect_create_from_file failed: ") +
 					 (error_string ? error_string.get() : "(unknown error)"));
 	}
-	return unique_gs_effect_t(rawEffect);
+	return unique_gs_effect_t(raw_effect);
 }
 
 struct gs_texture_deleter {
