@@ -24,9 +24,14 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "plugin-support.h"
 #include <obs.h>
 
-#include <obs-bridge-utils/obs-bridge-utils.hpp>
+#include <wolfssl/options.h>
+#include <wolfssl/ssl.h>
 
-using kaito_tokyo::obs_bridge_utils::slog;
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
+#include "CprUtils.hpp"
+
+using namespace kaito_tokyo::obs_bridge_utils;
+using namespace kaito_tokyo::obs_showdraw;
 
 namespace kaito_tokyo {
 namespace obs_showdraw {
@@ -64,7 +69,9 @@ UpdateChecker::UpdateChecker() {}
 
 std::optional<LatestVersion> UpdateChecker::fetch()
 {
-	cpr::Response r = cpr::Get(cpr::Url{"https://obs-showdraw.kaito.tokyo/metadata/latest-version.txt"});
+	MyCprSession session;
+	session.SetUrl(cpr::Url{"https://obs-showdraw.kaito.tokyo/metadata/latest-version.txt"});
+	cpr::Response r = session.Get();
 
 	if (r.status_code == 200) {
 		return LatestVersion(r.text);
