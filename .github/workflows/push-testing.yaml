@@ -119,7 +119,7 @@ jobs:
         run: "cmake --build --preset windows-testing-ci-x64"
       
       - name: "List files for debugging"
-        run: "dir /S"
+        run: "dir -Recurse"
         shell: "pwsh"
 
       - name: "Save Vcpkg cache"

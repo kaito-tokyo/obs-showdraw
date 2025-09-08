@@ -9,12 +9,12 @@
 !/cmake
 !/data
 !/docs
-!/vendor
+!/scripts
 !/src
 !/tests
 !/vcpkg-overlay-ports
-!/vcpkg-scripts
 !/vcpkg-triplets
+!/vendor
 !.clang-format
 !.gersemirc
 !.gitignore
