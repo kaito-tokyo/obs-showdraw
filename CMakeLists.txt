@@ -86,7 +86,6 @@ target_link_libraries(
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl
   PRIVATE
-    src/BufferedTexture.cpp
     src/Preset.cpp
     src/UpdateChecker.cpp
     src/PresetWindow.cpp

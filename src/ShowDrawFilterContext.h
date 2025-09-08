@@ -118,7 +118,7 @@ private:
 	std::shared_ptr<gs_texture_t> textureMotionMap = nullptr;
 	std::shared_ptr<gs_texture_t> textureFinalSobelMagnitude = nullptr;
 
-	std::unique_ptr<BufferedTexture> bufferedTextureCannyEdge = nullptr;
+	std::unique_ptr<BufferedTexture<2>> bufferedTextureCannyEdge = nullptr;
 
 	std::array<kaito_tokyo::obs_bridge_utils::unique_gs_stagesurf_t, 2> stagesurfCannyEdge = {};
 
