@@ -72,8 +72,6 @@ public:
 			FAIL() << "OBS startup failed.";
 		}
 
-		obs_load_all_modules();
-
 		obs_video_info ovi;
 #if defined(_WIN32)
 		ovi.graphics_module = "libobs-d3d11.dll";
