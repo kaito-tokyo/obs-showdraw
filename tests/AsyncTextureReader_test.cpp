@@ -48,86 +48,53 @@ TEST(AsyncTextureReader, getBytesPerPixel)
 	EXPECT_THROW(detail::getBytesPerPixel(GS_UNKNOWN), std::runtime_error);
 }
 
-TEST(AsyncTextureReader, sync2)
+TEST(AsyncTextureReader, sync1)
 {
-	obs_enter_graphics();
+	graphics_context_guard guard;
 
 	constexpr std::uint32_t WIDTH = 1;
 	constexpr std::uint32_t HEIGHT = 1;
 	constexpr gs_color_format FORMAT = GS_BGRX;
 
-	std::vector<uint8_t> fixturePixels{10, 20, 30, 255};
-	const std::uint8_t *fixtureData = fixturePixels.data();
-	gs_texture_t *fixtureTexture = gs_texture_create(WIDTH, HEIGHT, FORMAT, 1, &fixtureData, 0);
+	std::vector<uint8_t> sourcePixels{10, 20, 30, 255};
+	const std::uint8_t *sourceData = sourcePixels.data();
+	unique_gs_texture_t sourceTexture =
+		obs_bridge_utils::make_unique_gs_texture(WIDTH, HEIGHT, FORMAT, 1, &sourceData, 0);
 
-	gs_stagesurf_t *stagesurf = gs_stagesurface_create(WIDTH, HEIGHT, FORMAT);
-	gs_stage_texture(stagesurf, fixtureTexture);
-
-	uint8_t *data = nullptr;
-	uint32_t linesize = 0;
-	if (!gs_stagesurface_map(stagesurf, &data, &linesize)) {
-		FAIL() << "gs_stagesurface_map failed";
-	}
-
-	for (std::size_t i = 0; i < fixturePixels.size(); i++) {
-		std::cout << "data[" << i << "] = " << static_cast<int>(data[i]) << std::endl;
-	}
-
-	gs_stagesurface_unmap(stagesurf);
-
-	gs_stagesurface_destroy(stagesurf);
 
 	AsyncTextureReader<1> asyncTextureReader(WIDTH, HEIGHT, FORMAT);
-	asyncTextureReader.stage(fixtureTexture);
+	asyncTextureReader.stage(sourceTexture.get());
 	asyncTextureReader.sync();
 	auto &buffer = asyncTextureReader.getBuffer();
-	ASSERT_EQ(buffer.size(), fixturePixels.size());
-	for (std::size_t i = 0; i < fixturePixels.size(); i++) {
-		EXPECT_EQ(buffer[i], fixturePixels[i]) << " at index " << i;
+	ASSERT_EQ(buffer.size(), sourcePixels.size());
+	for (std::size_t i = 0; i < sourcePixels.size(); i++) {
+		EXPECT_EQ(buffer[i], sourcePixels[i]) << " at index " << i;
 	}
-
-	gs_texture_destroy(fixtureTexture);
-
-	obs_leave_graphics();
 }
 
-// TEST(BufferedTextureTest, sync)
-// {
-// graphics_context_guard guard;
+TEST(AsyncTextureReader, sync2)
+{
+	graphics_context_guard guard;
 
-// constexpr std::uint32_t WIDTH = 10;
-// constexpr std::uint32_t HEIGHT = 10;
-// constexpr gs_color_format FORMAT = GS_BGRX;
+	constexpr std::uint32_t WIDTH = 1;
+	constexpr std::uint32_t HEIGHT = 1;
+	constexpr gs_color_format FORMAT = GS_BGRX;
 
-// std::vector<uint8_t> redPixel(WIDTH * HEIGHT * 4, 128);
-// const std::uint8_t *redPixelData[1];
-// redPixelData[0] = redPixel.data();
-// auto sourceTexture = obs_bridge_utils::make_unique_gs_texture(WIDTH, HEIGHT, FORMAT, 1, redPixelData, GS_DYNAMIC);
+	std::vector<uint8_t> sourcePixels{10, 20, 30, 255};
+	const std::uint8_t *sourceData = sourcePixels.data();
+	unique_gs_texture_t sourceTexture =
+		obs_bridge_utils::make_unique_gs_texture(WIDTH, HEIGHT, FORMAT, 1, &sourceData, 0);
 
-// uint8_t *sourceTextureData;
-// uint32_t sourceTextureLinesize;
-// ASSERT_TRUE(gs_texture_map(sourceTexture.get(), &sourceTextureData, &sourceTextureLinesize));
-// for (std::size_t i = 0; i < redPixel.size(); i++) {
-// 	std::cout << "sourceTextureData[" << i << "] = " << static_cast<int>(sourceTextureData[i]) << std::endl;
-// 	sourceTextureData[i] = redPixel[i];
-// }
-// gs_texture_unmap(sourceTexture.get());
 
-// ASSERT_TRUE(gs_texture_map(sourceTexture.get(), &sourceTextureData, &sourceTextureLinesize));
-// for (std::size_t i = 0; i < redPixel.size(); i++) {
-// 	std::cout << "sourceTextureData[" << i << "] = " << static_cast<int>(sourceTextureData[i]) << std::endl;
-// }
-// gs_texture_unmap(sourceTexture.get());
-
-// BufferedTexture<1> bufferedTexture(WIDTH, HEIGHT, FORMAT);
-// bufferedTexture.stage(sourceTexture.get());
-// bufferedTexture.sync();
-// auto &buffer = bufferedTexture.getBuffer();
-// ASSERT_EQ(buffer.size(), redPixel.size());
-// for (std::size_t i = 0; i < redPixel.size(); i++)
-// {
-// 	EXPECT_EQ(buffer[i], redPixel[i]) << " at index " << i;
-// }
-// }
+	AsyncTextureReader<2> asyncTextureReader(WIDTH, HEIGHT, FORMAT);
+	asyncTextureReader.stage(sourceTexture.get());
+	asyncTextureReader.stage(sourceTexture.get());
+	asyncTextureReader.sync();
+	auto &buffer = asyncTextureReader.getBuffer();
+	ASSERT_EQ(buffer.size(), sourcePixels.size());
+	for (std::size_t i = 0; i < sourcePixels.size(); i++) {
+		EXPECT_EQ(buffer[i], sourcePixels[i]) << " at index " << i;
+	}
+}
 
 } // namespace kaito_tokyo::obs_showdraw
