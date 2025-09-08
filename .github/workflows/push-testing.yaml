@@ -82,7 +82,7 @@ jobs:
         run: "ctest --preset macos-testing-ci --verbose"
 
       - name: "Run shader tests"
-        run: "./scripts/run-gtest-with-retry.bash ./build_macos/tests/DrawingEffect_shader_test 100"
+        run: "./scripts/run-gtest-with-retry.bash ./build_macos/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
 
   RunTestsOnWindows:
     name: "Run Tests on Windows"
