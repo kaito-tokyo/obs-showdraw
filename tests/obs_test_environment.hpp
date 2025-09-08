@@ -56,7 +56,7 @@ public:
 	void SetUp() override
 	{
 #if defined(_WIN32)
-		const char *module_config_path = "C:\\Program Files\\obs-studio\\data";
+		const char *module_config_path = "C:\\Program Files\\obs-studio\\data\\libobs";
 #else
 		const char *module_config_path = nullptr;
 #endif
