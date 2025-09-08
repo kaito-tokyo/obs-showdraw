@@ -96,6 +96,7 @@ for test_case in $test_cases; do
             break # Succeeded, so break the retry loop
         else
             echo "  -> Result: FAILED (Exit Code: $exit_code)"
+            sleep 1
         fi
     done
     
