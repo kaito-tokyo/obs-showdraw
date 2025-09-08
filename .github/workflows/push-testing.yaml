@@ -135,6 +135,7 @@ jobs:
         run: |
           Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "..\..\data" -Recurse
           Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "..\data" -Recurse
+          Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "data" -Recurse
           Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "build_x64\data" -Recurse
           Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "build_x64\data\tests\data" -Recurse
           Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "build_x64\data\tests\RelWithDebInfo\data" -Recurse
