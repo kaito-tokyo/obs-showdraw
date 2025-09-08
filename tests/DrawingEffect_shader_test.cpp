@@ -96,3 +96,48 @@ TEST_F(DrawingEffectShaderTest, Draw)
 		ASSERT_EQ(255, targetBuffer[i]) << "at byte index " << i;
 	}
 }
+
+TEST_F(DrawingEffectShaderTest, ExtractLuminance)
+{
+	graphics_context_guard guard;
+
+	int width = 1;
+	int height = 1;
+
+	// BGRX format: Blue, Green, Red, Alpha
+	// Pure red
+	const std::vector<uint8_t> sourcePixels = {0, 0, 255, 255};
+	const uint8_t *sourceData = sourcePixels.data();
+	auto sourceTexture = make_unique_gs_texture(width, height, GS_BGRX, 1, &sourceData, 0);
+	auto targetTexture = make_unique_gs_texture(width, height, GS_BGRX, 1, nullptr, GS_RENDER_TARGET);
+
+	AsyncTextureReader<1> targetBufferedTexture(width, height, GS_BGRX);
+
+	gs_viewport_push();
+	gs_projection_push();
+	gs_matrix_push();
+
+	gs_set_viewport(0, 0, width, height);
+	gs_ortho(0.0f, (float)width, 0.0f, (float)height, -100.0f, 100.0f);
+	gs_matrix_identity();
+
+	drawingEffect->applyLuminanceExtractionPass(targetTexture.get(), sourceTexture.get());
+
+	gs_matrix_pop();
+	gs_projection_pop();
+	gs_viewport_pop();
+
+	targetBufferedTexture.stage(targetTexture.get());
+	targetBufferedTexture.sync();
+
+	auto &targetBuffer = targetBufferedTexture.getBuffer();
+
+	// Expected luminance for red (1.0, 0.0, 0.0):
+	// luma = 1.0 * 0.299 = 0.299
+	// 8-bit value = 0.299 * 255 = 76.245 -> 76
+	// Expected BGRX: (76, 76, 76, 255)
+	ASSERT_EQ(76, targetBuffer[0]) << "Blue channel";
+	ASSERT_EQ(76, targetBuffer[1]) << "Green channel";
+	ASSERT_EQ(76, targetBuffer[2]) << "Red channel";
+	ASSERT_EQ(255, targetBuffer[3]) << "Alpha channel";
+}
