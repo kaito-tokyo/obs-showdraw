@@ -56,13 +56,19 @@ public:
 	void SetUp() override
 	{
 #if defined(_WIN32)
-		const char *module_config_path = "C:\\Program Files\\obs-studio\\data\\libobs";
+		const char* data_path_env = "%ProgramFiles%\\obs-studio\\data";
+		char data_path[MAX_PATH];
+		ExpandEnvironmentStringsA(data_path_env, data_path, MAX_PATH);
+#elif defined(__APPLE__)
+		const char* data_path = nullptr;
 #else
-		const char *module_config_path = nullptr;
+		const char* data_path = nullptr;
 #endif
-		if (!obs_startup("en-US", module_config_path, nullptr)) {
+		if (!obs_startup("en-US", data_path, nullptr)) {
 			FAIL() << "OBS startup failed.";
 		}
+
+		obs_load_all_modules();
 
 		obs_video_info ovi;
 #if defined(_WIN32)
