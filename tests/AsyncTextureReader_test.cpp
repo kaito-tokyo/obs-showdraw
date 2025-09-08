@@ -61,7 +61,6 @@ TEST(AsyncTextureReader, sync1)
 	unique_gs_texture_t sourceTexture =
 		obs_bridge_utils::make_unique_gs_texture(WIDTH, HEIGHT, FORMAT, 1, &sourceData, 0);
 
-
 	AsyncTextureReader<1> asyncTextureReader(WIDTH, HEIGHT, FORMAT);
 	asyncTextureReader.stage(sourceTexture.get());
 	asyncTextureReader.sync();
@@ -84,7 +83,6 @@ TEST(AsyncTextureReader, sync2)
 	const std::uint8_t *sourceData = sourcePixels.data();
 	unique_gs_texture_t sourceTexture =
 		obs_bridge_utils::make_unique_gs_texture(WIDTH, HEIGHT, FORMAT, 1, &sourceData, 0);
-
 
 	AsyncTextureReader<2> asyncTextureReader(WIDTH, HEIGHT, FORMAT);
 	asyncTextureReader.stage(sourceTexture.get());

@@ -85,12 +85,7 @@ target_link_libraries(
 
 target_sources(
   ${CMAKE_PROJECT_NAME}_impl
-  PRIVATE
-    src/Preset.cpp
-    src/UpdateChecker.cpp
-    src/PresetWindow.cpp
-    src/DrawingEffect.cpp
-    src/ShowDrawFilterContext.cpp
+  PRIVATE src/Preset.cpp src/UpdateChecker.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp
 )
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
