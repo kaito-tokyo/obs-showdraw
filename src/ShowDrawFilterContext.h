@@ -51,7 +51,7 @@ void showdraw_module_unload(void);
 #include <memory>
 #include <optional>
 
-#include "BufferedTexture.hpp"
+#include "AsyncTextureReader.hpp"
 #include "DrawingEffect.hpp"
 #include "Preset.hpp"
 #include "UpdateChecker.hpp"
@@ -117,8 +117,9 @@ private:
 	std::shared_ptr<gs_texture_t> texturePreviousLuminance = nullptr;
 	std::shared_ptr<gs_texture_t> textureMotionMap = nullptr;
 	std::shared_ptr<gs_texture_t> textureFinalSobelMagnitude = nullptr;
+	std::shared_ptr<gs_texture_t> textureCannyEdge = nullptr;
 
-	std::unique_ptr<BufferedTexture> bufferedTextureCannyEdge = nullptr;
+	std::unique_ptr<AsyncTextureReader<2>> bufferedTextureCannyEdge = nullptr;
 
 	std::array<kaito_tokyo::obs_bridge_utils::unique_gs_stagesurf_t, 2> stagesurfCannyEdge = {};
 
