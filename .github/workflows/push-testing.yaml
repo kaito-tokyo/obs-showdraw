@@ -120,10 +120,6 @@ jobs:
 
       - name: "Build"
         run: "cmake --build --preset windows-testing-ci-x64"
-      
-      - name: "List files for debugging"
-        run: "dir -Recurse"
-        shell: "pwsh"
 
       - name: "Save Vcpkg cache"
         uses: "actions/cache/save@v4"
@@ -133,7 +129,7 @@ jobs:
 
       - name: "Copy OBS data"
         run: |
-          Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "build_x64\\tests\\obs-studio\\data" -Recurse -Verbose
+          Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "build_x64\\tests\\obs-studio\\data" -Recurse
         shell: "pwsh"
 
       - name: "Run tests"
