@@ -63,12 +63,10 @@ public:
 		const char *data_path_env = "%ProgramFiles%\\obs-studio\\data";
 		char data_path[MAX_PATH];
 		ExpandEnvironmentStringsA(data_path_env, data_path, MAX_PATH);
-#elif defined(__APPLE__)
-		const char *data_path = nullptr;
-#else
-		const char *data_path = nullptr;
+		obs_add_data_path(data_path);
 #endif
-		if (!obs_startup("en-US", data_path, nullptr)) {
+
+		if (!obs_startup("en-US", nullptr, nullptr)) {
 			FAIL() << "OBS startup failed.";
 		}
 
