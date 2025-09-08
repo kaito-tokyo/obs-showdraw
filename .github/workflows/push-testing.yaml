@@ -122,7 +122,8 @@ jobs:
       - name: "Build"
         run: "cmake --build --preset windows-testing-ci-x64"
       
-      - run: "find ."
+      - name: "List files for debugging"
+        run: "ls -r"
 
       - name: "Save Vcpkg cache"
         uses: "actions/cache/save@v4"
