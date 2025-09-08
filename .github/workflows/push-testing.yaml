@@ -133,7 +133,7 @@ jobs:
 
       - name: "Copy OBS data"
         run: |
-          Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "build_x64\tests\data" -Recurse
+          Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "..\data" -Recurse -Verbose
         shell: "pwsh"
 
       - name: "Run tests"
