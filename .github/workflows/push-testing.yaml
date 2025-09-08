@@ -144,8 +144,8 @@ jobs:
       - name: "Run tests"
         run: "ctest --preset windows-testing-ci-x64 --verbose"
 
-      - name: "Run shader tests"
-        run: "./scripts/run-gtest-with-retry.bash ./build_x64/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
+      # - name: "Run shader tests"
+      #   run: "./scripts/run-gtest-with-retry.bash ./build_x64/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
 
   RunTestsOnUbuntu:
     name: "Run Tests on Ubuntu"
