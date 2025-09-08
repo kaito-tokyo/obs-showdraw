@@ -121,17 +121,8 @@ jobs:
 
       - name: "Build"
         run: "cmake --build --preset windows-testing-ci-x64"
-
-      - name: "Verify OBS data file existence"
-        run: |
-          $obsDataPath = "$env:ProgramFiles\obs-studio\data\libobs"
-          Write-Host "Checking for files in: $obsDataPath"
-          if (Test-Path $obsDataPath) {
-            Get-ChildItem -Path $obsDataPath
-          } else {
-            Write-Error "OBS data directory not found at $obsDataPath!"
-            exit 1
-          }
+      
+      - run: "find ."
 
       - name: "Save Vcpkg cache"
         uses: "actions/cache/save@v4"
