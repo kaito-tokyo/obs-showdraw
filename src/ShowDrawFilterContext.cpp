@@ -627,8 +627,8 @@ void ShowDrawFilterContext::videoRender()
 							    textureSource.get());
 		std::swap(textureSource, textureTarget);
 
-		gs_copy_texture(bufferedTextureCannyEdge->getTexture(), textureSource.get());
-		bufferedTextureCannyEdge->stage();
+		gs_copy_texture(textureCannyEdge.get(), textureSource.get());
+		bufferedTextureCannyEdge->stage(textureCannyEdge.get());
 	}
 
 	gs_viewport_pop();
@@ -714,10 +714,10 @@ void ensureTexture(std::shared_ptr<gs_texture_t> &texture, uint32_t width, uint3
 	}
 }
 
-void ensureBufferedTexture(std::unique_ptr<BufferedTexture<2>> &bufferedTexture, uint32_t width, uint32_t height)
+void ensureBufferedTexture(std::unique_ptr<AsyncTextureReader<2>> &bufferedTexture, uint32_t width, uint32_t height)
 {
 	if (!bufferedTexture || bufferedTexture->getWidth() != width || bufferedTexture->getHeight() != height) {
-		bufferedTexture = std::make_unique<BufferedTexture<2>>(width, height);
+		bufferedTexture = std::make_unique<AsyncTextureReader<2>>(width, height);
 	}
 }
 
@@ -730,6 +730,7 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTexture(texturePreviousLuminance, width, height);
 	ensureTexture(textureMotionMap, width, height);
 	ensureTexture(textureFinalSobelMagnitude, width, height);
+	ensureTexture(textureCannyEdge, width, height);
 	ensureBufferedTexture(bufferedTextureCannyEdge, width, height);
 }
 

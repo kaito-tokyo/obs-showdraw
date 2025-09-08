@@ -32,3 +32,4 @@ add_obs_showdraw_test(ShowDrawFilterContext_test semver::semver cpr::cpr
 add_obs_showdraw_test(DrawingEffect_shader_test opencv_core opencv_imgproc
                                                 opencv_imgcodecs
 )
+add_obs_showdraw_test(AsyncTextureReader_test opencv_imgcodecs)

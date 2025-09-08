@@ -328,7 +328,8 @@ void DrawingEffect::drawFinalImage(gs_texture_t *targetTexture, gs_texture_t *so
 	gs_set_render_target(previousRenderTarget, nullptr);
 }
 
-void DrawingEffect::drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
+void DrawingEffect::drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+				   gs_texture_t *sourceTexture) noexcept
 {
 	gs_texture_t *previousRenderTarget = gs_get_render_target();
 

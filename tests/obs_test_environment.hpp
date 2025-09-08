@@ -21,12 +21,16 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <gtest/gtest.h>
 #include <obs-module.h>
 
+#include <obs-bridge-utils/obs-bridge-utils.hpp>
+
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 constexpr int FPS = 30;
 constexpr int WIDTH = 640;
 constexpr int HEIGHT = 480;
+
+using namespace kaito_tokyo::obs_bridge_utils;
 
 namespace kaito_tokyo {
 namespace obs_showdraw_testing {
@@ -40,7 +44,8 @@ public:
 		}
 	}
 
-	void TearDown() override {
+	void TearDown() override
+	{
 		obs_shutdown();
 		ASSERT_EQ(0, bnum_allocs()) << "Memory leak detected: " << bnum_allocs();
 	}
@@ -55,7 +60,6 @@ public:
 		}
 
 		obs_video_info ovi;
-		ovi.adapter = 0;
 #if defined(_WIN32)
 		ovi.graphics_module = "libobs-d3d11.dll";
 #elif defined(__APPLE__)
@@ -63,21 +67,37 @@ public:
 #else
 		ovi.graphics_module = "libobs-opengl.so";
 #endif
-		ovi.output_format = VIDEO_FORMAT_BGRA;
+
 		ovi.fps_num = FPS;
 		ovi.fps_den = 1;
+
 		ovi.base_width = WIDTH;
 		ovi.base_height = HEIGHT;
+
 		ovi.output_width = WIDTH;
 		ovi.output_height = HEIGHT;
+		ovi.output_format = VIDEO_FORMAT_BGRA;
+
+		ovi.adapter = 0;
+
+		ovi.gpu_conversion = true;
+
 		ovi.colorspace = VIDEO_CS_709;
 		ovi.range = VIDEO_RANGE_FULL;
+
+		ovi.scale_type = OBS_SCALE_DISABLE;
+
 		if (obs_reset_video(&ovi) != OBS_VIDEO_SUCCESS) {
 			FAIL() << "obs_reset_video failed";
 		}
 	}
 
-	void TearDown() override {
+	void TearDown() override
+	{
+		{
+			graphics_context_guard guard;
+			gs_unique::drain();
+		}
 		obs_shutdown();
 		ASSERT_EQ(0, bnum_allocs()) << "Memory leak detected: " << bnum_allocs();
 	}
