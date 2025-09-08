@@ -55,7 +55,12 @@ class ObsTestWithVideoEnvironment : public ::testing::Environment {
 public:
 	void SetUp() override
 	{
-		if (!obs_startup("en-US", nullptr, nullptr)) {
+#if defined(_WIN32)
+		const char *module_config_path = "C:/Program Files/obs-studio/data";
+#else
+		const char *module_config_path = nullptr;
+#endif
+		if (!obs_startup("en-US", module_config_path, nullptr)) {
 			FAIL() << "OBS startup failed.";
 		}
 
