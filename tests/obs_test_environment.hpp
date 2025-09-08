@@ -40,7 +40,10 @@ public:
 		}
 	}
 
-	void TearDown() override { obs_shutdown(); }
+	void TearDown() override {
+		obs_shutdown();
+		ASSERT_EQ(0, bnum_allocs()) << "Memory leak detected: " << bnum_allocs();
+	}
 };
 
 class ObsTestWithVideoEnvironment : public ::testing::Environment {
@@ -74,7 +77,10 @@ public:
 		}
 	}
 
-	void TearDown() override { obs_shutdown(); }
+	void TearDown() override {
+		obs_shutdown();
+		ASSERT_EQ(0, bnum_allocs()) << "Memory leak detected: " << bnum_allocs();
+	}
 };
 
 } // namespace obs_showdraw_testing

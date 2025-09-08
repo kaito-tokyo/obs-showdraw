@@ -23,6 +23,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <cstring>
 #include <stdexcept>
 #include <vector>
+#include <iostream>
 
 #include <obs-bridge-utils/obs-bridge-utils.hpp>
 
@@ -76,18 +77,25 @@ public:
 
 	gs_texture_t *getTexture() const noexcept { return texture.get(); }
 
-	void stage() noexcept { gs_stage_texture(stagesurfs[writeIndex].get(), texture.get()); }
+	void stage() noexcept {
+		gs_stage_texture(stagesurfs[writeIndex].get(), texture.get());
+	}
+
+	void stage(gs_texture_t *sourceTexture) noexcept {
+		gs_copy_texture(texture.get(), sourceTexture);
+		// gs_stage_texture(stagesurfs[writeIndex].get(), texture.get());
+	}
 
 	void sync()
 	{
 		const std::size_t readIndex = (writeIndex + 1) % BUFFER_COUNT;
-		gs_stagesurf_t *stagesurf = stagesurfs[readIndex].get();
+		// gs_stagesurf_t *stagesurf = stagesurfs[readIndex].get();
 
 		std::uint8_t *data = nullptr;
 		std::uint32_t linesize = 0;
 
-		if (!gs_stagesurface_map(stagesurf, &data, &linesize) || !data || linesize < bufferLinesize) {
-			throw std::runtime_error("gs_stagesurface_map failed");
+		if (!gs_texture_map(texture.get(), &data, &linesize) || !data || linesize > bufferLinesize) {
+			throw std::runtime_error("gs_texture_map failed");
 		}
 
 		for (std::uint32_t y = 0; y < height; y++) {
@@ -96,7 +104,7 @@ public:
 			std::memcpy(dstRow, srcRow, bufferLinesize);
 		}
 
-		gs_stagesurface_unmap(stagesurf);
+		gs_texture_unmap(texture.get());
 
 		writeIndex = readIndex;
 	}
