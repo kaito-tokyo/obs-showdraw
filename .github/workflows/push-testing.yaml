@@ -81,6 +81,9 @@ jobs:
       - name: "Run tests"
         run: "ctest --preset macos-testing-ci --verbose"
 
+      - name: "Run shader tests"
+        run: "./scripts/run-gtest-with-retry.bash ./build_macos/tests/DrawingEffect_shader_test 100"
+
   RunTestsOnWindows:
     name: "Run Tests on Windows"
 
@@ -215,3 +218,7 @@ jobs:
 
       - name: "Run tests"
         run: "ctest --preset ubuntu-testing-ci-x86_64 --verbose"
+
+      - name: "Run shader tests"
+        run: "./scripts/run-gtest-with-retry.bash ./build_x86_64/tests/DrawingEffect_shader_test 100"
+
