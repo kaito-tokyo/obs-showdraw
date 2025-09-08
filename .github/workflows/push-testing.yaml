@@ -81,7 +81,7 @@ jobs:
       - name: "Run tests"
         run: "ctest --preset macos-testing-ci --verbose"
 
-RunTestsOnWindows:
+  RunTestsOnWindows:
     name: "Run Tests on Windows"
 
     runs-on: "windows-2022"
@@ -106,19 +106,6 @@ RunTestsOnWindows:
       - name: "Checkout"
         uses: "actions/checkout@v5"
 
-      # ★修正点1：Ccacheのキャッシュパスを修正
-      # Ccacheのデフォルトパスは %LOCALAPPDATA%\Ccache です。
-      # 以前のパス指定はネストが深すぎてキャッシュが効いていなかった可能性があります。
-      - name: "Restore Ccache cache"
-        uses: "actions/cache/restore@v4"
-        id: "ccache-cache"
-        with:
-          path: "${{ env:LOCALAPPDATA }}\\Ccache"
-          key: "${{ runner.os }}-ccache-${{ github.ref_name }}-testing-${{ github.sha }}"
-          restore-keys: |
-            ${{ runner.os }}-ccache-${{ github.ref_name }}-testing-
-            ${{ runner.os }}-ccache-main-testing-
-
       - name: "Restore Vcpkg cache"
         uses: "actions/cache/restore@v4"
         id: "vcpkg-cache"
@@ -135,11 +122,6 @@ RunTestsOnWindows:
       - name: "Build"
         run: "cmake --build --preset windows-testing-ci-x64"
 
-      - name: "Show Ccache statistics"
-        run: "ccache -s"
-
-      # ★修正点2：デバッグ用のステップを追加
-      # これで、テスト実行前にファイルが本当に存在するかどうかを確実に確認できます。
       - name: "Verify OBS data file existence"
         run: |
           $obsDataPath = "$env:ProgramFiles\obs-studio\data\libobs"
@@ -151,19 +133,11 @@ RunTestsOnWindows:
             exit 1
           }
 
-      - name: "Save Vcpkg cache" # SaveステップはCcacheの後が良いかもしれません
+      - name: "Save Vcpkg cache"
         uses: "actions/cache/save@v4"
         with:
           path: "${{ github.workspace }}/vcpkg-cache"
           key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
-      
-      # Save Ccache cache ステップが抜けていたので追加
-      - name: "Save Ccache cache"
-        if: always()
-        uses: "actions/cache/save@v4"
-        with:
-          path: "${{ env:LOCALAPPDATA }}\\Ccache"
-          key: "${{ runner.os }}-ccache-${{ github.ref_name }}-testing-${{ github.sha }}"
 
       - name: "Run tests"
         run: "ctest --preset windows-testing-ci-x64 --verbose"

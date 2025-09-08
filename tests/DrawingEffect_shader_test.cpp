@@ -42,7 +42,7 @@ protected:
 	void SetUp() override
 	{
 		graphics_context_guard guard;
-		effect = make_unique_gs_effect_from_file(CMAKE_SOURCE_DIR "/data/effects/drawing.effect");
+		effect = make_unique_gs_effect_from_file(CMAKE_SOURCE_DIR "/data/effects/drawing-test.effect");
 		drawingEffect = std::make_unique<DrawingEffect>(std::move(effect));
 	}
 
@@ -58,11 +58,6 @@ protected:
 TEST_F(DrawingEffectShaderTest, Draw)
 {
 	graphics_context_guard guard;
-
-	unique_gs_effect_t effect =
-		make_unique_gs_effect_from_file(CMAKE_SOURCE_DIR "/data/effects/drawing-test.effect");
-
-	DrawingEffect drawingEffect(std::move(effect));
 
 	int width = 1;
 	int height = 1;
@@ -81,7 +76,7 @@ TEST_F(DrawingEffectShaderTest, Draw)
 	gs_ortho(0.0f, (float)width, 0.0f, (float)height, -100.0f, 100.0f);
 	gs_matrix_identity();
 
-	drawingEffect.drawFinalImage(width, height, targetTexture.get(), sourceTexture.get());
+	drawingEffect->drawFinalImage(width, height, targetTexture.get(), sourceTexture.get());
 
 	gs_matrix_pop();
 	gs_projection_pop();
