@@ -79,7 +79,7 @@ jobs:
           key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
 
       - name: "Run tests"
-        run: "ctest --preset macos-testing-ci --rerun-failed --output-on-failure"
+        run: "ctest --preset macos-testing-ci --verbose"
 
   RunTestsOnWindows:
     name: "Run Tests on Windows"
@@ -147,7 +147,7 @@ jobs:
           key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
 
       - name: "Run tests"
-        run: "ctest --preset windows-testing-ci-x64 --rerun-failed --output-on-failure"
+        run: "ctest --preset windows-testing-ci-x64 --verbose"
 
   RunTestsOnUbuntu:
     name: "Run Tests on Ubuntu"
@@ -232,4 +232,4 @@ jobs:
           key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
 
       - name: "Run tests"
-        run: "ctest --preset ubuntu-testing-ci-x86_64 --rerun-failed --output-on-failure"
+        run: "ctest --preset ubuntu-testing-ci-x86_64 --verbose"
