@@ -46,7 +46,7 @@ endif()
 if(OS_MACOS)
   message(STATUS "macOS detected. Running vcpkg setup script...")
   execute_process(
-    COMMAND bash "${CMAKE_SOURCE_DIR}/vcpkg-scripts/install-macos.bash"
+    COMMAND bash "${CMAKE_SOURCE_DIR}/scripts/install-vcpkg-macos.bash"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     RESULT_VARIABLE _vcpkg_result
   )

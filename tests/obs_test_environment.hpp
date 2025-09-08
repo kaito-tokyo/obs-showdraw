@@ -18,6 +18,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 #include <gtest/gtest.h>
 #include <obs-module.h>
 

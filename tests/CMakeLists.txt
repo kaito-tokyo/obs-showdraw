@@ -1,13 +1,23 @@
 include(GoogleTest)
 
 function(add_obs_showdraw_test test_name)
+  set(discover_tests_flag TRUE)
+  set(libraries)
+  foreach(arg IN ITEMS ${ARGN})
+    if(arg STREQUAL "NO_DISCOVER_TESTS")
+      set(discover_tests_flag FALSE)
+    else()
+      list(APPEND libraries ${arg})
+    endif()
+  endforeach()
+
   add_executable(${test_name} ${test_name}.cpp)
 
   target_include_directories(${test_name} PRIVATE ${CMAKE_SOURCE_DIR}/src)
-  target_compile_definitions(${test_name} PRIVATE CMAKE_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  target_compile_definitions(${test_name} PRIVATE CMAKE_SOURCE_DIR\="${CMAKE_SOURCE_DIR}")
   target_link_libraries(
     ${test_name}
-    PRIVATE GTest::gtest_main plugin-support OBS::libobs ${CMAKE_PROJECT_NAME}_impl ${ARGN}
+    PRIVATE GTest::gtest_main plugin-support OBS::libobs ${CMAKE_PROJECT_NAME}_impl ${libraries}
   )
 
   set_target_properties(
@@ -21,7 +31,9 @@ function(add_obs_showdraw_test test_name)
       INSTALL_RPATH "/Applications/OBS.app/Contents/Frameworks"
   )
 
-  gtest_discover_tests(${test_name} DISCOVERY_MODE PRE_TEST)
+  if(discover_tests_flag)
+    gtest_discover_tests(${test_name} DISCOVERY_MODE PRE_TEST)
+  endif()
 endfunction()
 
 add_obs_showdraw_test(Preset_test)
@@ -29,7 +41,7 @@ add_obs_showdraw_test(UpdateChecker_test semver::semver cpr::cpr
 )
 add_obs_showdraw_test(ShowDrawFilterContext_test semver::semver cpr::cpr
 )
-add_obs_showdraw_test(DrawingEffect_shader_test opencv_core opencv_imgproc
+add_obs_showdraw_test(DrawingEffect_shader_test NO_DISCOVER_TESTS opencv_core opencv_imgproc
                                                 opencv_imgcodecs
 )
 add_obs_showdraw_test(AsyncTextureReader_test opencv_imgcodecs)

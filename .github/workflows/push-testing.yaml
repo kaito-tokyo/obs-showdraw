@@ -79,7 +79,10 @@ jobs:
           key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
 
       - name: "Run tests"
-        run: "ctest --preset macos-testing-ci --rerun-failed --output-on-failure"
+        run: "ctest --preset macos-testing-ci --verbose"
+
+      - name: "Run shader tests"
+        run: "./scripts/run-gtest-with-retry.bash ./build_macos/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
 
   RunTestsOnWindows:
     name: "Run Tests on Windows"
@@ -92,34 +95,15 @@ jobs:
       VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
 
     steps:
-      - name: "Install obs-studio.install"
+      - name: "Install dependencies"
         run: |
           choco install obs-studio.install -y --no-progress
+          choco install ccache -y --no-progress
           echo "$env:ProgramFiles\obs-studio\bin\64bit" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        shell: "pwsh"
-
-      - name: "Install ccache"
-        run: "choco install ccache -y --no-progress"
-
-      - name: Get Ccache path
-        id: get_ccache_path
-        run: |
-          $ccacheDir = Join-Path $env:LOCALAPPDATA "Ccache\Ccache"
-          echo "path=$ccacheDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
         shell: "pwsh"
 
       - name: "Checkout"
         uses: "actions/checkout@v5"
-
-      - name: "Restore Ccache cache"
-        uses: "actions/cache/restore@v4"
-        id: "ccache-cache"
-        with:
-          path: "${{ steps.get_ccache_path.outputs.path }}\\Ccache\\Ccache"
-          key: "${{ runner.os }}-ccache-${{ github.ref_name }}-testing-${{ github.sha }}"
-          restore-keys: |
-            ${{ runner.os }}-ccache-${{ github.ref_name }}-testing-
-            ${{ runner.os }}-ccache-main-testing-
 
       - name: "Restore Vcpkg cache"
         uses: "actions/cache/restore@v4"
@@ -132,13 +116,14 @@ jobs:
             ${{ runner.os }}-vcpkg-main-testing-
 
       - name: "Configure"
-        run: "cmake --preset windows-testing-ci-x64 -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
+        run: "cmake --preset windows-testing-ci-x64"
 
       - name: "Build"
         run: "cmake --build --preset windows-testing-ci-x64"
-
-      - name: "Show Ccache statistics"
-        run: "ccache -s"
+      
+      - name: "List files for debugging"
+        run: "dir -Recurse"
+        shell: "pwsh"
 
       - name: "Save Vcpkg cache"
         uses: "actions/cache/save@v4"
@@ -146,8 +131,16 @@ jobs:
           path: "${{ github.workspace }}/vcpkg-cache"
           key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
 
+      - name: "Copy OBS data"
+        run: |
+          Copy-Item -Path "$env:ProgramFiles\obs-studio\data\*" -Destination "data" -Recurse -Verbose
+        shell: "pwsh"
+
       - name: "Run tests"
-        run: "ctest --preset windows-testing-ci-x64 --rerun-failed --output-on-failure"
+        run: "ctest --preset windows-testing-ci-x64 --verbose"
+
+      # - name: "Run shader tests"
+      #   run: "./scripts/run-gtest-with-retry.bash ./build_x64/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
 
   RunTestsOnUbuntu:
     name: "Run Tests on Ubuntu"
@@ -232,4 +225,8 @@ jobs:
           key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
 
       - name: "Run tests"
-        run: "ctest --preset ubuntu-testing-ci-x86_64 --rerun-failed --output-on-failure"
+        run: "ctest --preset ubuntu-testing-ci-x86_64 --verbose"
+
+      - name: "Run shader tests"
+        run: "./scripts/run-gtest-with-retry.bash ./build_x86_64/tests/DrawingEffect_shader_test 100"
+

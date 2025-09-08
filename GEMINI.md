@@ -7,7 +7,7 @@
 - CMake files must be formatted using gersemi after any modification.
 - OBS team maintains the CMake and GitHub Actions so we don't need to improve these parts. However, you can modify `push-testing.yaml`.
 - The default branch of this project is `main`.
-- There must be a empty newline at the end of the file.
+- There must be a empty newline at the end of the file. The build will fail if this rule is not followed.
 
 ## How to build and run tests on macOS
 
