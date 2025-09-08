@@ -13,6 +13,8 @@ function(add_obs_showdraw_test test_name)
 
   add_executable(${test_name} ${test_name}.cpp)
 
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/obs-studio/bin/64bit)
+
   target_include_directories(${test_name} PRIVATE ${CMAKE_SOURCE_DIR}/src)
   target_compile_definitions(${test_name} PRIVATE CMAKE_SOURCE_DIR\="${CMAKE_SOURCE_DIR}")
   target_link_libraries(
@@ -32,7 +34,11 @@ function(add_obs_showdraw_test test_name)
   )
 
   if(discover_tests_flag)
-    gtest_discover_tests(${test_name} DISCOVERY_MODE PRE_TEST)
+    gtest_discover_tests(
+      ${test_name}
+      DISCOVERY_MODE PRE_TEST
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/obs-studio/bin/64bit
+    )
   endif()
 endfunction()
 
