@@ -116,7 +116,7 @@ jobs:
             ${{ runner.os }}-vcpkg-main-testing-
 
       - name: "Configure"
-        run: "cmake --preset windows-testing-ci-x64 -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
+        run: "cmake --preset windows-testing-ci-x64"
 
       - name: "Build"
         run: "cmake --build --preset windows-testing-ci-x64"
@@ -133,7 +133,7 @@ jobs:
 
       - name: "Copy OBS data"
         run: |
-          Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "..\data" -Recurse -Verbose
+          Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "..\..\data" -Recurse -Verbose
         shell: "pwsh"
 
       - name: "Run tests"
