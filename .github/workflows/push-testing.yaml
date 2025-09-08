@@ -82,7 +82,7 @@ jobs:
         run: "ctest --preset macos-testing-ci --verbose"
 
       - name: "Run shader tests"
-        run: "./scripts/run-gtest-with-retry.bash ./build_macos/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
+        run: "${{ github.workspace }}/scripts/run-gtest-with-retry.bash ${{ github.workspace }}/build_macos/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
         working-directory: "${{ github.workspace }}/build_macos/tests/RelWithDebInfo/obs-studio/bin/64bit"
 
   RunTestsOnWindows:
@@ -226,6 +226,6 @@ jobs:
         run: "ctest --preset ubuntu-testing-ci-x86_64 --verbose"
 
       - name: "Run shader tests"
-        run: "./scripts/run-gtest-with-retry.bash ./build_x86_64/tests/DrawingEffect_shader_test 100"
+        run: "${{ github.workspace }}/scripts/run-gtest-with-retry.bash ${{ github.workspace }}/build_x86_64/tests/DrawingEffect_shader_test 100"
         working-directory: "${{ github.workspace }}/build_x86_64/tests/RelWithDebInfo/obs-studio/bin/64bit"
 
