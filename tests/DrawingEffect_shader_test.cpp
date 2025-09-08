@@ -66,13 +66,12 @@ TEST_F(DrawingEffectShaderTest, Draw)
 
 	int width = 1;
 	int height = 1;
+	gs_color_format colorFormat = GS_BGRX;
 
 	const std::vector<uint8_t> sourcePixels(width * height * 4, 255);
 	const uint8_t *sourceData = sourcePixels.data();
-	auto sourceTexture = make_unique_gs_texture(width, height, GS_BGRX, 1, &sourceData, 0);
-	auto targetTexture = make_unique_gs_texture(width, height, GS_BGRX, 1, nullptr, GS_RENDER_TARGET);
-
-	AsyncTextureReader<1> targetBufferedTexture(width, height, GS_BGRX);
+	auto sourceTexture = make_unique_gs_texture(width, height, colorFormat, 1, &sourceData, 0);
+	auto targetTexture = make_unique_gs_texture(width, height, colorFormat, 1, nullptr, GS_RENDER_TARGET);
 
 	gs_viewport_push();
 	gs_projection_push();
@@ -88,11 +87,16 @@ TEST_F(DrawingEffectShaderTest, Draw)
 	gs_projection_pop();
 	gs_viewport_pop();
 
-	targetBufferedTexture.stage(targetTexture.get());
-	targetBufferedTexture.sync();
+	unique_gs_stagesurf_t stagesurf = make_unique_gs_stagesurf(width, height, colorFormat);
+	gs_stage_texture(stagesurf.get(), targetTexture.get());
 
-	auto &targetBuffer = targetBufferedTexture.getBuffer();
-	for (std::size_t i = 0; i < targetBuffer.size(); i++) {
-		ASSERT_EQ(255, targetBuffer[i]) << "at byte index " << i;
+	uint8_t *data = nullptr;
+	uint32_t linesize = 0;
+	ASSERT_TRUE(gs_stagesurface_map(stagesurf.get(), &data, &linesize));
+
+	for (std::size_t i = 0; i < height * linesize; i++) {
+		ASSERT_EQ(255, data[i]) << "at byte index " << i;
 	}
+
+	gs_stagesurface_unmap(stagesurf.get());
 }
