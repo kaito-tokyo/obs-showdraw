@@ -137,7 +137,7 @@ jobs:
         run: "ctest --preset windows-testing-ci-x64 --verbose"
 
       - name: "Run shader tests"
-        run: "${{ github.workspace }}/scripts/run-gtest-with-retry.bash ${{ github.workspace }}/build_x64/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
+        run: "${{ github.workspace }}/scripts/run-gtest-with-retry.bash --verbose ${{ github.workspace }}/build_x64/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
         working-directory: "${{ github.workspace }}/build_x64/tests/RelWithDebInfo/obs-studio/bin/64bit"
 
   RunTestsOnUbuntu:
