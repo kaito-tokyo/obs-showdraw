@@ -54,8 +54,7 @@ VertInOut VSDefault(VertInOut vert_in)
 //
 float4 PSDraw(VertInOut vert_in) : TARGET
 {
-	return float4(0.5, 0.0, 0.0, 1.0);
-	//return image.Sample(def_sampler, vert_in.uv);
+	return image.Sample(def_sampler, vert_in.uv);
 }
 
 //

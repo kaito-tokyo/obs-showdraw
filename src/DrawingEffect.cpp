@@ -338,9 +338,6 @@ void DrawingEffect::drawFinalImage(std::uint32_t width, std::uint32_t height, gs
 	gs_blend_state_push();
 	gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
 
-	vec4 zero{0.0f, 0.0f, 0.0f, 1.0f};
-	gs_clear(GS_CLEAR_COLOR, &zero, 1.0f, 0);
-
 	while (gs_effect_loop(effect.get(), "Draw")) {
 		gs_effect_set_texture(textureImage, sourceTexture);
 		gs_draw_sprite(nullptr, 0, width, height);

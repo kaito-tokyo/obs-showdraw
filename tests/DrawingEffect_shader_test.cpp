@@ -57,72 +57,42 @@ protected:
 
 TEST_F(DrawingEffectShaderTest, Draw)
 {
-	// graphics_context_guard guard;
+	graphics_context_guard guard;
 
-	// unique_gs_effect_t effect =
-	// 	make_unique_gs_effect_from_file(CMAKE_SOURCE_DIR "/data/effects/drawing-test.effect");
+	unique_gs_effect_t effect =
+		make_unique_gs_effect_from_file(CMAKE_SOURCE_DIR "/data/effects/drawing-test.effect");
 
-	// DrawingEffect drawingEffect(std::move(effect));
+	DrawingEffect drawingEffect(std::move(effect));
 
-	// int width = 1;
-	// int height = 1;
+	int width = 1;
+	int height = 1;
 
-	// const std::vector<uint8_t> sourcePixels(width * height * 4, 255);
-	// const uint8_t *sourceData = sourcePixels.data();
-	// auto sourceTexture = make_unique_gs_texture(width, height, GS_BGRX, 1, &sourceData, GS_RENDER_TARGET);
-	// auto targetTexture = make_unique_gs_texture(width, height, GS_BGRX, 1, nullptr, GS_RENDER_TARGET);
+	const std::vector<uint8_t> sourcePixels(width * height * 4, 255);
+	const uint8_t *sourceData = sourcePixels.data();
+	auto sourceTexture = make_unique_gs_texture(width, height, GS_BGRX, 1, &sourceData, 0);
+	auto targetTexture = make_unique_gs_texture(width, height, GS_BGRX, 1, nullptr, GS_RENDER_TARGET);
 
-	// BufferedTexture<1> targetBufferedTexture(width, height, GS_BGRX, GS_DYNAMIC);
+	AsyncTextureReader<1> targetBufferedTexture(width, height, GS_BGRX);
 
-	// gs_viewport_push();
-	// gs_projection_push();
-	// gs_matrix_push();
+	gs_viewport_push();
+	gs_projection_push();
+	gs_matrix_push();
 
-	// gs_set_viewport(0, 0, width, height);
-	// gs_ortho(0.0f, (float)width, 0.0f, (float)height, -100.0f, 100.0f);
-	// gs_matrix_identity();
+	gs_set_viewport(0, 0, width, height);
+	gs_ortho(0.0f, (float)width, 0.0f, (float)height, -100.0f, 100.0f);
+	gs_matrix_identity();
 
-	// drawingEffect.drawFinalImage(width, height, targetTexture.get(), sourceTexture.get());
+	drawingEffect.drawFinalImage(width, height, targetTexture.get(), sourceTexture.get());
 
-	// gs_matrix_pop();
-	// gs_projection_pop();
-	// gs_viewport_pop();
+	gs_matrix_pop();
+	gs_projection_pop();
+	gs_viewport_pop();
 
-	// targetBufferedTexture.stage(sourceTexture.get());
-	// std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	// targetBufferedTexture.sync();
+	targetBufferedTexture.stage(sourceTexture.get());
+	targetBufferedTexture.sync();
 
-	// auto &targetBuffer = targetBufferedTexture.getBuffer();
-	// for (std::size_t i = 0; i < targetBuffer.size(); i++) {
-	// 	std::cout << "Pixel " << i << ": " << (int)targetBuffer[i] << std::endl;
-	// }
+	auto &targetBuffer = targetBufferedTexture.getBuffer();
+	for (std::size_t i = 0; i < targetBuffer.size(); i++) {
+		ASSERT_EQ(255, targetBuffer[i]) << "at byte index " << i;
+	}
 }
-
-// TEST_F(DrawingEffectShaderTest, ExtractLuminance)
-// {
-// 	// graphics_context_guard guard;
-
-// 	// drawingEffect->applyLuminanceExtractionPass(targetBufferedTexture->getTexture(), sourceTexture.get());
-
-// 	// targetBufferedTexture->stage();
-// 	// ASSERT_TRUE(targetBufferedTexture->sync());
-// 	// ASSERT_TRUE(targetBufferedTexture->sync());
-
-// 	// cv::Mat targetImage(HEIGHT, WIDTH, CV_8UC4, (void *)targetBufferedTexture->getBuffer().data(),
-// 	// 		    targetBufferedTexture->bufferLinesize);
-
-// 	// // The luminance value for red (255, 0, 0) is calculated as:
-// 	// // luma = 0.299 * R + 0.587 * G + 0.114 * B
-// 	// // luma = 0.299 * 255 + 0.587 * 0 + 0.114 * 0 = 76.245
-// 	// // The shader returns (luma, luma, luma, 1.0), which corresponds to (76, 76, 76, 255) in 8-bit BGRA.
-// 	// cv::Mat expectedImage(HEIGHT, WIDTH, CV_8UC4, cv::Scalar(76, 76, 76, 255));
-
-// 	// cv::Mat diff;
-// 	// cv::absdiff(expectedImage, targetImage, diff);
-// 	// cv::Scalar sum = cv::sum(diff);
-
-// 	// EXPECT_LE(sum[0], 255) << "B channel differs";
-// 	// EXPECT_LE(sum[1], 255) << "G channel differs";
-// 	// EXPECT_LE(sum[2], 255) << "R channel differs";
-// 	// EXPECT_EQ(sum[3], 0) << "A channel differs";
-// }
