@@ -131,8 +131,16 @@ jobs:
           path: "${{ github.workspace }}/vcpkg-cache"
           key: "${{ runner.os }}-vcpkg-${{ github.ref_name }}-testing-${{ github.sha }}"
 
+      - name: "Copy OBS data"
+        run: |
+          Copy-Item -Path "$env:ProgramFiles\obs-studio\data" -Destination "build_x64\tests\data" -Recurse
+        shell: "pwsh"
+
       - name: "Run tests"
         run: "ctest --preset windows-testing-ci-x64 --verbose"
+
+      - name: "Run shader tests"
+        run: "./scripts/run-gtest-with-retry.bash ./build_x64/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
 
   RunTestsOnUbuntu:
     name: "Run Tests on Ubuntu"
