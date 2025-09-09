@@ -122,18 +122,6 @@ DrawingEffect::DrawingEffect(unique_gs_effect_t _effect)
 {
 }
 
-void DrawingEffect::applyEffectPass(gs_technique_t *technique, gs_texture_t *sourceTexture) noexcept
-{
-	size_t passes = gs_technique_begin(technique);
-	for (size_t i = 0; i < passes; i++) {
-		if (gs_technique_begin_pass(technique, i)) {
-			gs_draw_sprite(sourceTexture, 0, 0, 0);
-			gs_technique_end_pass(technique);
-		}
-	}
-	gs_technique_end(technique);
-}
-
 void DrawingEffect::applyLuminanceExtractionPass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
 						 gs_texture_t *sourceTexture) noexcept
 {
