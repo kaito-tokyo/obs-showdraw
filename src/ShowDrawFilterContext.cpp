@@ -279,6 +279,8 @@ void ShowDrawFilterContext::afterCreate(obs_data_t *settings, obs_source_t *sour
 				      UpdateChecker checker;
 				      return checker.fetch();
 			      }).share();
+
+	
 }
 
 ShowDrawFilterContext::~ShowDrawFilterContext() noexcept

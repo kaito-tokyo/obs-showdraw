@@ -129,7 +129,7 @@ private:
 
 	BS::thread_pool<> threadPool;
 
-	std::vector<std::uint8_t> processFrameCannyEdgeBuffer;
+	
 };
 
 } // namespace obs_showdraw
