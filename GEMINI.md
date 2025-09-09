@@ -15,6 +15,11 @@
 2. Run `cmake --build --preset macos-testing`.
 3. Run `ctest --preset macos-testing --rerun-failed --output-on-failure`.
 
+## How to test the effect shader (DrawingEffect_shader) on macOS
+1. Run `cmake --preset macos-testing`.
+2. Run `cmake --build --preset macos-testing`.
+3. Run `( cd build_macos/tests/obs-studio/bin/64bit && ../../../../../scripts/run-gtest-with-retry.bash --verbose ../../../RelWithDebInfo/DrawingEffect_shader_test )`
+
 ## How to test plugin with OBS
 
 1. Run `cmake --preset macos-testing` only when CMake-related changes are made.
