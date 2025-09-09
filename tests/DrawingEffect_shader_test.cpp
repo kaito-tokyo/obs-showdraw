@@ -231,3 +231,73 @@ TEST_F(DrawingEffectShaderTest, Median9)
 
 	gs_stagesurface_unmap(stagesurf.get());
 }
+
+TEST_F(DrawingEffectShaderTest, Median3)
+{
+	std::mt19937_64 rng(std::random_device{}());
+
+	graphics_context_guard guard;
+
+	int width = 1;
+	int height = 1;
+	gs_color_format colorFormat = GS_BGRX;
+
+	const std::vector<uint8_t> sourcePixels(width * height * 4, 255);
+	const uint8_t *sourceData = sourcePixels.data();
+	auto sourceTexture = make_unique_gs_texture(width, height, colorFormat, 1, &sourceData, 0);
+	auto targetTexture = make_unique_gs_texture(width, height, colorFormat, 1, nullptr, GS_RENDER_TARGET);
+
+	gs_viewport_push();
+	gs_projection_push();
+	gs_matrix_push();
+
+	gs_set_viewport(0, 0, width, height);
+	gs_ortho(0.0f, (float)width, 0.0f, (float)height, -100.0f, 100.0f);
+	gs_matrix_identity();
+
+	auto &effect = drawingEffect->effect;
+
+	std::vector<float> sequence;
+	for (int i = 0; i < 3; ++i) {
+		sequence.push_back(std::uniform_real_distribution<float>(0.0f, 1.0f)(rng));
+	}
+	std::sort(sequence.begin(), sequence.end());
+	float expected_median = sequence[1];
+
+	gs_set_render_target(targetTexture.get(), nullptr);
+
+	vec4 clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+	gs_clear(GS_CLEAR_COLOR, &clearColor, 1.0f, 0);
+
+	gs_eparam_t *floatV0 = gs_effect_get_param_by_name(effect.get(), "v0");
+	gs_eparam_t *floatV1 = gs_effect_get_param_by_name(effect.get(), "v1");
+	gs_eparam_t *floatV2 = gs_effect_get_param_by_name(effect.get(), "v2");
+
+	gs_effect_set_float(floatV0, sequence[0]);
+	gs_effect_set_float(floatV1, sequence[1]);
+	gs_effect_set_float(floatV2, sequence[2]);
+
+	while (gs_effect_loop(effect.get(), "TestMedian3")) {
+		gs_effect_set_texture(drawingEffect->textureImage, sourceTexture.get());
+		gs_draw_sprite(sourceTexture.get(), 0, width, height);
+	}
+
+	gs_flush();
+	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+	gs_matrix_pop();
+	gs_projection_pop();	gs_viewport_pop();
+
+	unique_gs_stagesurf_t stagesurf = make_unique_gs_stagesurf(width, height, colorFormat);
+	gs_stage_texture(stagesurf.get(), targetTexture.get());
+
+	uint8_t *data = nullptr;
+	uint32_t linesize = 0;
+	ASSERT_TRUE(gs_stagesurface_map(stagesurf.get(), &data, &linesize));
+
+	uint8_t expected_median_8bit = static_cast<uint8_t>(expected_median * 255.0f);
+	// Allow for a small tolerance due to float to uint8_t conversion and shader precision
+	ASSERT_NEAR(expected_median_8bit, data[0], 1) << "at byte index 0";
+
+	gs_stagesurface_unmap(stagesurf.get());
+}

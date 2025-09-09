@@ -24,3 +24,18 @@ technique TestMedian9
 		pixel_shader = PSTestMedian9(vert_in);
 	}
 }
+
+float4 PSTestMedian3(VertInOut vert_in) : TARGET
+{
+	float value = median3(v0, v1, v2);
+	return float4(value, value, value, 1.0);
+}
+
+technique TestMedian3
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSTestMedian3(vert_in);
+	}
+}
