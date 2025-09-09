@@ -57,6 +57,7 @@ void showdraw_module_unload(void);
 #include "DrawingEffect.hpp"
 #include "Preset.hpp"
 #include "UpdateChecker.hpp"
+#include "TaskQueue.hpp"
 
 namespace kaito_tokyo {
 namespace obs_showdraw {
@@ -100,16 +101,18 @@ public:
 private:
 	void reloadDrawingEffectInGraphics();
 	void ensureTextures(uint32_t width, uint32_t height);
-	void processFrame() noexcept;
+	void processFrame(const TaskQueue::CancellationToken &token) noexcept;
 
 	obs_data_t *settings;
 	obs_source_t *filter;
+	std::shared_ptr<DrawingEffect> drawingEffect;
+	Preset runningPreset;
+	TaskQueue taskQueueProcessFrame;
+
 	uint32_t width;
 	uint32_t height;
 	float texelWidth;
 	float texelHeight;
-	std::shared_ptr<DrawingEffect> drawingEffect;
-	Preset runningPreset;
 
 	double sobelMagnitudeFinalizationScalingFactor = 1.0;
 
@@ -126,10 +129,6 @@ private:
 	std::mutex readerCannyEdgeMutex;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
-
-	BS::thread_pool<> threadPool;
-
-	
 };
 
 } // namespace obs_showdraw

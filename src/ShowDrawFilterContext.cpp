@@ -279,8 +279,6 @@ void ShowDrawFilterContext::afterCreate(obs_data_t *settings, obs_source_t *sour
 				      UpdateChecker checker;
 				      return checker.fetch();
 			      }).share();
-
-	
 }
 
 ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
@@ -491,7 +489,9 @@ void ShowDrawFilterContext::hide()
 
 void ShowDrawFilterContext::videoTick(float seconds)
 {
-	threadPool.detach_task([self = shared_from_this(), seconds]() { self->processFrame(); });
+	taskQueueProcessFrame.push([self = shared_from_this(), seconds](const TaskQueue::CancellationToken &token) {
+		self->processFrame(token);
+	});
 }
 
 void ShowDrawFilterContext::videoRender()
@@ -745,11 +745,15 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTextureReader(readerCannyEdge, width, height);
 }
 
-void ShowDrawFilterContext::processFrame() noexcept
+void ShowDrawFilterContext::processFrame(const TaskQueue::CancellationToken &token) noexcept
 try {
 	std::lock_guard<std::mutex> lock(readerCannyEdgeMutex);
 	if (!readerCannyEdge) {
 		slog(LOG_DEBUG) << "Texture reader not initialized yet";
+		return;
+	}
+
+	if (token.get()) {
 		return;
 	}
 
