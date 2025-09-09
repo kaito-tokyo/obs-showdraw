@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the input HLSL file
-HLSL_FILE="$(dirname "$0")"/../data/effects/drawing.hlsl
+HLSL_FILE="$(dirname "$0")"/../data/effects/drawing-hlsl.effect
 
 # Define the output directory for compiled shaders
 OUTPUT_DIR="$(dirname "$0")"/../build/shaders
