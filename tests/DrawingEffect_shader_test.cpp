@@ -77,7 +77,7 @@ TEST_F(DrawingEffectShaderTest, Draw)
 	gs_matrix_identity();
 
 	drawingEffect->drawFinalImage(width, height, targetTexture.get(), sourceTexture.get());
-	gs_flush()l
+	gs_flush();
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 	gs_matrix_pop();
