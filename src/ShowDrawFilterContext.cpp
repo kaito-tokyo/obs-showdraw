@@ -635,13 +635,12 @@ void ShowDrawFilterContext::videoRender()
 	gs_projection_pop();
 	gs_matrix_pop();
 
-	gs_set_render_target(defaultRenderTarget, nullptr);
 	if (extractionMode == ExtractionMode::MotionMapCalculation) {
-		_drawingEffect->drawFinalImage(defaultRenderTarget, textureMotionMap.get());
+		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureMotionMap.get());
 	} else if (extractionMode == ExtractionMode::SobelMagnitude) {
-		_drawingEffect->drawFinalImage(defaultRenderTarget, textureFinalSobelMagnitude.get());
+		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureFinalSobelMagnitude.get());
 	} else {
-		_drawingEffect->drawFinalImage(defaultRenderTarget, textureSource.get());
+		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureSource.get());
 	}
 
 	kaito_tokyo::obs_bridge_utils::gs_unique::drain();

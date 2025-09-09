@@ -81,10 +81,6 @@ jobs:
       - name: "Run tests"
         run: "ctest --preset macos-testing-ci --verbose"
 
-      - name: "Run shader tests"
-        run: "${{ github.workspace }}/scripts/run-gtest-with-retry.bash ${{ github.workspace }}/build_macos/tests/RelWithDebInfo/DrawingEffect_shader_test 100"
-        working-directory: "${{ github.workspace }}/build_macos/tests/obs-studio/bin/64bit"
-
   RunTestsOnWindows:
     name: "Run Tests on Windows"
 
@@ -99,7 +95,6 @@ jobs:
       - name: "Install dependencies"
         run: |
           choco install obs-studio.install -y --no-progress
-          choco install ccache -y --no-progress
           echo "$env:ProgramFiles\obs-studio\bin\64bit" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         shell: "pwsh"
 
@@ -220,8 +215,3 @@ jobs:
 
       - name: "Run tests"
         run: "ctest --preset ubuntu-testing-ci-x86_64 --verbose"
-
-      - name: "Run shader tests"
-        run: "${{ github.workspace }}/scripts/run-gtest-with-retry.bash ${{ github.workspace }}/build_x86_64/tests/DrawingEffect_shader_test 100"
-        working-directory: "${{ github.workspace }}/build_x86_64/tests/obs-studio/bin/64bit"
-

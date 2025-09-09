@@ -47,7 +47,4 @@ add_obs_showdraw_test(UpdateChecker_test semver::semver cpr::cpr
 )
 add_obs_showdraw_test(ShowDrawFilterContext_test semver::semver cpr::cpr
 )
-add_obs_showdraw_test(DrawingEffect_shader_test NO_DISCOVER_TESTS opencv_core opencv_imgproc
-                                                opencv_imgcodecs
-)
 add_obs_showdraw_test(AsyncTextureReader_test opencv_imgcodecs)

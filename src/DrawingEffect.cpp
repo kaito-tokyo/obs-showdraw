@@ -311,41 +311,47 @@ void DrawingEffect::applyMorphologyPass(gs_technique_t *horizontalTechnique, gs_
 	applyEffectPass(verticalTechnique, targetIntermediateTexture);
 }
 
-void DrawingEffect::drawFinalImage(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
-{
-	gs_texture_t *previousRenderTarget = gs_get_render_target();
+namespace {
 
-	// vec4 zero{0.0f, 0.0f, 0.0f, 0.0f};
-	// gs_clear(GS_CLEAR_COLOR, &zero, 1.0f, 0);
+struct RenderingGuard {
+	gs_texture_t *previousRenderTarget;
+	gs_zstencil_t *previousZStencil;
+	gs_color_space previousColorSpace;
 
-	gs_set_render_target(targetTexture, nullptr);
-
-	while (gs_effect_loop(effect.get(), "Draw")) {
-		gs_effect_set_texture(textureImage, sourceTexture);
-		gs_draw_sprite(sourceTexture, 0, 10, 10);
+	RenderingGuard(gs_texture_t *targetTexture, gs_zstencil_t *targetZStencil = nullptr,
+		       gs_color_space targetColorSpace = GS_CS_SRGB)
+		: previousRenderTarget(gs_get_render_target()),
+		  previousZStencil(gs_get_zstencil_target()),
+		  previousColorSpace(gs_get_color_space())
+	{
+		gs_set_render_target_with_color_space(targetTexture, targetZStencil, targetColorSpace);
+		gs_blend_state_push();
+		gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
 	}
 
-	gs_set_render_target(previousRenderTarget, nullptr);
-}
+	~RenderingGuard()
+	{
+		gs_blend_state_pop();
+		gs_set_render_target_with_color_space(previousRenderTarget, previousZStencil, previousColorSpace);
+	}
+};
+
+} // namespace
 
 void DrawingEffect::drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
 				   gs_texture_t *sourceTexture) noexcept
 {
-	gs_texture_t *previousRenderTarget = gs_get_render_target();
+	RenderingGuard guard(targetTexture);
 
-	gs_set_render_target(targetTexture, nullptr);
-
-	gs_blend_state_push();
-	gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
-
-	while (gs_effect_loop(effect.get(), "Draw")) {
-		gs_effect_set_texture(textureImage, sourceTexture);
-		gs_draw_sprite(nullptr, 0, width, height);
+	size_t passes = gs_technique_begin(techDraw);
+	for (size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(techDraw, i)) {
+			gs_effect_set_texture(textureImage, sourceTexture);
+			gs_draw_sprite(nullptr, 0, width, height);
+			gs_technique_end_pass(techDraw);
+		}
 	}
-
-	gs_blend_state_pop();
-
-	gs_set_render_target(previousRenderTarget, nullptr);
+	gs_technique_end(techDraw);
 }
 
 } // namespace obs_showdraw

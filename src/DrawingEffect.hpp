@@ -115,7 +115,6 @@ public:
 				 float texelWidth, float texelHeight, int kernelSize, gs_texture_t *targetTexture,
 				 gs_texture_t *targetIntermediateTexture, gs_texture_t *sourceTexture) noexcept;
 
-	void drawFinalImage(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
 	void drawFinalImage(uint32_t width, uint32_t height, gs_texture_t *targetTexture,
 			    gs_texture_t *sourceTexture) noexcept;
 
