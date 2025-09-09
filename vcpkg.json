@@ -11,8 +11,8 @@
         "wolfssl"
       ]
     },
-    "nlohmann-json",
     "neargye-semver",
+    "nlohmann-json",
     {
       "name": "opencv4",
       "default-features": false,
@@ -21,6 +21,7 @@
         "png",
         "webp"
       ]
-    }
+    },
+    "gtest"
   ]
 }
