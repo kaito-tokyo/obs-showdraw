@@ -102,7 +102,8 @@ public:
 					     float scalingFactor, gs_texture_t *targetTexture,
 					     gs_texture_t *sourceTexture) noexcept;
 
-	void applySuppressNonMaximumPass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
+	void applySuppressNonMaximumPass(std::uint32_t width, std::uint32_t height, float texelWidth,
+					 float texelHeight, gs_texture_t *targetTexture,
 					 gs_texture_t *sourceTexture) noexcept;
 
 	void applyHysteresisClassifyPass(float texelWidth, float texelHeight, float highThreshold, float lowThreshold,

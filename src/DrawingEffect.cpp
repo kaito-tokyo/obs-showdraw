@@ -321,17 +321,25 @@ void DrawingEffect::applyFinalizeSobelMagnitudePass(std::uint32_t width, std::ui
 	}
 }
 
-void DrawingEffect::applySuppressNonMaximumPass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
+void DrawingEffect::applySuppressNonMaximumPass(std::uint32_t width, std::uint32_t height, float texelWidth,
+						float texelHeight, gs_texture_t *targetTexture,
 						gs_texture_t *sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	RenderingGuard guard(targetTexture);
+	gs_technique_t *tech = techSuppressNonMaximum;
+	std::size_t passes = gs_technique_begin(tech);
+	for (std::size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(tech, i)) {
+			gs_effect_set_texture(textureImage, sourceTexture);
 
-	gs_effect_set_texture(textureImage, sourceTexture);
+			gs_effect_set_float(floatTexelWidth, texelWidth);
+			gs_effect_set_float(floatTexelHeight, texelHeight);
 
-	gs_effect_set_float(floatTexelWidth, texelWidth);
-	gs_effect_set_float(floatTexelHeight, texelHeight);
-
-	applyEffectPass(techSuppressNonMaximum, sourceTexture);
+			gs_draw_sprite(nullptr, 0, width, height);
+			gs_technique_end_pass(tech);
+		}
+	}
+	gs_technique_end(tech);
 }
 
 void DrawingEffect::applyHysteresisClassifyPass(float texelWidth, float texelHeight, float highThreshold,

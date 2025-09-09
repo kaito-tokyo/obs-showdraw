@@ -621,7 +621,7 @@ void ShowDrawFilterContext::videoRender()
 	}
 
 	if (extractionMode >= ExtractionMode::EdgeDetection) {
-		_drawingEffect->applySuppressNonMaximumPass(texelWidth, texelHeight, textureTarget.get(),
+		_drawingEffect->applySuppressNonMaximumPass(width, height, texelWidth, texelHeight, textureTarget.get(),
 							    textureSource.get());
 		std::swap(textureSource, textureTarget);
 
