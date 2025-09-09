@@ -100,7 +100,7 @@ public:
 private:
 	void reloadDrawingEffectInGraphics();
 	void ensureTextures(uint32_t width, uint32_t height);
-	void processFrame();
+	void processFrame() noexcept;
 
 	obs_data_t *settings;
 	obs_source_t *filter;
