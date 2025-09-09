@@ -376,30 +376,46 @@ void DrawingEffect::applyHysteresisFinalizePass(float texelWidth, float texelHei
 	applyEffectPass(techHysteresisFinalize, sourceTexture);
 }
 
-void DrawingEffect::applyMorphologyPass(gs_technique_t *horizontalTechnique, gs_technique_t *verticalTechnique,
-					float texelWidth, float texelHeight, int kernelSize,
-					gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
-					gs_texture_t *sourceTexture) noexcept
+void DrawingEffect::applyMorphologyPass(std::uint32_t width, std::uint32_t height, gs_technique_t *horizontalTechnique,
+					gs_technique_t *verticalTechnique, float texelWidth, float texelHeight,
+					int kernelSize, gs_texture_t *targetTexture,
+					gs_texture_t *targetIntermediateTexture, gs_texture_t *sourceTexture) noexcept
 {
-	// Horizontal pass
-	gs_set_render_target(targetIntermediateTexture, nullptr);
+	{
+		RenderingGuard guard(targetIntermediateTexture);
+		gs_technique_t *tech = horizontalTechnique;
+		std::size_t passes = gs_technique_begin(tech);
+		for (std::size_t i = 0; i < passes; i++) {
+			if (gs_technique_begin_pass(tech, i)) {
+				gs_effect_set_texture(textureImage, sourceTexture);
 
-	gs_effect_set_texture(textureImage, sourceTexture);
+				gs_effect_set_float(floatTexelWidth, texelWidth);
+				gs_effect_set_int(intKernelSize, kernelSize);
 
-	gs_effect_set_float(floatTexelWidth, texelWidth);
-	gs_effect_set_int(intKernelSize, kernelSize);
+				gs_draw_sprite(nullptr, 0, width, height);
+				gs_technique_end_pass(tech);
+			}
+		}
+		gs_technique_end(tech);
+	}
 
-	applyEffectPass(horizontalTechnique, sourceTexture);
+	{
+		RenderingGuard guard(targetTexture);
+		gs_technique_t *tech = verticalTechnique;
+		std::size_t passes = gs_technique_begin(tech);
+		for (std::size_t i = 0; i < passes; i++) {
+			if (gs_technique_begin_pass(tech, i)) {
+				gs_effect_set_texture(textureImage, targetIntermediateTexture);
 
-	// Vertical pass
-	gs_set_render_target(targetTexture, nullptr);
+				gs_effect_set_float(floatTexelHeight, texelHeight);
+				gs_effect_set_int(intKernelSize, kernelSize);
 
-	gs_effect_set_texture(textureImage, targetIntermediateTexture);
-
-	gs_effect_set_float(floatTexelHeight, texelHeight);
-	gs_effect_set_int(intKernelSize, kernelSize);
-
-	applyEffectPass(verticalTechnique, targetIntermediateTexture);
+				gs_draw_sprite(nullptr, 0, width, height);
+				gs_technique_end_pass(tech);
+			}
+		}
+		gs_technique_end(tech);
+	}
 }
 
 void DrawingEffect::drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
