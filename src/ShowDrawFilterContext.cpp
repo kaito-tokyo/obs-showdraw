@@ -21,6 +21,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <stdexcept>
 #include <utility>
 
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+
 #include "plugin-support.h"
 
 #include <obs-frontend-api.h>
@@ -504,19 +507,20 @@ void ShowDrawFilterContext::videoRender()
 
 	ensureTextures(width, height);
 
-	if (!stagesurfCannyEdge[0] || gs_stagesurface_get_width(stagesurfCannyEdge[0].get()) != width ||
-	    gs_stagesurface_get_height(stagesurfCannyEdge[0].get()) != height) {
-		stagesurfCannyEdge[0] = make_unique_gs_stagesurf(width, height, GS_BGRA);
-	}
-
-	if (!stagesurfCannyEdge[1] || gs_stagesurface_get_width(stagesurfCannyEdge[1].get()) != width ||
-	    gs_stagesurface_get_height(stagesurfCannyEdge[1].get()) != height) {
-		stagesurfCannyEdge[1] = make_unique_gs_stagesurf(width, height, GS_BGRA);
-	}
-
 	ExtractionMode extractionMode = runningPreset.extractionMode == ExtractionMode::Default
 						? DefaultExtractionMode
 						: runningPreset.extractionMode;
+
+	readerCannyEdge->sync();
+	cv::Mat cannyEdgeImage(height, width, CV_8UC4, readerCannyEdge->getBuffer().data(),
+			       readerCannyEdge->getBufferLinesize());
+
+	{
+		cv::Mat singleChannelImage;
+		cv::extractChannel(cannyEdgeImage, singleChannelImage, 0);
+		int whitePixelCount = cv::countNonZero(singleChannelImage);
+		slog(LOG_INFO) << "Canny edge white pixel count: " << whitePixelCount;
+	}
 
 	gs_texture_t *defaultRenderTarget = gs_get_render_target();
 
@@ -537,11 +541,11 @@ void ShowDrawFilterContext::videoRender()
 	obs_source_process_filter_end(filter, _drawingEffect.get()->effect.get(), 0, 0);
 
 	if (extractionMode >= ExtractionMode::LuminanceExtraction) {
-		_drawingEffect->applyLuminanceExtractionPass(textureTarget.get(), textureSource.get());
+		_drawingEffect->applyLuminanceExtractionPass(width, height, textureTarget.get(), textureSource.get());
 		std::swap(textureSource, textureTarget);
 
 		if (runningPreset.medianFilteringKernelSize > 1) {
-			_drawingEffect->applyMedianFilteringPass(texelWidth, texelHeight,
+			_drawingEffect->applyMedianFilteringPass(width, height, texelWidth, texelHeight,
 								 runningPreset.medianFilteringKernelSize,
 								 textureTarget.get(), textureTemporary1.get(),
 								 textureSource.get());
@@ -550,55 +554,65 @@ void ShowDrawFilterContext::videoRender()
 
 		if (runningPreset.motionAdaptiveFilteringStrength > 0.0) {
 			_drawingEffect->applyMotionAdaptiveFilteringPass(
-				texelWidth, texelHeight, runningPreset.motionMapKernelSize,
+				width, height, texelWidth, texelHeight, runningPreset.motionMapKernelSize,
 				runningPreset.motionAdaptiveFilteringStrength,
 				runningPreset.motionAdaptiveFilteringMotionThreshold, textureTarget.get(),
 				textureMotionMap.get(), textureTemporary2.get(), textureSource.get(),
 				texturePreviousLuminance.get());
 			std::swap(textureSource, textureTarget);
-		}
 
-		gs_copy_texture(texturePreviousLuminance.get(), textureSource.get());
+			gs_copy_texture(texturePreviousLuminance.get(), textureSource.get());
+		}
 	}
 
 	if (extractionMode >= ExtractionMode::SobelMagnitude) {
 		std::shared_ptr<gs_texture_t> textureComplexSobel = textureTemporary1;
 
-		_drawingEffect->applySobelPass(texelWidth, texelHeight, textureComplexSobel.get(), textureSource.get());
+		_drawingEffect->applySobelPass(width, height, texelWidth, texelHeight, textureComplexSobel.get(),
+					       textureSource.get());
 
-		_drawingEffect->applyFinalizeSobelMagnitudePass(runningPreset.sobelMagnitudeFinalizationUseLog,
+		_drawingEffect->applyFinalizeSobelMagnitudePass(width, height,
+								runningPreset.sobelMagnitudeFinalizationUseLog,
 								sobelMagnitudeFinalizationScalingFactor,
 								textureSource.get(), textureComplexSobel.get());
 
 		if (runningPreset.morphologyOpeningErosionKernelSize > 1) {
-			_drawingEffect->applyMorphologyPass(
-				_drawingEffect->techHorizontalErosion, _drawingEffect->techVerticalErosion, texelWidth,
-				texelHeight, (int)runningPreset.morphologyOpeningErosionKernelSize, textureTarget.get(),
-				textureTemporary2.get(), textureSource.get());
+			_drawingEffect->applyMorphologyPass(width, height, _drawingEffect->techHorizontalErosion,
+							    _drawingEffect->techVerticalErosion, texelWidth,
+							    texelHeight,
+							    (int)runningPreset.morphologyOpeningErosionKernelSize,
+							    textureTarget.get(), textureTemporary2.get(),
+							    textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
 		if (runningPreset.morphologyOpeningDilationKernelSize > 1) {
-			_drawingEffect->applyMorphologyPass(
-				_drawingEffect->techHorizontalDilation, _drawingEffect->techVerticalDilation,
-				texelWidth, texelHeight, (int)runningPreset.morphologyOpeningDilationKernelSize,
-				textureTarget.get(), textureTemporary2.get(), textureSource.get());
+			_drawingEffect->applyMorphologyPass(width, height, _drawingEffect->techHorizontalDilation,
+							    _drawingEffect->techVerticalDilation, texelWidth,
+							    texelHeight,
+							    (int)runningPreset.morphologyOpeningDilationKernelSize,
+							    textureTarget.get(), textureTemporary2.get(),
+							    textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
 		if (runningPreset.morphologyClosingDilationKernelSize > 1) {
-			_drawingEffect->applyMorphologyPass(
-				_drawingEffect->techHorizontalDilation, _drawingEffect->techVerticalDilation,
-				texelWidth, texelHeight, (int)runningPreset.morphologyClosingDilationKernelSize,
-				textureTarget.get(), textureTemporary2.get(), textureSource.get());
+			_drawingEffect->applyMorphologyPass(width, height, _drawingEffect->techHorizontalDilation,
+							    _drawingEffect->techVerticalDilation, texelWidth,
+							    texelHeight,
+							    (int)runningPreset.morphologyClosingDilationKernelSize,
+							    textureTarget.get(), textureTemporary2.get(),
+							    textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
 		if (runningPreset.morphologyClosingErosionKernelSize > 1) {
-			_drawingEffect->applyMorphologyPass(
-				_drawingEffect->techHorizontalErosion, _drawingEffect->techVerticalErosion, texelWidth,
-				texelHeight, (int)runningPreset.morphologyClosingErosionKernelSize, textureTarget.get(),
-				textureTemporary2.get(), textureSource.get());
+			_drawingEffect->applyMorphologyPass(width, height, _drawingEffect->techHorizontalErosion,
+							    _drawingEffect->techVerticalErosion, texelWidth,
+							    texelHeight,
+							    (int)runningPreset.morphologyClosingErosionKernelSize,
+							    textureTarget.get(), textureTemporary2.get(),
+							    textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
@@ -607,28 +621,28 @@ void ShowDrawFilterContext::videoRender()
 	}
 
 	if (extractionMode >= ExtractionMode::EdgeDetection) {
-		_drawingEffect->applySuppressNonMaximumPass(texelWidth, texelHeight, textureTarget.get(),
+		_drawingEffect->applySuppressNonMaximumPass(width, height, texelWidth, texelHeight, textureTarget.get(),
 							    textureSource.get());
 		std::swap(textureSource, textureTarget);
 
-		_drawingEffect->applyHysteresisClassifyPass(texelWidth, texelHeight,
+		_drawingEffect->applyHysteresisClassifyPass(width, height, texelWidth, texelHeight,
 							    runningPreset.hysteresisHighThreshold,
 							    runningPreset.hysteresisLowThreshold, textureTarget.get(),
 							    textureSource.get());
 		std::swap(textureSource, textureTarget);
 
 		for (int i = 0; i < runningPreset.hysteresisPropagationIterations; i++) {
-			_drawingEffect->applyHysteresisPropagatePass(texelWidth, texelHeight, textureTarget.get(),
-								     textureSource.get());
+			_drawingEffect->applyHysteresisPropagatePass(width, height, texelWidth, texelHeight,
+								     textureTarget.get(), textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
-		_drawingEffect->applyHysteresisFinalizePass(texelWidth, texelHeight, textureTarget.get(),
+		_drawingEffect->applyHysteresisFinalizePass(width, height, texelWidth, texelHeight, textureTarget.get(),
 							    textureSource.get());
 		std::swap(textureSource, textureTarget);
 
 		gs_copy_texture(textureCannyEdge.get(), textureSource.get());
-		bufferedTextureCannyEdge->stage(textureCannyEdge.get());
+		readerCannyEdge->stage(textureCannyEdge.get());
 	}
 
 	gs_viewport_pop();
@@ -713,10 +727,10 @@ void ensureTexture(std::shared_ptr<gs_texture_t> &texture, uint32_t width, uint3
 	}
 }
 
-void ensureBufferedTexture(std::unique_ptr<AsyncTextureReader<2>> &bufferedTexture, uint32_t width, uint32_t height)
+void ensureTextureReader(std::unique_ptr<AsyncTextureReader<2>> &textureReader, uint32_t width, uint32_t height)
 {
-	if (!bufferedTexture || bufferedTexture->getWidth() != width || bufferedTexture->getHeight() != height) {
-		bufferedTexture = std::make_unique<AsyncTextureReader<2>>(width, height);
+	if (!textureReader || textureReader->getWidth() != width || textureReader->getHeight() != height) {
+		textureReader = std::make_unique<AsyncTextureReader<2>>(width, height);
 	}
 }
 
@@ -730,7 +744,7 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTexture(textureMotionMap, width, height);
 	ensureTexture(textureFinalSobelMagnitude, width, height);
 	ensureTexture(textureCannyEdge, width, height);
-	ensureBufferedTexture(bufferedTextureCannyEdge, width, height);
+	ensureTextureReader(readerCannyEdge, width, height);
 }
 
 } // namespace obs_showdraw

@@ -80,7 +80,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}_impl PRIVATE NOMINMAX)
 
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}_impl
-  PRIVATE OBS::libobs semver::semver cpr::cpr nlohmann_json::nlohmann_json
+  PRIVATE OBS::libobs semver::semver cpr::cpr nlohmann_json::nlohmann_json opencv_core opencv_imgproc opencv_imgcodecs
 )
 
 target_sources(

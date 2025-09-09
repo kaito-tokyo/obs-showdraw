@@ -153,6 +153,12 @@ public:
 	}
 
 	/**
+     * @brief Gets read-write access to the internal CPU buffer containing the pixel data.
+     * @return A reference to the pixel data buffer.
+     */
+	std::vector<uint8_t> &getBuffer() noexcept { return buffer; }
+
+	/**
      * @brief Gets read-only access to the internal CPU buffer containing the pixel data.
      * @return A constant reference to the pixel data buffer.
      */

@@ -82,44 +82,47 @@ public:
 
 	gs_technique_t *const techDraw;
 
-	void applyLuminanceExtractionPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
+	void applyLuminanceExtractionPass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+					  gs_texture_t *sourceTexture) noexcept;
 
-	void applyMedianFilteringPass(float texelWidth, float texelHeight, int kernelSize, gs_texture_t *targetTexture,
+	void applyMedianFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
+				      int kernelSize, gs_texture_t *targetTexture,
 				      gs_texture_t *targetIntermediateTexture, gs_texture_t *sourceTexture) noexcept;
 
-	void applyMotionAdaptiveFilteringPass(float texelWidth, float texelHeight, int kernelSize, float strength,
-					      float motionThreshold, gs_texture_t *targetTexture,
-					      gs_texture_t *targetMotionMapTexture,
+	void applyMotionAdaptiveFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth,
+					      float texelHeight, int kernelSize, float strength, float motionThreshold,
+					      gs_texture_t *targetTexture, gs_texture_t *targetMotionMapTexture,
 					      gs_texture_t *targetIntermediateTexture, gs_texture_t *sourceTexture,
 					      gs_texture_t *sourcePreviousLuminanceTexture) noexcept;
 
-	void applySobelPass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
-			    gs_texture_t *sourceTexture) noexcept;
+	void applySobelPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
+			    gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
 
-	void applyFinalizeSobelMagnitudePass(bool useLog, float scalingFactor, gs_texture_t *targetTexture,
+	void applyFinalizeSobelMagnitudePass(std::uint32_t width, std::uint32_t height, bool useLog,
+					     float scalingFactor, gs_texture_t *targetTexture,
 					     gs_texture_t *sourceTexture) noexcept;
 
-	void applySuppressNonMaximumPass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
-					 gs_texture_t *sourceTexture) noexcept;
-
-	void applyHysteresisClassifyPass(float texelWidth, float texelHeight, float highThreshold, float lowThreshold,
+	void applySuppressNonMaximumPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
 					 gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
 
-	void applyHysteresisPropagatePass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
-					  gs_texture_t *sourceTexture) noexcept;
-
-	void applyHysteresisFinalizePass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
+	void applyHysteresisClassifyPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
+					 float highThreshold, float lowThreshold, gs_texture_t *targetTexture,
 					 gs_texture_t *sourceTexture) noexcept;
 
-	void applyMorphologyPass(gs_technique_t *horizontalTechnique, gs_technique_t *verticalTechnique,
-				 float texelWidth, float texelHeight, int kernelSize, gs_texture_t *targetTexture,
-				 gs_texture_t *targetIntermediateTexture, gs_texture_t *sourceTexture) noexcept;
+	void applyHysteresisPropagatePass(std::uint32_t width, std::uint32_t height, float texelWidth,
+					  float texelHeight, gs_texture_t *targetTexture,
+					  gs_texture_t *sourceTexture) noexcept;
 
-	void drawFinalImage(uint32_t width, uint32_t height, gs_texture_t *targetTexture,
+	void applyHysteresisFinalizePass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
+					 gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
+
+	void applyMorphologyPass(std::uint32_t width, std::uint32_t height, gs_technique_t *horizontalTechnique,
+				 gs_technique_t *verticalTechnique, float texelWidth, float texelHeight, int kernelSize,
+				 gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
+				 gs_texture_t *sourceTexture) noexcept;
+
+	void drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
 			    gs_texture_t *sourceTexture) noexcept;
-
-private:
-	void applyEffectPass(gs_technique_t *technique, gs_texture_t *sourceTexture) noexcept;
 };
 
 } // namespace obs_showdraw

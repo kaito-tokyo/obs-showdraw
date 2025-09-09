@@ -119,9 +119,7 @@ private:
 	std::shared_ptr<gs_texture_t> textureFinalSobelMagnitude = nullptr;
 	std::shared_ptr<gs_texture_t> textureCannyEdge = nullptr;
 
-	std::unique_ptr<AsyncTextureReader<2>> bufferedTextureCannyEdge = nullptr;
-
-	std::array<kaito_tokyo::obs_bridge_utils::unique_gs_stagesurf_t, 2> stagesurfCannyEdge = {};
+	std::unique_ptr<AsyncTextureReader<2>> readerCannyEdge = nullptr;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
 };
