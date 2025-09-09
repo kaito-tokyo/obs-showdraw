@@ -13,7 +13,7 @@ add_executable(DrawingEffect_shader_test DrawingEffect_shader_test.cpp)
 target_link_libraries(DrawingEffect_shader_test PRIVATE GTest::gtest GTest::gtest_main)
 
 if(WIN32)
-  target_link_libraries(DrawingEffect_shader_test PRIVATE Microsoft::DirectXTK)
+  target_link_libraries(DrawingEffect_shader_test PRIVATE d3d11 d3dcompiler Microsoft::DirectXTK)
 else()
   set_target_properties(
     DrawingEffect_shader_test
