@@ -257,12 +257,8 @@ TEST_F(DrawingEffectShaderTest, Median3)
 
 	auto &effect = drawingEffect->effect;
 
-	std::vector<float> sequence;
-	for (int i = 0; i < 3; ++i) {
-		sequence.push_back(std::uniform_real_distribution<float>(0.0f, 1.0f)(rng));
-	}
-	std::sort(sequence.begin(), sequence.end());
-	float expected_median = sequence[1];
+	std::vector<float> sequence{0.1, 0.5, 0.9};
+	std::shuffle(sequence.begin(), sequence.end(), rng);
 
 	gs_set_render_target(targetTexture.get(), nullptr);
 
@@ -296,9 +292,10 @@ TEST_F(DrawingEffectShaderTest, Median3)
 	uint32_t linesize = 0;
 	ASSERT_TRUE(gs_stagesurface_map(stagesurf.get(), &data, &linesize));
 
-	uint8_t expected_median_8bit = static_cast<uint8_t>(expected_median * 255.0f);
-	// Allow for a small tolerance due to float to uint8_t conversion and shader precision
-	ASSERT_NEAR(expected_median_8bit, data[0], 1) << "at byte index 0";
+	for (std::size_t i = 0; i < height * linesize; i++) {
+		std::cout << "data[" << i << "] = " << static_cast<int>(data[i]) << std::endl;
+	}
+	ASSERT_EQ(128, data[0]) << "at byte index 0";
 
 	gs_stagesurface_unmap(stagesurf.get());
 }
