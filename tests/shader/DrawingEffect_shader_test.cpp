@@ -18,7 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <gtest/gtest.h>
 
-TEST(DrawingEffectShader, basic)
+TEST(DrawingEffectShader, Draw)
 {
 	EXPECT_TRUE(true);
 }
