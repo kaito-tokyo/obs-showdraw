@@ -135,16 +135,16 @@ TEST_F(DrawingEffectShaderTest, ExtractLuminance)
 	uint32_t linesize = 0;
 	ASSERT_TRUE(gs_stagesurface_map(stagesurf.get(), &data, &linesize));
 
-	// The shader calculates luma = dot(color.rgb, float3(0.299, 0.587, 0.114)).
+	// The shader calculates luma = dot(color.rgb, float3(0.2126, 0.7152, 0.0722)).
 	// Assuming the texture sampler correctly maps BGRX to RGB for the shader,
 	// the input color (0, 0, 255) becomes (1.0, 0.0, 0.0) in the shader.
-	// luma = 0.299 * 1.0 + 0.587 * 0.0 + 0.114 * 0.0 = 0.299.
+	// luma = 0.2126 * 1.0 + 0.7152 * 0.0 + 0.0722 * 0.0 = 0.2126.
 	// The output color is (luma, luma, luma, 1.0).
-	// In 8-bit format, this is 0.299 * 255 = 76.245, which is 76.
-	// The output pixel in BGRX should be (76, 76, 76, 255).
-	EXPECT_EQ(76, data[0]);  // Blue
-	EXPECT_EQ(76, data[1]);  // Green
-	EXPECT_EQ(76, data[2]);  // Red
+	// In 8-bit format, this is 0.2126 * 255 = 54.213, which is 54.
+	// The output pixel in BGRX should be (54, 54, 54, 255).
+	EXPECT_EQ(54, data[0]);  // Blue
+	EXPECT_EQ(54, data[1]);  // Green
+	EXPECT_EQ(54, data[2]);  // Red
 	EXPECT_EQ(255, data[3]); // Alpha
 
 	gs_stagesurface_unmap(stagesurf.get());
