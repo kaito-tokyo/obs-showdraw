@@ -142,9 +142,9 @@ TEST_F(DrawingEffectShaderTest, ExtractLuminance)
 	// The output color is (luma, luma, luma, 1.0).
 	// In 8-bit format, this is 0.299 * 255 = 76.245, which is 76.
 	// The output pixel in BGRX should be (76, 76, 76, 255).
-	EXPECT_EQ(76, data[0]); // Blue
-	EXPECT_EQ(76, data[1]); // Green
-	EXPECT_EQ(76, data[2]); // Red
+	EXPECT_EQ(76, data[0]);  // Blue
+	EXPECT_EQ(76, data[1]);  // Green
+	EXPECT_EQ(76, data[2]);  // Red
 	EXPECT_EQ(255, data[3]); // Alpha
 
 	gs_stagesurface_unmap(stagesurf.get());
