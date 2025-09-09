@@ -489,7 +489,7 @@ void ShowDrawFilterContext::hide()
 
 void ShowDrawFilterContext::videoTick(float seconds)
 {
-	UNUSED_PARAMETER(seconds);
+	threadPool.detach_task([self = shared_from_this(), seconds]() { self->processFrame(); });
 }
 
 void ShowDrawFilterContext::videoRender()
@@ -512,15 +512,6 @@ void ShowDrawFilterContext::videoRender()
 						: runningPreset.extractionMode;
 
 	readerCannyEdge->sync();
-	cv::Mat cannyEdgeImage(height, width, CV_8UC4, readerCannyEdge->getBuffer().data(),
-			       readerCannyEdge->getBufferLinesize());
-
-	{
-		cv::Mat singleChannelImage;
-		cv::extractChannel(cannyEdgeImage, singleChannelImage, 0);
-		int whitePixelCount = cv::countNonZero(singleChannelImage);
-		slog(LOG_INFO) << "Canny edge white pixel count: " << whitePixelCount;
-	}
 
 	gs_texture_t *defaultRenderTarget = gs_get_render_target();
 
@@ -745,6 +736,16 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTexture(textureFinalSobelMagnitude, width, height);
 	ensureTexture(textureCannyEdge, width, height);
 	ensureTextureReader(readerCannyEdge, width, height);
+}
+
+void ShowDrawFilterContext::processFrame()
+{
+	cv::Mat cannyEdgeImage(height, width, CV_8UC4, readerCannyEdge->getBuffer().data(),
+			       readerCannyEdge->getBufferLinesize());
+	cv::Mat singleChannelImage;
+	cv::extractChannel(cannyEdgeImage, singleChannelImage, 0);
+	int whitePixelCount = cv::countNonZero(singleChannelImage);
+	slog(LOG_INFO) << "Canny edge white pixel count: " << whitePixelCount;
 }
 
 } // namespace obs_showdraw

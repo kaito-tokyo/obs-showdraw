@@ -51,6 +51,8 @@ void showdraw_module_unload(void);
 #include <memory>
 #include <optional>
 
+#include <BS_thread_pool.hpp>
+
 #include "AsyncTextureReader.hpp"
 #include "DrawingEffect.hpp"
 #include "Preset.hpp"
@@ -98,6 +100,7 @@ public:
 private:
 	void reloadDrawingEffectInGraphics();
 	void ensureTextures(uint32_t width, uint32_t height);
+	void processFrame();
 
 	obs_data_t *settings;
 	obs_source_t *filter;
@@ -122,6 +125,8 @@ private:
 	std::unique_ptr<AsyncTextureReader<2>> readerCannyEdge = nullptr;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
+
+	BS::thread_pool<> threadPool;
 };
 
 } // namespace obs_showdraw
