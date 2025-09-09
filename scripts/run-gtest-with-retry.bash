@@ -119,9 +119,13 @@ for test_case in $test_cases; do
             echo "    ^^^ End of output ^^^"
         fi
     done
-    
-    if ! $is_successful; then
+
+    # Add the test case to the appropriate list based on the final result
+    if $is_successful; then
+        succeeded_tests+=("$test_case")
+    else
         echo "[FAILED]: $test_case did not pass after $MAX_RETRIES attempts."
+        failed_tests+=("$test_case")
     fi
     echo "----------------------------------------"
 done
