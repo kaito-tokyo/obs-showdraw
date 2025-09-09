@@ -1,1 +1,26 @@
 #include "drawing.effect"
+
+uniform float v0;
+uniform float v1;
+uniform float v2;
+uniform float v3;
+uniform float v4;
+uniform float v5;
+uniform float v6;
+uniform float v7;
+uniform float v8;
+
+float4 PSTestMedian9(VertInOut vert_in) : TARGET
+{
+	float value = median9(v0, v1, v2, v3, v4, v5, v6, v7, v8);
+	return float4(value, value, value, 1.0);
+}
+
+technique TestMedian9
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSTestMedian9(vert_in);
+	}
+}
