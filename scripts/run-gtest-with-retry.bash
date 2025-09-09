@@ -5,29 +5,43 @@
 #
 # Overview:
 #   - Automatically retrieves a list of test cases from the specified GoogleTest binary.
-#   - Executes each test case individually.
-#   - If a test fails, it will be retried up to a maximum number of times until it succeeds.
+#   - Executes each test case individually with retries on failure.
 #   - If a test succeeds even once, it is considered "PASSED".
-#   - After all test cases have been run, a summary of passed and failed tests is displayed.
+#   - With the --verbose option, it shows the output for all attempts.
+#   - Without it, it only shows the output for failed attempts.
 #
 # Usage:
-#   ./run_gtest_with_retry.sh [path_to_test_binary] [max_retries]
+#   ./run_gtest_with_retry.sh [--verbose] [path_to_test_binary] [max_retries]
 #
-# Example:
+# Examples:
 #   ./run_gtest_with_retry.sh ./my_test_app 10
+#   ./run_gtest_with_retry.sh --verbose ./my_test_app 5
+#   ./run_gtest_with_retry.sh ./my_test_app --verbose
 #
 # Default values if arguments are omitted:
 #   - Path to test binary: ./gtest_main
 #   - Max retries: 10
 # ==============================================================================
 
-# --- Configuration ---
-# Use the first argument if provided, otherwise use the default value
-TEST_BINARY=${1:-./gtest_main}
-# Use the second argument if provided, otherwise use the default value
-MAX_RETRIES=${2:-10}
-# Set to true to suppress the standard output of successful GoogleTest runs for a cleaner log
-HIDE_SUCCESS_OUTPUT=true
+# --- Configuration & Argument Parsing ---
+VERBOSE=false
+POSITIONAL_ARGS=()
+
+# Separate --verbose from other arguments
+for arg in "$@"; do
+  case $arg in
+    --verbose)
+      VERBOSE=true
+      ;;
+    *)
+      POSITIONAL_ARGS+=("$arg")
+      ;;
+  esac
+done
+
+# Assign positional arguments
+TEST_BINARY=${POSITIONAL_ARGS[0]:-./gtest_main}
+MAX_RETRIES=${POSITIONAL_ARGS[1]:-10}
 
 # --- Pre-flight Checks ---
 # Check if the test binary exists and has execute permissions
@@ -43,11 +57,13 @@ fi
 # --- Main Processing ---
 echo "Test Binary: $TEST_BINARY"
 echo "Max Retries: $MAX_RETRIES"
+if [ "$VERBOSE" = true ]; then
+  echo "Verbose Mode: Enabled"
+fi
 echo
 
 # 1. Get the list of test cases
 echo "Getting the list of test cases..."
-# Parse the output of `--gtest_list_tests` to format it as "TestSuite.TestCase"
 test_cases=$(
   "$TEST_BINARY" --gtest_list_tests | \
   awk '
@@ -82,33 +98,30 @@ for test_case in $test_cases; do
     for i in $(seq 1 "$MAX_RETRIES"); do
         echo "  - Attempt: $i/$MAX_RETRIES"
         
-        # Store GoogleTest output in a variable and get the exit code
         output=$("$TEST_BINARY" --gtest_filter="$test_case" 2>&1)
         exit_code=$?
 
         if [ $exit_code -eq 0 ]; then
             echo "  -> Result: PASSED"
             is_successful=true
-            # If successful, show GoogleTest output based on the configuration
-            if [ "$HIDE_SUCCESS_OUTPUT" = false ]; then
+            # In verbose mode, show output even on success
+            if [ "$VERBOSE" = true ]; then
+                echo "    vvv Test output vvv"
                 echo "$output" | sed 's/^/    | /'
+                echo "    ^^^ End of output ^^^"
             fi
-            break # Succeeded, so break the retry loop
+            break 
         else
             echo "  -> Result: FAILED (Exit Code: $exit_code)"
-            sleep 1
+            # Always show output on failure
+            echo "    vvv Test output vvv"
+            echo "$output" | sed 's/^/    | /'
+            echo "    ^^^ End of output ^^^"
         fi
     done
     
-    if $is_successful; then
-        succeeded_tests+=("$test_case")
-    else
+    if ! $is_successful; then
         echo "[FAILED]: $test_case did not pass after $MAX_RETRIES attempts."
-        # Display the output from the final failed attempt
-        echo "    vvv Output from the last attempt vvv"
-        echo "$output" | sed 's/^/    | /'
-        echo "    ^^^ End of output ^^^"
-        failed_tests+=("$test_case")
     fi
     echo "----------------------------------------"
 done
