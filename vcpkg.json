@@ -11,6 +11,10 @@
         "wolfssl"
       ]
     },
+    {
+      "name": "directxtk",
+      "platform": "windows"
+    },
     "gtest",
     "neargye-semver",
     "nlohmann-json",
@@ -23,9 +27,6 @@
         "webp"
       ]
     },
-    {
-      "name": "directxtk",
-      "platform": "windows"
-    }
+    "bshoshany-thread-pool"
   ]
 }

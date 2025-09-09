@@ -68,6 +68,7 @@ endif()
 set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed")
 list(PREPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
+find_path(BSHOSHANY_THREAD_POOL_INCLUDE_DIRS "BS_thread_pool.hpp")
 find_package(cpr CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenCV CONFIG REQUIRED core imgproc imgcodecs)
@@ -77,6 +78,8 @@ add_subdirectory(vendor/obs-bridge-utils)
 target_link_libraries(${CMAKE_PROJECT_NAME}_impl PUBLIC obs_bridge_utils)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME}_impl PRIVATE NOMINMAX)
+
+target_include_directories(${CMAKE_PROJECT_NAME}_impl PRIVATE ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
 
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}_impl
