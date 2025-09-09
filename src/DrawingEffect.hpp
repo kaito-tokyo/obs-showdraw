@@ -106,10 +106,12 @@ public:
 					 float texelHeight, gs_texture_t *targetTexture,
 					 gs_texture_t *sourceTexture) noexcept;
 
-	void applyHysteresisClassifyPass(float texelWidth, float texelHeight, float highThreshold, float lowThreshold,
+	void applyHysteresisClassifyPass(std::uint32_t width, std::uint32_t height, float texelWidth,
+					 float texelHeight, float highThreshold, float lowThreshold,
 					 gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
 
-	void applyHysteresisPropagatePass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
+	void applyHysteresisPropagatePass(std::uint32_t width, std::uint32_t height, float texelWidth,
+					  float texelHeight, gs_texture_t *targetTexture,
 					  gs_texture_t *sourceTexture) noexcept;
 
 	void applyHysteresisFinalizePass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,

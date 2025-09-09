@@ -625,15 +625,15 @@ void ShowDrawFilterContext::videoRender()
 							    textureSource.get());
 		std::swap(textureSource, textureTarget);
 
-		_drawingEffect->applyHysteresisClassifyPass(texelWidth, texelHeight,
+		_drawingEffect->applyHysteresisClassifyPass(width, height, texelWidth, texelHeight,
 							    runningPreset.hysteresisHighThreshold,
 							    runningPreset.hysteresisLowThreshold, textureTarget.get(),
 							    textureSource.get());
 		std::swap(textureSource, textureTarget);
 
 		for (int i = 0; i < runningPreset.hysteresisPropagationIterations; i++) {
-			_drawingEffect->applyHysteresisPropagatePass(texelWidth, texelHeight, textureTarget.get(),
-								     textureSource.get());
+			_drawingEffect->applyHysteresisPropagatePass(width, height, texelWidth, texelHeight,
+								     textureTarget.get(), textureSource.get());
 			std::swap(textureSource, textureTarget);
 		}
 
