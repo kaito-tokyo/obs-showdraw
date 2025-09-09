@@ -511,7 +511,12 @@ void ShowDrawFilterContext::videoRender()
 						? DefaultExtractionMode
 						: runningPreset.extractionMode;
 
-	readerCannyEdge->sync();
+	{
+		std::lock_guard<std::mutex> lock(readerCannyEdgeMutex);
+		if (readerCannyEdge) {
+			readerCannyEdge->sync();
+		}
+	}
 
 	gs_texture_t *defaultRenderTarget = gs_get_render_target();
 
@@ -738,8 +743,9 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTextureReader(readerCannyEdge, width, height);
 }
 
-void ShowDrawFilterContext::processFrame() noexcept try
-{
+void ShowDrawFilterContext::processFrame() noexcept
+try {
+	std::lock_guard<std::mutex> lock(readerCannyEdgeMutex);
 	if (!readerCannyEdge) {
 		slog(LOG_DEBUG) << "Texture reader not initialized yet";
 		return;
@@ -755,34 +761,34 @@ void ShowDrawFilterContext::processFrame() noexcept try
 	cv::findContours(singleChannelImage, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
 	slog(LOG_INFO) << "Found " << contours.size() << " contours";
 
-    std::vector<std::vector<cv::Point>> found_contours;
+	std::vector<std::vector<cv::Point>> found_contours;
 
-    for (const auto& contour : contours) {
-        double area = cv::contourArea(contour);
-        if (area < 500) {
-            continue;
-        }
+	for (const auto &contour : contours) {
+		double area = cv::contourArea(contour);
+		if (area < 500) {
+			continue;
+		}
 
-        std::vector<cv::Point> approx;
-        double peri = cv::arcLength(contour, true);
-        cv::approxPolyDP(contour, approx, 0.02 * peri, true);
+		std::vector<cv::Point> approx;
+		double peri = cv::arcLength(contour, true);
+		cv::approxPolyDP(contour, approx, 0.02 * peri, true);
 
-        if (approx.size() == 4) {
-            cv::Rect rect = cv::boundingRect(approx);
-            double aspect_ratio = static_cast<double>(rect.width) / rect.height;
-            const double a4_aspect_ratio = 1.414;
-            const double tolerance = 0.25;
+		if (approx.size() == 4) {
+			cv::Rect rect = cv::boundingRect(approx);
+			double aspect_ratio = static_cast<double>(rect.width) / rect.height;
+			const double a4_aspect_ratio = 1.414;
+			const double tolerance = 0.25;
 
-            if ((std::abs(aspect_ratio - a4_aspect_ratio) < tolerance) ||
-                (std::abs(1.0 / aspect_ratio - a4_aspect_ratio) < tolerance)) {
-                
-                // --- ステップ5: 凸性の確認（オプション） ---
-                if (cv::isContourConvex(approx)) {
-                    found_contours.push_back(approx);
-                }
-            }
-        }
-    }
+			if ((std::abs(aspect_ratio - a4_aspect_ratio) < tolerance) ||
+			    (std::abs(1.0 / aspect_ratio - a4_aspect_ratio) < tolerance)) {
+
+				// --- ステップ5: 凸性の確認（オプション） ---
+				if (cv::isContourConvex(approx)) {
+					found_contours.push_back(approx);
+				}
+			}
+		}
+	}
 
 	std::cout << "Detected " << found_contours.size() << " A4-like contours." << std::endl;
 } catch (const std::exception &e) {

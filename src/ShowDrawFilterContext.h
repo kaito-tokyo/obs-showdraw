@@ -123,10 +123,13 @@ private:
 	std::shared_ptr<gs_texture_t> textureCannyEdge = nullptr;
 
 	std::unique_ptr<AsyncTextureReader<2>> readerCannyEdge = nullptr;
+	std::mutex readerCannyEdgeMutex;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
 
 	BS::thread_pool<> threadPool;
+
+	std::vector<std::uint8_t> processFrameCannyEdgeBuffer;
 };
 
 } // namespace obs_showdraw
