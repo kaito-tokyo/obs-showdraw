@@ -28,7 +28,32 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 using namespace kaito_tokyo::obs_bridge_utils;
 using namespace kaito_tokyo::obs_showdraw;
 
-inline gs_eparam_t *getEffectParam(const unique_gs_effect_t &effect, const char *name)
+namespace {
+
+struct RenderingGuard {
+	gs_texture_t *previousRenderTarget;
+	gs_zstencil_t *previousZStencil;
+	gs_color_space previousColorSpace;
+
+	RenderingGuard(gs_texture_t *targetTexture, gs_zstencil_t *targetZStencil = nullptr,
+		       gs_color_space targetColorSpace = GS_CS_SRGB)
+		: previousRenderTarget(gs_get_render_target()),
+		  previousZStencil(gs_get_zstencil_target()),
+		  previousColorSpace(gs_get_color_space())
+	{
+		gs_set_render_target_with_color_space(targetTexture, targetZStencil, targetColorSpace);
+		gs_blend_state_push();
+		gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+	}
+
+	~RenderingGuard()
+	{
+		gs_blend_state_pop();
+		gs_set_render_target_with_color_space(previousRenderTarget, previousZStencil, previousColorSpace);
+	}
+};
+
+gs_eparam_t *getEffectParam(const unique_gs_effect_t &effect, const char *name)
 {
 	gs_eparam_t *param = gs_effect_get_param_by_name(effect.get(), name);
 
@@ -40,7 +65,7 @@ inline gs_eparam_t *getEffectParam(const unique_gs_effect_t &effect, const char 
 	return param;
 }
 
-inline gs_technique_t *getEffectTech(const unique_gs_effect_t &effect, const char *name)
+gs_technique_t *getEffectTech(const unique_gs_effect_t &effect, const char *name)
 {
 	gs_technique_t *tech = gs_effect_get_technique(effect.get(), name);
 
@@ -51,6 +76,8 @@ inline gs_technique_t *getEffectTech(const unique_gs_effect_t &effect, const cha
 
 	return tech;
 }
+
+} // namespace
 
 namespace kaito_tokyo {
 namespace obs_showdraw {
@@ -107,17 +134,27 @@ void DrawingEffect::applyEffectPass(gs_technique_t *technique, gs_texture_t *sou
 	gs_technique_end(technique);
 }
 
-void DrawingEffect::applyLuminanceExtractionPass(gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
+void DrawingEffect::applyLuminanceExtractionPass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+						 gs_texture_t *sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	RenderingGuard guard(targetTexture);
 
-	gs_effect_set_texture(textureImage, sourceTexture);
+	gs_technique_t *tech = techExtractLuminance;
+	std::size_t passes = gs_technique_begin(tech);
+	for (std::size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(tech, i)) {
+			gs_effect_set_texture(textureImage, sourceTexture);
 
-	applyEffectPass(techExtractLuminance, sourceTexture);
+			gs_draw_sprite(nullptr, 0, width, height);
+			gs_technique_end_pass(tech);
+		}
+	}
+	gs_technique_end(tech);
 }
 
-void DrawingEffect::applyMedianFilteringPass(float texelWidth, float texelHeight, int kernelSize,
-					     gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
+void DrawingEffect::applyMedianFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth,
+					     float texelHeight, int kernelSize, gs_texture_t *targetTexture,
+					     gs_texture_t *targetIntermediateTexture,
 					     gs_texture_t *sourceTexture) noexcept
 {
 	gs_technique_t *techHorizontal, *techVertical;
@@ -144,90 +181,144 @@ void DrawingEffect::applyMedianFilteringPass(float texelWidth, float texelHeight
 		return;
 	}
 
-	gs_set_render_target(targetIntermediateTexture, nullptr);
+	{
+		RenderingGuard guard(targetIntermediateTexture);
+		gs_technique_t *tech = techHorizontal;
+		std::size_t passes = gs_technique_begin(tech);
+		for (std::size_t i = 0; i < passes; i++) {
+			if (gs_technique_begin_pass(tech, i)) {
+				gs_effect_set_texture(textureImage, sourceTexture);
 
-	gs_effect_set_texture(textureImage, sourceTexture);
+				gs_effect_set_float(floatTexelWidth, texelWidth);
 
-	gs_effect_set_float(floatTexelWidth, texelWidth);
-	gs_effect_set_int(intKernelSize, kernelSize);
+				gs_draw_sprite(nullptr, 0, width, height);
+				gs_technique_end_pass(tech);
+			}
+		}
+		gs_technique_end(tech);
+	}
 
-	applyEffectPass(techHorizontal, sourceTexture);
+	{
+		RenderingGuard guard(targetTexture);
+		gs_technique_t *tech = techVertical;
+		std::size_t passes = gs_technique_begin(tech);
+		for (std::size_t i = 0; i < passes; i++) {
+			if (gs_technique_begin_pass(tech, i)) {
+				gs_effect_set_texture(textureImage, sourceTexture);
 
-	gs_set_render_target(targetTexture, nullptr);
+				gs_effect_set_float(floatTexelHeight, texelHeight);
 
-	gs_effect_set_texture(textureImage, targetIntermediateTexture);
-
-	gs_effect_set_float(floatTexelHeight, texelHeight);
-	gs_effect_set_int(intKernelSize, kernelSize);
-
-	applyEffectPass(techVertical, targetIntermediateTexture);
+				gs_draw_sprite(nullptr, 0, width, height);
+				gs_technique_end_pass(tech);
+			}
+		}
+		gs_technique_end(tech);
+	}
 }
 
-void DrawingEffect::applyMotionAdaptiveFilteringPass(float texelWidth, float texelHeight, int kernelSize,
-						     float strength, float motionThreshold, gs_texture_t *targetTexture,
+void DrawingEffect::applyMotionAdaptiveFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth,
+						     float texelHeight, int kernelSize, float strength,
+						     float motionThreshold, gs_texture_t *targetTexture,
 						     gs_texture_t *targetMotionMapTexture,
 						     gs_texture_t *targetIntermediateTexture,
 						     gs_texture_t *sourceTexture,
 						     gs_texture_t *sourcePreviousLuminanceTexture) noexcept
 {
-	// Calculate horizontal motion map
-	gs_set_render_target(targetIntermediateTexture, nullptr);
+	{
+		RenderingGuard guard(targetIntermediateTexture);
+		gs_technique_t *tech = techCalculateHorizontalMotionMap;
+		std::size_t passes = gs_technique_begin(tech);
+		for (std::size_t i = 0; i < passes; i++) {
+			if (gs_technique_begin_pass(tech, i)) {
+				gs_effect_set_texture(textureImage, sourceTexture);
+				gs_effect_set_texture(textureImage1, sourcePreviousLuminanceTexture);
 
-	gs_effect_set_texture(textureImage, sourceTexture);
-	gs_effect_set_texture(textureImage1, sourcePreviousLuminanceTexture);
+				gs_effect_set_float(floatTexelWidth, texelWidth);
+				gs_effect_set_int(intKernelSize, kernelSize);
 
-	gs_effect_set_float(floatTexelWidth, texelWidth);
-	gs_effect_set_int(intKernelSize, kernelSize);
+				gs_draw_sprite(nullptr, 0, width, height);
+				gs_technique_end_pass(tech);
+			}
+		}
+		gs_technique_end(tech);
+	}
 
-	applyEffectPass(techCalculateHorizontalMotionMap, sourceTexture);
+	{
+		RenderingGuard guard(targetMotionMapTexture);
+		gs_technique_t *tech = techCalculateVerticalMotionMap;
+		std::size_t passes = gs_technique_begin(tech);
+		for (std::size_t i = 0; i < passes; i++) {
+			if (gs_technique_begin_pass(tech, i)) {
+				gs_effect_set_texture(textureImage, targetIntermediateTexture);
 
-	// Calculate vertical motion map
-	gs_set_render_target(targetMotionMapTexture, nullptr);
+				gs_effect_set_float(floatTexelHeight, texelHeight);
+				gs_effect_set_int(intKernelSize, kernelSize);
 
-	gs_effect_set_texture(textureImage, targetIntermediateTexture);
+				gs_draw_sprite(nullptr, 0, width, height);
+				gs_technique_end_pass(tech);
+			}
+		}
+		gs_technique_end(tech);
+	}
 
-	gs_effect_set_float(floatTexelHeight, texelHeight);
-	gs_effect_set_int(intKernelSize, kernelSize);
+	{
+		RenderingGuard guard(targetTexture);
+		gs_technique_t *tech = techMotionAdaptiveFiltering;
+		std::size_t passes = gs_technique_begin(tech);
+		for (std::size_t i = 0; i < passes; i++) {
+			if (gs_technique_begin_pass(tech, i)) {
+				gs_effect_set_texture(textureImage, sourceTexture);
+				gs_effect_set_texture(textureImage1, sourcePreviousLuminanceTexture);
+				gs_effect_set_texture(textureMotionMap, targetMotionMapTexture);
 
-	applyEffectPass(techCalculateVerticalMotionMap, targetIntermediateTexture);
+				gs_effect_set_float(floatStrength, strength);
+				gs_effect_set_float(floatMotionThreshold, motionThreshold);
 
-	// Apply motion adaptive filtering
-	gs_set_render_target(targetTexture, nullptr);
-
-	gs_effect_set_texture(textureImage, sourceTexture);
-	gs_effect_set_texture(textureImage1, sourcePreviousLuminanceTexture);
-	gs_effect_set_texture(textureMotionMap, targetMotionMapTexture);
-
-	gs_effect_set_float(floatStrength, strength);
-	gs_effect_set_float(floatMotionThreshold, motionThreshold);
-
-	applyEffectPass(techMotionAdaptiveFiltering, sourceTexture);
+				gs_draw_sprite(nullptr, 0, width, height);
+				gs_technique_end_pass(tech);
+			}
+		}
+		gs_technique_end(tech);
+	}
 }
 
-void DrawingEffect::applySobelPass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
-				   gs_texture_t *sourceTexture) noexcept
+void DrawingEffect::applySobelPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
+				   gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	RenderingGuard guard(targetTexture);
+	gs_technique_t *tech = techApplySobel;
+	std::size_t passes = gs_technique_begin(tech);
+	for (std::size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(tech, i)) {
+			gs_effect_set_texture(textureImage, sourceTexture);
 
-	gs_effect_set_texture(textureImage, sourceTexture);
+			gs_effect_set_float(floatTexelWidth, texelWidth);
+			gs_effect_set_float(floatTexelHeight, texelHeight);
 
-	gs_effect_set_float(floatTexelWidth, texelWidth);
-	gs_effect_set_float(floatTexelHeight, texelHeight);
-
-	applyEffectPass(techApplySobel, sourceTexture);
+			gs_draw_sprite(nullptr, 0, width, height);
+			gs_technique_end_pass(tech);
+		}
+	}
 }
 
-void DrawingEffect::applyFinalizeSobelMagnitudePass(bool useLog, float scalingFactor, gs_texture_t *targetTexture,
+void DrawingEffect::applyFinalizeSobelMagnitudePass(std::uint32_t width, std::uint32_t height, bool useLog,
+						    float scalingFactor, gs_texture_t *targetTexture,
 						    gs_texture_t *sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	RenderingGuard guard(targetTexture);
+	gs_technique_t *tech = techFinalizeSobelMagnitude;
+	std::size_t passes = gs_technique_begin(tech);
+	for (std::size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(tech, i)) {
+			gs_effect_set_texture(textureImage, sourceTexture);
 
-	gs_effect_set_texture(textureImage, sourceTexture);
+			gs_effect_set_bool(boolUseLog, useLog);
+			gs_effect_set_float(floatScalingFactor, scalingFactor);
 
-	gs_effect_set_bool(boolUseLog, useLog);
-	gs_effect_set_float(floatScalingFactor, scalingFactor);
-
-	applyEffectPass(techFinalizeSobelMagnitude, sourceTexture);
+			gs_draw_sprite(nullptr, 0, width, height);
+			gs_technique_end_pass(tech);
+		}
+	}
 }
 
 void DrawingEffect::applySuppressNonMaximumPass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
@@ -311,47 +402,22 @@ void DrawingEffect::applyMorphologyPass(gs_technique_t *horizontalTechnique, gs_
 	applyEffectPass(verticalTechnique, targetIntermediateTexture);
 }
 
-namespace {
-
-struct RenderingGuard {
-	gs_texture_t *previousRenderTarget;
-	gs_zstencil_t *previousZStencil;
-	gs_color_space previousColorSpace;
-
-	RenderingGuard(gs_texture_t *targetTexture, gs_zstencil_t *targetZStencil = nullptr,
-		       gs_color_space targetColorSpace = GS_CS_SRGB)
-		: previousRenderTarget(gs_get_render_target()),
-		  previousZStencil(gs_get_zstencil_target()),
-		  previousColorSpace(gs_get_color_space())
-	{
-		gs_set_render_target_with_color_space(targetTexture, targetZStencil, targetColorSpace);
-		gs_blend_state_push();
-		gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
-	}
-
-	~RenderingGuard()
-	{
-		gs_blend_state_pop();
-		gs_set_render_target_with_color_space(previousRenderTarget, previousZStencil, previousColorSpace);
-	}
-};
-
-} // namespace
-
 void DrawingEffect::drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
 				   gs_texture_t *sourceTexture) noexcept
 {
 	RenderingGuard guard(targetTexture);
 
-	size_t passes = gs_technique_begin(techDraw);
+	gs_technique_t *tech = techDraw;
+	size_t passes = gs_technique_begin(tech);
 	for (size_t i = 0; i < passes; i++) {
-		if (gs_technique_begin_pass(techDraw, i)) {
+		if (gs_technique_begin_pass(tech, i)) {
 			gs_effect_set_texture(textureImage, sourceTexture);
+
 			gs_draw_sprite(nullptr, 0, width, height);
-			gs_technique_end_pass(techDraw);
+			gs_technique_end_pass(tech);
 		}
 	}
-	gs_technique_end(techDraw);
+	gs_technique_end(tech);
 }
 
 } // namespace obs_showdraw
