@@ -1,3 +1,4 @@
 .deps/
 .vscode/
 build_macos/
+build_shader_macos/
