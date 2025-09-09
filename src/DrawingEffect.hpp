@@ -102,20 +102,19 @@ public:
 					     float scalingFactor, gs_texture_t *targetTexture,
 					     gs_texture_t *sourceTexture) noexcept;
 
-	void applySuppressNonMaximumPass(std::uint32_t width, std::uint32_t height, float texelWidth,
-					 float texelHeight, gs_texture_t *targetTexture,
-					 gs_texture_t *sourceTexture) noexcept;
-
-	void applyHysteresisClassifyPass(std::uint32_t width, std::uint32_t height, float texelWidth,
-					 float texelHeight, float highThreshold, float lowThreshold,
+	void applySuppressNonMaximumPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
 					 gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
+
+	void applyHysteresisClassifyPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
+					 float highThreshold, float lowThreshold, gs_texture_t *targetTexture,
+					 gs_texture_t *sourceTexture) noexcept;
 
 	void applyHysteresisPropagatePass(std::uint32_t width, std::uint32_t height, float texelWidth,
 					  float texelHeight, gs_texture_t *targetTexture,
 					  gs_texture_t *sourceTexture) noexcept;
 
-	void applyHysteresisFinalizePass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
-					 gs_texture_t *sourceTexture) noexcept;
+	void applyHysteresisFinalizePass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
+					 gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
 
 	void applyMorphologyPass(std::uint32_t width, std::uint32_t height, gs_technique_t *horizontalTechnique,
 				 gs_technique_t *verticalTechnique, float texelWidth, float texelHeight, int kernelSize,

@@ -386,17 +386,25 @@ void DrawingEffect::applyHysteresisPropagatePass(std::uint32_t width, std::uint3
 	gs_technique_end(tech);
 }
 
-void DrawingEffect::applyHysteresisFinalizePass(float texelWidth, float texelHeight, gs_texture_t *targetTexture,
+void DrawingEffect::applyHysteresisFinalizePass(std::uint32_t width, std::uint32_t height, float texelWidth,
+						float texelHeight, gs_texture_t *targetTexture,
 						gs_texture_t *sourceTexture) noexcept
 {
-	gs_set_render_target(targetTexture, nullptr);
+	RenderingGuard guard(targetTexture);
+	gs_technique_t *tech = techHysteresisFinalize;
+	std::size_t passes = gs_technique_begin(tech);
+	for (std::size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(tech, i)) {
+			gs_effect_set_texture(textureImage, sourceTexture);
 
-	gs_effect_set_texture(textureImage, sourceTexture);
+			gs_effect_set_float(floatTexelWidth, texelWidth);
+			gs_effect_set_float(floatTexelHeight, texelHeight);
 
-	gs_effect_set_float(floatTexelWidth, texelWidth);
-	gs_effect_set_float(floatTexelHeight, texelHeight);
-
-	applyEffectPass(techHysteresisFinalize, sourceTexture);
+			gs_draw_sprite(nullptr, 0, width, height);
+			gs_technique_end_pass(tech);
+		}
+	}
+	gs_technique_end(tech);
 }
 
 void DrawingEffect::applyMorphologyPass(std::uint32_t width, std::uint32_t height, gs_technique_t *horizontalTechnique,

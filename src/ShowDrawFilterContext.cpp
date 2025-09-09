@@ -637,7 +637,7 @@ void ShowDrawFilterContext::videoRender()
 			std::swap(textureSource, textureTarget);
 		}
 
-		_drawingEffect->applyHysteresisFinalizePass(texelWidth, texelHeight, textureTarget.get(),
+		_drawingEffect->applyHysteresisFinalizePass(width, height, texelWidth, texelHeight, textureTarget.get(),
 							    textureSource.get());
 		std::swap(textureSource, textureTarget);
 
