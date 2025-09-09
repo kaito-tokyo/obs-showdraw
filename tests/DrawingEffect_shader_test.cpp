@@ -286,7 +286,8 @@ TEST_F(DrawingEffectShaderTest, Median3)
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
 	gs_matrix_pop();
-	gs_projection_pop();	gs_viewport_pop();
+	gs_projection_pop();
+	gs_viewport_pop();
 
 	unique_gs_stagesurf_t stagesurf = make_unique_gs_stagesurf(width, height, colorFormat);
 	gs_stage_texture(stagesurf.get(), targetTexture.get());
