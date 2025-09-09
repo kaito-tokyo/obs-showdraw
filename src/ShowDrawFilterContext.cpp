@@ -52,6 +52,9 @@ try {
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to create showdraw context: %s", e.what());
 	return nullptr;
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to create showdraw context: unknown error");
+	return nullptr;
 }
 
 void showdraw_destroy(void *data)
@@ -70,6 +73,13 @@ try {
 	}
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to destroy showdraw context: %s", e.what());
+
+	{
+		graphics_context_guard guard;
+		kaito_tokyo::obs_bridge_utils::gs_unique::drain();
+	}
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to destroy showdraw context: unknown error");
 
 	{
 		graphics_context_guard guard;
@@ -116,6 +126,9 @@ try {
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to get properties: %s", e.what());
 	return nullptr;
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to get properties: unknown error");
+	return nullptr;
 }
 
 void showdraw_update(void *data, obs_data_t *settings)
@@ -129,6 +142,8 @@ try {
 	self->get()->update(settings);
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to update showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to update showdraw context: unknown error");
 }
 
 void showdraw_activate(void *data)
@@ -142,6 +157,8 @@ try {
 	self->get()->activate();
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to activate showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to activate showdraw context: unknown error");
 }
 
 void showdraw_deactivate(void *data)
@@ -157,6 +174,8 @@ try {
 	self->get()->deactivate();
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to deactivate showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to deactivate showdraw context: unknown error");
 }
 
 void showdraw_show(void *data)
@@ -172,6 +191,8 @@ try {
 	self->get()->show();
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to show showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to show showdraw context: unknown error");
 }
 
 void showdraw_hide(void *data)
@@ -187,6 +208,8 @@ try {
 	self->get()->hide();
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to hide showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to hide showdraw context: unknown error");
 }
 
 void showdraw_video_tick(void *data, float seconds)
@@ -200,6 +223,8 @@ try {
 	self->get()->videoTick(seconds);
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to tick showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to tick showdraw context: unknown error");
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
@@ -222,19 +247,8 @@ try {
 	}
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to render video in showdraw context: %s", e.what());
-}
-
-void showdraw_module_load()
-{
-	// Nothing to do
-}
-
-void showdraw_module_unload()
-try {
-	graphics_context_guard guard;
-	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
-} catch (const std::exception &e) {
-	obs_log(LOG_ERROR, "Failed to unload showdraw module: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to render video in showdraw context: unknown error");
 }
 
 struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame)
@@ -249,6 +263,28 @@ try {
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to filter video in showdraw context: %s", e.what());
 	return frame;
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to filter video in showdraw context: unknown error");
+	return frame;
+}
+
+void showdraw_module_load()
+try {
+	// Nothing to do
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to load showdraw module: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to load showdraw module: unknown error");
+}
+
+void showdraw_module_unload()
+try {
+	graphics_context_guard guard;
+	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to unload showdraw module: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to unload showdraw module: unknown error");
 }
 
 namespace kaito_tokyo {
