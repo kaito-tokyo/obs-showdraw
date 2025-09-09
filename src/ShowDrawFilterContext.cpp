@@ -747,18 +747,22 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 
 void ShowDrawFilterContext::processFrame(const TaskQueue::CancellationToken &token) noexcept
 try {
-	std::lock_guard<std::mutex> lock(readerCannyEdgeMutex);
 	if (!readerCannyEdge) {
-		slog(LOG_DEBUG) << "Texture reader not initialized yet";
+		slog(LOG_ERROR) << "Texture reader not initialized yet";
 		return;
 	}
 
-	if (token.get()) {
+	if (token->load()) {
 		return;
 	}
 
-	cv::Mat cannyEdgeImage(height, width, CV_8UC4, readerCannyEdge->getBuffer().data(),
-			       readerCannyEdge->getBufferLinesize());
+	cv::Mat cannyEdgeImage;
+	{
+		std::lock_guard<std::mutex> lock(readerCannyEdgeMutex);
+		cannyEdgeImage = cv::Mat(height, width, CV_8UC4, readerCannyEdge->getBuffer().data(),
+					 readerCannyEdge->getBufferLinesize());
+	}
+
 	cv::Mat singleChannelImage;
 	cv::extractChannel(cannyEdgeImage, singleChannelImage, 0);
 
