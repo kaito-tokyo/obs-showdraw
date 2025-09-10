@@ -76,7 +76,7 @@ std::optional<LatestVersion> UpdateChecker::fetch()
 	if (r.status_code == 200) {
 		return LatestVersion(r.text);
 	} else {
-		slog(LOG_WARNING) << "Failed to fetch latest version information: HTTP " << r.status_code;
+		obs_log(LOG_WARNING, "Failed to fetch latest version information: HTTP %ld", r.status_code);
 		return std::nullopt;
 	}
 }

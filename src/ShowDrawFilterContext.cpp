@@ -60,7 +60,7 @@ try {
 void showdraw_destroy(void *data)
 try {
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_destroy called with null data";
+		obs_log(LOG_ERROR, "showdraw_destroy called with null data");
 		return;
 	}
 
@@ -118,7 +118,7 @@ void showdraw_get_defaults(obs_data_t *data)
 obs_properties_t *showdraw_get_properties(void *data)
 try {
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_get_properties called with null data";
+		obs_log(LOG_ERROR, "showdraw_get_properties called with null data");
 		return nullptr;
 	}
 
@@ -823,7 +823,7 @@ try {
 		cannyEdgeImage = _edgeImage;
 	}
 } catch (const std::exception &e) {
-	slog(LOG_ERROR) << "Failed to process frame: " << e.what();
+	obs_log(LOG_ERROR, "Failed to process frame: %s", e.what());
 }
 
 } // namespace obs_showdraw

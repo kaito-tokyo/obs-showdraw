@@ -59,7 +59,7 @@ gs_eparam_t *getEffectParam(const unique_gs_effect_t &effect, const char *name)
 	gs_eparam_t *param = gs_effect_get_param_by_name(effect.get(), name);
 
 	if (!param) {
-		slog(LOG_ERROR) << "Effect parameter " << name << " not found";
+		obs_log(LOG_ERROR, "Effect parameter %s not found", name);
 		throw std::runtime_error("Effect parameter not found");
 	}
 
@@ -71,7 +71,7 @@ gs_technique_t *getEffectTech(const unique_gs_effect_t &effect, const char *name
 	gs_technique_t *tech = gs_effect_get_technique(effect.get(), name);
 
 	if (!tech) {
-		slog(LOG_ERROR) << "Effect technique " << name << " not found";
+		obs_log(LOG_ERROR, "Effect technique %s not found", name);
 		throw std::runtime_error("Effect technique not found");
 	}
 

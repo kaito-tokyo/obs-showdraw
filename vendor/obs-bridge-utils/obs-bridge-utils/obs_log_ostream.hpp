@@ -84,10 +84,5 @@ private:
 	obs_log_streambuf streambuf;
 };
 
-inline obs_log_ostream slog(int level)
-{
-	return obs_log_ostream(level);
-}
-
 } // namespace obs_bridge_utils
 } // namespace kaito_tokyo
