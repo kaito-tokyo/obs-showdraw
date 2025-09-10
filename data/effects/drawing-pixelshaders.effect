@@ -1,10 +1,5 @@
 #define SQRT_20 4.472136f
 
-struct VertInOut {
-	float4 pos : POSITION;
-	float2 uv : TEXCOORD0;
-};
-
 //
 // Role:      Converts a color image to a grayscale luminance map. This is the first step for many image processing operations.
 // Prerequisite: The original video source from OBS.
