@@ -148,6 +148,9 @@ private:
 
 	cv::Mat cannyEdgeImage;
 	std::mutex cannyEdgeImageMutex;
+
+	cv::Mat detectedContoursImage;
+	std::mutex detectedContoursImageMutex;
 };
 
 } // namespace obs_showdraw

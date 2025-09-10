@@ -41,6 +41,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "ShowDrawFilterContext.h"
 
+using namespace kaito_tokyo::obs_bridge_utils;
 using namespace kaito_tokyo::obs_showdraw;
 
 namespace kaito_tokyo {

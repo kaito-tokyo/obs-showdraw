@@ -135,7 +135,7 @@ try {
 void showdraw_update(void *data, obs_data_t *settings)
 try {
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_update called with null data";
+		obs_log(LOG_ERROR, "showdraw_update called with null data");
 		return;
 	}
 
@@ -167,7 +167,7 @@ try {
 	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
 
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_deactivate called with null data";
+		obs_log(LOG_ERROR, "showdraw_deactivate called with null data");
 		return;
 	}
 
@@ -184,7 +184,7 @@ try {
 	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
 
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_show called with null data";
+		obs_log(LOG_ERROR, "showdraw_show called with null data");
 		return;
 	}
 
@@ -201,7 +201,7 @@ try {
 	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
 
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_hide called with null data";
+		obs_log(LOG_ERROR, "showdraw_hide called with null data");
 		return;
 	}
 
@@ -216,7 +216,7 @@ try {
 void showdraw_video_tick(void *data, float seconds)
 try {
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_video_tick called with null data";
+		obs_log(LOG_ERROR, "showdraw_video_tick called with null data");
 		return;
 	}
 
@@ -255,7 +255,7 @@ try {
 struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame)
 try {
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_filter_video called with null data";
+		obs_log(LOG_ERROR, "showdraw_filter_video called with null data");
 		return frame;
 	}
 
@@ -309,7 +309,7 @@ void ShowDrawFilterContext::afterCreate(obs_data_t *settings, obs_source_t *sour
 {
 	UNUSED_PARAMETER(source);
 
-	slog(LOG_INFO) << "Creating showdraw filter context";
+	obs_log(LOG_INFO, "Creating showdraw filter context");
 
 	update(settings);
 
@@ -512,7 +512,7 @@ void ShowDrawFilterContext::update(obs_data_t *settings)
 		reloadDrawingEffectInGraphics();
 	} catch (const std::exception &e) {
 		obs_leave_graphics();
-		slog(LOG_ERROR) << "Failed to reload drawing effect: " << e.what();
+		obs_log(LOG_ERROR, "Failed to reload drawing effect: %s", e.what());
 		return;
 	}
 	obs_leave_graphics();
@@ -520,22 +520,22 @@ void ShowDrawFilterContext::update(obs_data_t *settings)
 
 void ShowDrawFilterContext::activate()
 {
-	slog(LOG_INFO) << "Activating showdraw filter context";
+	obs_log(LOG_INFO, "Activating showdraw filter context");
 }
 
 void ShowDrawFilterContext::deactivate()
 {
-	slog(LOG_INFO) << "Deactivating showdraw filter context";
+	obs_log(LOG_INFO, "Deactivating showdraw filter context");
 }
 
 void ShowDrawFilterContext::show()
 {
-	slog(LOG_INFO) << "Showing showdraw filter context";
+	obs_log(LOG_INFO, "Showing showdraw filter context");
 }
 
 void ShowDrawFilterContext::hide()
 {
-	slog(LOG_INFO) << "Hiding showdraw filter context";
+	obs_log(LOG_INFO, "Hiding showdraw filter context");
 }
 
 void ShowDrawFilterContext::videoTick(float seconds)
@@ -544,7 +544,7 @@ void ShowDrawFilterContext::videoTick(float seconds)
 		if (auto s = self.lock()) {
 			s->processFrame(token);
 		} else {
-			slog(LOG_DEBUG) << "ShowDrawFilterContext has been destroyed, skipping processFrame";
+			obs_log(LOG_DEBUG, "ShowDrawFilterContext has been destroyed, skipping processFrame");
 		}
 	});
 }
@@ -553,12 +553,12 @@ void ShowDrawFilterContext::videoRender()
 {
 	auto _drawingEffect = std::atomic_load(&drawingEffect);
 	if (!_drawingEffect) {
-		slog(LOG_DEBUG) << "Drawing effect not loaded";
+		obs_log(LOG_DEBUG, "Drawing effect not loaded");
 		throw skip_video_filter_exception();
 	}
 
 	if (width == 0 || height == 0) {
-		slog(LOG_DEBUG) << "Target source has zero width or height";
+		obs_log(LOG_DEBUG, "Target source has zero width or height");
 		throw skip_video_filter_exception();
 	}
 
@@ -584,7 +584,7 @@ void ShowDrawFilterContext::videoRender()
 	gs_texture_t *defaultRenderTarget = gs_get_render_target();
 
 	if (!obs_source_process_filter_begin(filter, GS_BGRA, OBS_ALLOW_DIRECT_RENDERING)) {
-		slog(LOG_ERROR) << "Could not begin processing filter";
+		obs_log(LOG_ERROR, "Could not begin processing filter");
 		throw skip_video_filter_exception();
 	}
 
@@ -686,7 +686,7 @@ void ShowDrawFilterContext::videoRender()
 		{
 			std::lock_guard<std::mutex> lock(cannyEdgeImageMutex);
 			if (cannyEdgeImage.empty()) {
-				slog(LOG_DEBUG) << "Canny edge image is empty, skipping rendering";
+				obs_log(LOG_DEBUG, "Canny edge image is empty, skipping rendering");
 				throw skip_video_filter_exception();
 			}
 			const uint8_t *data = cannyEdgeImage.data;
@@ -694,6 +694,19 @@ void ShowDrawFilterContext::videoRender()
 				make_unique_gs_texture(cannyEdgeImage.cols, cannyEdgeImage.rows, GS_R8, 1, &data, 0);
 		}
 		_drawingEffect->drawGrayscaleTexture(width, height, defaultRenderTarget, bgrxCannyEdge.get());
+	} else if (extractionMode == ExtractionMode::ShowDetectedContours) {
+		unique_gs_texture_t bgrxDetectedContours;
+		{
+			std::lock_guard<std::mutex> lock(detectedContoursImageMutex);
+			if (detectedContoursImage.empty()) {
+				obs_log(LOG_DEBUG, "Detected contours image is empty, skipping rendering");
+				throw skip_video_filter_exception();
+			}
+			const uint8_t *data = detectedContoursImage.data;
+			bgrxDetectedContours = make_unique_gs_texture(detectedContoursImage.cols,
+								      detectedContoursImage.rows, GS_BGRX, 1, &data, 0);
+		}
+		_drawingEffect->drawColoredImage(width, height, defaultRenderTarget, bgrxDetectedContours.get());
 	}
 
 	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
@@ -752,7 +765,7 @@ try {
 
 	std::atomic_store(&drawingEffect, newDrawingEffect);
 } catch (const std::exception &e) {
-	slog(LOG_ERROR) << "Failed to load drawing effect: " << e.what();
+	obs_log(LOG_ERROR, "Failed to load drawing effect: %s", e.what());
 	throw;
 }
 
@@ -799,7 +812,7 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 void ShowDrawFilterContext::processFrame(const TaskQueue::CancellationToken &token) noexcept
 try {
 	if (!readerCannyEdge) {
-		slog(LOG_DEBUG) << "Texture reader not initialized yet";
+		obs_log(LOG_DEBUG, "Texture reader not initialized yet");
 		return;
 	}
 
@@ -821,6 +834,21 @@ try {
 	{
 		std::lock_guard<std::mutex> lock(cannyEdgeImageMutex);
 		cannyEdgeImage = _edgeImage;
+	}
+
+	std::vector<std::vector<cv::Point>> contours;
+	cv::findContours(_edgeImage, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+	cv::Mat _detectedContourImage = cv::Mat::zeros(_edgeImage.size(), CV_8UC4);
+	std::vector<std::vector<cv::Point>> approxContours(contours.size());
+	for (size_t i = 0; i < contours.size(); i++) {
+		cv::approxPolyDP(contours[i], approxContours[i], 0.02 * cv::arcLength(contours[i], true), true);
+	}
+	cv::drawContours(_detectedContourImage, approxContours, -1, cv::Scalar(0, 255, 0, 255), 2);
+
+	{
+		std::lock_guard<std::mutex> lock(detectedContoursImageMutex);
+		detectedContoursImage = _detectedContourImage;
 	}
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to process frame: %s", e.what());
