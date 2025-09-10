@@ -35,7 +35,8 @@ struct RenderingGuard {
 	gs_zstencil_t *previousZStencil;
 	gs_color_space previousColorSpace;
 
-	RenderingGuard(gs_texture_t *targetTexture, gs_zstencil_t *targetZStencil = nullptr,
+	RenderingGuard(gs_texture_t *targetTexture, gs_blend_type srcBlendType = GS_BLEND_ONE,
+		       gs_blend_type dstBlendType = GS_BLEND_ZERO, gs_zstencil_t *targetZStencil = nullptr,
 		       gs_color_space targetColorSpace = GS_CS_SRGB)
 		: previousRenderTarget(gs_get_render_target()),
 		  previousZStencil(gs_get_zstencil_target()),
@@ -43,7 +44,7 @@ struct RenderingGuard {
 	{
 		gs_set_render_target_with_color_space(targetTexture, targetZStencil, targetColorSpace);
 		gs_blend_state_push();
-		gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+		gs_blend_function(srcBlendType, dstBlendType);
 	}
 
 	~RenderingGuard()
@@ -435,6 +436,24 @@ void DrawingEffect::applyMorphologyPass(std::uint32_t width, std::uint32_t heigh
 		}
 		gs_technique_end(tech);
 	}
+}
+
+void DrawingEffect::drawWithBlending(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+				     gs_texture_t *sourceTexture) noexcept
+{
+	RenderingGuard guard(targetTexture, GS_BLEND_ONE, GS_BLEND_INVSRCALPHA);
+
+	gs_technique_t *tech = techDraw;
+	size_t passes = gs_technique_begin(tech);
+	for (size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(tech, i)) {
+			gs_effect_set_texture(textureImage, sourceTexture);
+
+			gs_draw_sprite(nullptr, 0, width, height);
+			gs_technique_end_pass(tech);
+		}
+	}
+	gs_technique_end(tech);
 }
 
 void DrawingEffect::drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,

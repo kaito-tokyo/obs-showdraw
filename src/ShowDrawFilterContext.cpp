@@ -65,6 +65,7 @@ try {
 	}
 
 	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	self->get()->shutdown();
 	delete self;
 
 	{
@@ -298,6 +299,7 @@ const char *ShowDrawFilterContext::getName() noexcept
 ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept
 	: settings(settings),
 	  filter(source),
+	  taskQueueProcessFrame(std::make_unique<TaskQueue>()),
 	  drawingEffect(nullptr)
 {
 	runningPreset.presetName = " running";
@@ -319,7 +321,12 @@ void ShowDrawFilterContext::afterCreate(obs_data_t *settings, obs_source_t *sour
 
 ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 {
-	slog(LOG_INFO) << "Destroying showdraw filter context";
+	obs_log(LOG_INFO, "Destroying showdraw filter context");
+}
+
+void ShowDrawFilterContext::shutdown() noexcept
+{
+	taskQueueProcessFrame.reset();
 }
 
 uint32_t ShowDrawFilterContext::getWidth() const noexcept
@@ -408,6 +415,8 @@ obs_properties_t *ShowDrawFilterContext::getProperties()
 				  static_cast<long long>(ExtractionMode::SobelMagnitude));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeEdgeDetection"),
 				  static_cast<long long>(ExtractionMode::EdgeDetection));
+	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeShowDetectedContours"),
+				  static_cast<long long>(ExtractionMode::ShowDetectedContours));
 
 	obs_property_t *propMedianFilteringKernelSize = obs_properties_add_list(
 		props, "medianFilteringKernelSize", obs_module_text("medianFilteringKernelSize"), OBS_COMBO_TYPE_LIST,
@@ -525,8 +534,12 @@ void ShowDrawFilterContext::hide()
 
 void ShowDrawFilterContext::videoTick(float seconds)
 {
-	taskQueueProcessFrame.push([self = shared_from_this(), seconds](const TaskQueue::CancellationToken &token) {
-		self->processFrame(token);
+	taskQueueProcessFrame->push([self = weak_from_this(), seconds](const TaskQueue::CancellationToken &token) {
+		if (auto s = self.lock()) {
+			s->processFrame(token);
+		} else {
+			slog(LOG_DEBUG) << "ShowDrawFilterContext has been destroyed, skipping processFrame";
+		}
 	});
 }
 
@@ -600,7 +613,7 @@ void ShowDrawFilterContext::videoRender()
 	}
 
 	if (extractionMode >= ExtractionMode::SobelMagnitude) {
-		std::shared_ptr<gs_texture_t> textureComplexSobel = textureTemporary1;
+		unique_gs_texture_t &textureComplexSobel = textureTemporary1;
 
 		_drawingEffect->applySobelPass(width, height, texelWidth, texelHeight, textureComplexSobel.get(),
 					       textureSource.get());
@@ -679,13 +692,24 @@ void ShowDrawFilterContext::videoRender()
 		readerCannyEdge->stage(textureCannyEdge.get());
 	}
 
+	if (extractionMode == ExtractionMode::ShowDetectedContours) {
+		std::lock_guard<std::mutex> lock(contourImageMutex);
+		if (!contourImage.empty()) {
+			const uint8_t *data = contourImage.data;
+			textureContour = make_unique_gs_texture(width, height, GS_BGRA, 1, &data, 0);
+			_drawingEffect->drawWithBlending(width, height, textureFinalSobelMagnitude.get(),
+							 textureContour.get());
+		}
+	}
+
 	gs_viewport_pop();
 	gs_projection_pop();
 	gs_matrix_pop();
 
 	if (extractionMode == ExtractionMode::MotionMapCalculation) {
 		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureMotionMap.get());
-	} else if (extractionMode == ExtractionMode::SobelMagnitude) {
+	} else if (extractionMode == ExtractionMode::SobelMagnitude ||
+		   extractionMode == ExtractionMode::ShowDetectedContours) {
 		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureFinalSobelMagnitude.get());
 	} else {
 		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureSource.get());
@@ -751,13 +775,13 @@ try {
 	throw;
 }
 
-void ensureTexture(std::shared_ptr<gs_texture_t> &texture, uint32_t width, uint32_t height)
+void ensureTexture(unique_gs_texture_t &texture, uint32_t width, uint32_t height)
 {
 	if (!texture || gs_texture_get_width(texture.get()) != width ||
 	    gs_texture_get_height(texture.get()) != height) {
 		unique_gs_texture_t newTexture =
 			make_unique_gs_texture(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
-		texture = std::shared_ptr<gs_texture_t>(std::move(newTexture));
+		texture = unique_gs_texture_t(std::move(newTexture));
 	}
 }
 
@@ -806,37 +830,12 @@ try {
 	std::vector<cv::Vec4i> hierarchy;
 	cv::findContours(singleChannelImage, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
 	slog(LOG_INFO) << "Found " << contours.size() << " contours";
-
-	std::vector<std::vector<cv::Point>> found_contours;
-
-	for (const auto &contour : contours) {
-		double area = cv::contourArea(contour);
-		if (area < 500) {
-			continue;
-		}
-
-		std::vector<cv::Point> approx;
-		double peri = cv::arcLength(contour, true);
-		cv::approxPolyDP(contour, approx, 0.02 * peri, true);
-
-		if (approx.size() == 4) {
-			cv::Rect rect = cv::boundingRect(approx);
-			double aspect_ratio = static_cast<double>(rect.width) / rect.height;
-			const double a4_aspect_ratio = 1.414;
-			const double tolerance = 0.25;
-
-			if ((std::abs(aspect_ratio - a4_aspect_ratio) < tolerance) ||
-			    (std::abs(1.0 / aspect_ratio - a4_aspect_ratio) < tolerance)) {
-
-				// --- ステップ5: 凸性の確認（オプション） ---
-				if (cv::isContourConvex(approx)) {
-					found_contours.push_back(approx);
-				}
-			}
-		}
+    
+	{
+		std::lock_guard<std::mutex> lock(contourImageMutex);
+		contourImage = cv::Mat::zeros(height, width, CV_8UC4);
+		cv::drawContours(contourImage, contours, -1, cv::Scalar(255, 0, 0, 255), 2, cv::LINE_AA);
 	}
-
-	std::cout << "Detected " << found_contours.size() << " A4-like contours." << std::endl;
 } catch (const std::exception &e) {
 	slog(LOG_ERROR) << "Failed to process frame: " << e.what();
 }

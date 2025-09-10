@@ -121,6 +121,9 @@ public:
 				 gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
 				 gs_texture_t *sourceTexture) noexcept;
 
+	void drawWithBlending(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+			      gs_texture_t *sourceTexture) noexcept;
+
 	void drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
 			    gs_texture_t *sourceTexture) noexcept;
 };

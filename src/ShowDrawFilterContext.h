@@ -51,7 +51,7 @@ void showdraw_module_unload(void);
 #include <memory>
 #include <optional>
 
-#include <BS_thread_pool.hpp>
+#include <opencv2/core.hpp>
 
 #include "AsyncTextureReader.hpp"
 #include "DrawingEffect.hpp"
@@ -72,10 +72,10 @@ public:
 	static const char *getName() noexcept;
 
 	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept;
-
 	void afterCreate(obs_data_t *settings, obs_source_t *source);
 
 	~ShowDrawFilterContext() noexcept;
+	void shutdown() noexcept;
 
 	std::pair<uint32_t, uint32_t> getDimensions() const noexcept;
 	uint32_t getWidth() const noexcept;
@@ -105,9 +105,11 @@ private:
 
 	obs_data_t *settings;
 	obs_source_t *filter;
+
+	std::unique_ptr<TaskQueue> taskQueueProcessFrame;
 	std::shared_ptr<DrawingEffect> drawingEffect;
+
 	Preset runningPreset;
-	TaskQueue taskQueueProcessFrame;
 
 	uint32_t width;
 	uint32_t height;
@@ -116,19 +118,23 @@ private:
 
 	double sobelMagnitudeFinalizationScalingFactor = 1.0;
 
-	std::shared_ptr<gs_texture_t> textureSource = nullptr;
-	std::shared_ptr<gs_texture_t> textureTarget = nullptr;
-	std::shared_ptr<gs_texture_t> textureTemporary1 = nullptr;
-	std::shared_ptr<gs_texture_t> textureTemporary2 = nullptr;
-	std::shared_ptr<gs_texture_t> texturePreviousLuminance = nullptr;
-	std::shared_ptr<gs_texture_t> textureMotionMap = nullptr;
-	std::shared_ptr<gs_texture_t> textureFinalSobelMagnitude = nullptr;
-	std::shared_ptr<gs_texture_t> textureCannyEdge = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureSource = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureTarget = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureTemporary1 = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureTemporary2 = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t texturePreviousLuminance = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureMotionMap = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureFinalSobelMagnitude = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureCannyEdge = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureContour = nullptr;
 
 	std::unique_ptr<AsyncTextureReader<2>> readerCannyEdge = nullptr;
 	std::mutex readerCannyEdgeMutex;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
+
+	cv::Mat contourImage;
+	std::mutex contourImageMutex;
 };
 
 } // namespace obs_showdraw
