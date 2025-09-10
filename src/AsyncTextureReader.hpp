@@ -21,6 +21,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <mutex>
 #include <stdexcept>
 #include <vector>
 
@@ -77,8 +78,10 @@ inline std::uint32_t getBytesPerPixel(gs_color_format format)
  *
  * @tparam BUFFER_COUNT The number of buffers in the ring. 2 for double buffering, 3 for triple buffering.
  *
- * @warning This class is NOT thread-safe. Access to an instance of this class from multiple
- * threads must be synchronized externally (e.g., using a mutex).
+ * @warning The `stage()` and `sync()` methods are thread-safe. However, `getBuffer()` returns a
+ * direct reference to the internal buffer. To avoid data races, the caller must ensure that this
+ * reference is not used while `sync()` could be executing in another thread. It is recommended to
+ * call `sync()` and access the buffer from the same thread.
  */
 template<std::size_t BUFFER_COUNT> class AsyncTextureReader {
 public:
@@ -108,6 +111,7 @@ public:
      */
 	void stage(gs_texture_t *sourceTexture) noexcept
 	{
+		std::lock_guard<std::mutex> lock(mutex);
 		gs_stage_texture(stagesurfs[writeIndex].get(), sourceTexture);
 		writeIndex = (writeIndex + 1) % BUFFER_COUNT;
 	}
@@ -123,7 +127,11 @@ public:
      */
 	void sync()
 	{
-		const std::size_t readIndex = writeIndex;
+		std::size_t readIndex;
+		{
+			std::lock_guard<std::mutex> lock(mutex);
+			readIndex = writeIndex;
+		}
 		gs_stagesurf_t *stagesurf = stagesurfs[readIndex].get();
 
 		std::uint8_t *data = nullptr;
@@ -139,14 +147,18 @@ public:
 		}
 
 		const std::size_t bytesToCopyPerRow =
-			std::min(static_cast<size_t>(linesize), static_cast<size_t>(bufferLinesize));
+			std::min(static_cast<std::size_t>(linesize), static_cast<std::size_t>(bufferLinesize));
 
-		// Following code won't throw exceptions.
-		// We must not leave the stagesurface mapped.
-		for (std::uint32_t y = 0; y < height; y++) {
-			const std::uint8_t *srcRow = data + (y * linesize);
-			std::uint8_t *dstRow = buffer.data() + (y * bufferLinesize);
-			std::memcpy(dstRow, srcRow, bytesToCopyPerRow);
+		try {
+			std::lock_guard<std::mutex> lock(mutex);
+			for (std::uint32_t y = 0; y < height; y++) {
+				const std::uint8_t *srcRow = data + (y * linesize);
+				std::uint8_t *dstRow = buffer.data() + (y * bufferLinesize);
+				std::memcpy(dstRow, srcRow, bytesToCopyPerRow);
+			}
+		} catch (...) {
+			gs_stagesurface_unmap(stagesurf);
+			throw;
 		}
 
 		gs_stagesurface_unmap(stagesurf);
@@ -191,6 +203,7 @@ private:
 	std::array<kaito_tokyo::obs_bridge_utils::unique_gs_stagesurf_t, BUFFER_COUNT> stagesurfs;
 
 	std::size_t writeIndex = 0;
+	std::mutex mutex;
 };
 
 } // namespace obs_showdraw
