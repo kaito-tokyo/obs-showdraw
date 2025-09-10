@@ -19,16 +19,16 @@ uniform float scalingFactor;
 uniform float highThreshold;
 uniform float lowThreshold;
 
-#define PI 3.14159265359f
-#define SQRT_20 4.472136f
-#define TAN_22_5 0.41421356f
-#define TAN_67_5 2.41421356f
-
 sampler_state def_sampler
 {
 	Filter = Linear;
 	AddressU = Clamp;
 	AddressV = Clamp;
+};
+
+struct VertInOut {
+	float4 pos : POSITION;
+	float2 uv : TEXCOORD0;
 };
 
 VertInOut VSDefault(VertInOut vert_in)
@@ -68,21 +68,21 @@ technique VerticalMedian3
 	}
 }
 
-technique CalculateHorizontalMotionMap
+technique CalculateHorizontalMotionMap3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSCalculateHorizontalMotionMap(vert_in);
+		pixel_shader = PSCalculateHorizontalMotionMap3(vert_in);
 	}
 }
 
-technique CalculateVerticalMotionMap
+technique CalculateVerticalMotionMap3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSCalculateVerticalMotionMap(vert_in);
+		pixel_shader = PSCalculateVerticalMotionMap3(vert_in);
 	}
 }
 
@@ -113,39 +113,39 @@ technique FinalizeSobelMagnitude
 	}
 }
 
-technique HorizontalErosion
+technique HorizontalErosion3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSHorizontalErosion(vert_in);
+		pixel_shader = PSHorizontalErosion3(vert_in);
 	}
 }
 
-technique VerticalErosion
+technique VerticalErosion3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSVerticalErosion(vert_in);
+		pixel_shader = PSVerticalErosion3(vert_in);
 	}
 }
 
-technique HorizontalDilation
+technique HorizontalDilation3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSHorizontalDilation(vert_in);
+		pixel_shader = PSHorizontalDilation3(vert_in);
 	}
 }
 
-technique VerticalDilation
+technique VerticalDilation3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSVerticalDilation(vert_in);
+		pixel_shader = PSVerticalDilation3(vert_in);
 	}
 }
 

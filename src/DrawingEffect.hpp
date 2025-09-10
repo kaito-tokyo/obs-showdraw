@@ -56,29 +56,19 @@ public:
 	gs_technique_t *const techConvertGrayscale;
 
 	gs_technique_t *const techHorizontalMedian3;
-	gs_technique_t *const techHorizontalMedian5;
-	gs_technique_t *const techHorizontalMedian7;
-	gs_technique_t *const techHorizontalMedian9;
 	gs_technique_t *const techVerticalMedian3;
-	gs_technique_t *const techVerticalMedian5;
-	gs_technique_t *const techVerticalMedian7;
-	gs_technique_t *const techVerticalMedian9;
 
-	gs_technique_t *const techCalculateHorizontalMotionMap;
-	gs_technique_t *const techCalculateVerticalMotionMap;
+	gs_technique_t *const techCalculateHorizontalMotionMap3;
+	gs_technique_t *const techCalculateVerticalMotionMap3;
 	gs_technique_t *const techMotionAdaptiveFiltering;
 
 	gs_technique_t *const techApplySobel;
 	gs_technique_t *const techFinalizeSobelMagnitude;
-	gs_technique_t *const techSuppressNonMaximum;
-	gs_technique_t *const techHysteresisClassify;
-	gs_technique_t *const techHysteresisPropagate;
-	gs_technique_t *const techHysteresisFinalize;
 
-	gs_technique_t *const techHorizontalErosion;
-	gs_technique_t *const techVerticalErosion;
-	gs_technique_t *const techHorizontalDilation;
-	gs_technique_t *const techVerticalDilation;
+	gs_technique_t *const techHorizontalErosion3;
+	gs_technique_t *const techVerticalErosion3;
+	gs_technique_t *const techHorizontalDilation3;
+	gs_technique_t *const techVerticalDilation3;
 
 	gs_technique_t *const techDraw;
 	gs_technique_t *const techDrawGrayscale;
@@ -91,7 +81,7 @@ public:
 				      gs_texture_t *targetIntermediateTexture, gs_texture_t *sourceTexture) noexcept;
 
 	void applyMotionAdaptiveFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth,
-					      float texelHeight, int kernelSize, float strength, float motionThreshold,
+					      float texelHeight, float strength, float motionThreshold,
 					      gs_texture_t *targetTexture, gs_texture_t *targetMotionMapTexture,
 					      gs_texture_t *targetIntermediateTexture, gs_texture_t *sourceTexture,
 					      gs_texture_t *sourcePreviousGrayscaleTexture) noexcept;
@@ -103,22 +93,8 @@ public:
 					     float scalingFactor, gs_texture_t *targetTexture,
 					     gs_texture_t *sourceTexture) noexcept;
 
-	void applySuppressNonMaximumPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
-					 gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-
-	void applyHysteresisClassifyPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
-					 float highThreshold, float lowThreshold, gs_texture_t *targetTexture,
-					 gs_texture_t *sourceTexture) noexcept;
-
-	void applyHysteresisPropagatePass(std::uint32_t width, std::uint32_t height, float texelWidth,
-					  float texelHeight, gs_texture_t *targetTexture,
-					  gs_texture_t *sourceTexture) noexcept;
-
-	void applyHysteresisFinalizePass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
-					 gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
-
 	void applyMorphologyPass(std::uint32_t width, std::uint32_t height, gs_technique_t *horizontalTechnique,
-				 gs_technique_t *verticalTechnique, float texelWidth, float texelHeight, int kernelSize,
+				 gs_technique_t *verticalTechnique, float texelWidth, float texelHeight,
 				 gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
 				 gs_texture_t *sourceTexture) noexcept;
 
