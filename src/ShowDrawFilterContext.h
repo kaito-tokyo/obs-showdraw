@@ -135,6 +135,8 @@ private:
 
 	cv::Mat contourImage;
 	std::mutex contourImageMutex;
+
+	cv::Mat filterVideoImage;
 };
 
 } // namespace obs_showdraw

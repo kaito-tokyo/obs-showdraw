@@ -364,6 +364,9 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 	obs_data_set_default_double(data, "hysteresisHighThreshold", defaultPreset.hysteresisHighThreshold);
 	obs_data_set_default_double(data, "hysteresisLowThreshold", defaultPreset.hysteresisLowThreshold);
 
+	obs_data_set_default_int(data, "hysteresisPropagationIterations",
+				 static_cast<long long>(defaultPreset.hysteresisPropagationIterations));
+
 	obs_data_set_default_int(data, "morphologyOpeningErosionKernelSize",
 				 static_cast<long long>(defaultPreset.morphologyOpeningErosionKernelSize));
 	obs_data_set_default_int(data, "morphologyOpeningDilationKernelSize",
@@ -453,6 +456,9 @@ obs_properties_t *ShowDrawFilterContext::getProperties()
 					0.0, 1.0, 0.001);
 	obs_properties_add_float_slider(props, "hysteresisLowThreshold", obs_module_text("hysteresisLowThreshold"), 0.0,
 					1.0, 0.0001);
+
+	obs_properties_add_int_slider(props, "hysteresisPropagationIterations",
+				      obs_module_text("HysteresisPropagationIterations"), 0, 30, 1);
 
 	obs_properties_add_int_slider(props, "morphologyOpeningErosionKernelSize",
 				      obs_module_text("morphologyOpeningErosionKernelSize"), 1, 31, 2);
