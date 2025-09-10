@@ -313,11 +313,8 @@ void DrawingEffect::applyMorphologyPass(std::uint32_t width, std::uint32_t heigh
 	}
 }
 
-void DrawingEffect::drawWithBlending(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-				     gs_texture_t *sourceTexture) noexcept
+void DrawingEffect::drawTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *sourceTexture) noexcept
 {
-	RenderingGuard guard(targetTexture, GS_BLEND_ONE, GS_BLEND_INVSRCALPHA);
-
 	gs_technique_t *tech = techDraw;
 	size_t passes = gs_technique_begin(tech);
 	for (size_t i = 0; i < passes; i++) {
@@ -331,29 +328,9 @@ void DrawingEffect::drawWithBlending(std::uint32_t width, std::uint32_t height, 
 	gs_technique_end(tech);
 }
 
-void DrawingEffect::drawColoredImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-				     gs_texture_t *sourceTexture) noexcept
-{
-	RenderingGuard guard(targetTexture);
-
-	gs_technique_t *tech = techDraw;
-	size_t passes = gs_technique_begin(tech);
-	for (size_t i = 0; i < passes; i++) {
-		if (gs_technique_begin_pass(tech, i)) {
-			gs_effect_set_texture(textureImage, sourceTexture);
-
-			gs_draw_sprite(nullptr, 0, width, height);
-			gs_technique_end_pass(tech);
-		}
-	}
-	gs_technique_end(tech);
-}
-
-void DrawingEffect::drawGrayscaleTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+void DrawingEffect::drawGrayscaleTexture(std::uint32_t width, std::uint32_t height,
 					 gs_texture_t *sourceTexture) noexcept
 {
-	RenderingGuard guard(targetTexture);
-
 	gs_technique_t *tech = techDrawGrayscale;
 	size_t passes = gs_technique_begin(tech);
 	for (size_t i = 0; i < passes; i++) {

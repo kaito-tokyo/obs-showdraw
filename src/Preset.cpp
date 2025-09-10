@@ -69,7 +69,6 @@ std::optional<std::string> Preset::validate() const noexcept
 	case ExtractionMode::Passthrough:
 	case ExtractionMode::ConvertGrayscale:
 	case ExtractionMode::SobelMagnitude:
-	case ExtractionMode::EdgeDetection:
 		break;
 	default:
 		return obs_module_text("configHelperInvalidExtractionMode");

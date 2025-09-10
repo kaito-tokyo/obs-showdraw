@@ -34,8 +34,6 @@ enum class ExtractionMode {
 	ConvertGrayscale = 200,
 	MotionMapCalculation = 300,
 	SobelMagnitude = 400,
-	EdgeDetection = 500,
-	ShowDetectedContours = 600,
 };
 
 constexpr ExtractionMode DefaultExtractionMode = ExtractionMode::SobelMagnitude;

@@ -97,14 +97,9 @@ public:
 				 gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
 				 gs_texture_t *sourceTexture) noexcept;
 
-	void drawWithBlending(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-			      gs_texture_t *sourceTexture) noexcept;
+	void drawTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *sourceTexture) noexcept;
 
-	void drawColoredImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-			      gs_texture_t *sourceTexture) noexcept;
-
-	void drawGrayscaleTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-				  gs_texture_t *sourceTexture) noexcept;
+	void drawGrayscaleTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *sourceTexture) noexcept;
 };
 
 } // namespace obs_showdraw

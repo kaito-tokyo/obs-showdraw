@@ -71,9 +71,7 @@ class ShowDrawFilterContext : public std::enable_shared_from_this<ShowDrawFilter
 public:
 	static const char *getName() noexcept;
 
-	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept;
-	void startup(obs_data_t *settings, obs_source_t *source);
-
+	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source);
 	~ShowDrawFilterContext() noexcept;
 	void shutdown() noexcept;
 
@@ -106,7 +104,7 @@ private:
 	obs_source_t *filter = nullptr;
 
 	std::unique_ptr<TaskQueue> taskQueueProcessFrame = nullptr;
-	std::shared_ptr<DrawingEffect> drawingEffect = nullptr;
+	std::unique_ptr<DrawingEffect> drawingEffect = nullptr;
 
 	Preset runningPreset;
 
