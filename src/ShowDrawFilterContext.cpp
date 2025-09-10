@@ -410,8 +410,8 @@ obs_properties_t *ShowDrawFilterContext::getProperties()
 				  static_cast<long long>(ExtractionMode::Default));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModePassthrough"),
 				  static_cast<long long>(ExtractionMode::Passthrough));
-	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeLuminanceExtraction"),
-				  static_cast<long long>(ExtractionMode::LuminanceExtraction));
+	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeConvertGrayscale"),
+				  static_cast<long long>(ExtractionMode::ConvertGrayscale));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeMotionMapCalculation"),
 				  static_cast<long long>(ExtractionMode::MotionMapCalculation));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeSobelMagnitude"),
@@ -568,10 +568,16 @@ void ShowDrawFilterContext::videoRender()
 						? DefaultExtractionMode
 						: runningPreset.extractionMode;
 
+	// {
+	// 	std::lock_guard<std::mutex> lock(readerCannyEdgeMutex);
+	// 	if (readerCannyEdge) {
+	// 		readerCannyEdge->sync();
+	// 	}
+	// }
 	{
-		std::lock_guard<std::mutex> lock(readerCannyEdgeMutex);
-		if (readerCannyEdge) {
-			readerCannyEdge->sync();
+		std::lock_guard<std::mutex> lock(readerGrayscaleMutex);
+		if (readerGrayscale) {
+			readerGrayscale->sync();
 		}
 	}
 
@@ -582,7 +588,7 @@ void ShowDrawFilterContext::videoRender()
 		throw skip_video_filter_exception();
 	}
 
-	gs_set_render_target(textureSource.get(), NULL);
+	gs_set_render_target(bgrxSource.get(), NULL);
 
 	gs_viewport_push();
 	gs_projection_push();
@@ -593,50 +599,49 @@ void ShowDrawFilterContext::videoRender()
 
 	obs_source_process_filter_end(filter, _drawingEffect.get()->effect.get(), 0, 0);
 
-	if (extractionMode >= ExtractionMode::LuminanceExtraction) {
-		_drawingEffect->applyLuminanceExtractionPass(width, height, textureTarget.get(), textureSource.get());
-		std::swap(textureSource, textureTarget);
+	if (extractionMode >= ExtractionMode::ConvertGrayscale) {
+		_drawingEffect->applyConvertGrayscalePass(width, height, r8Source.get(), bgrxSource.get());
 
 		if (runningPreset.medianFilteringKernelSize > 1) {
 			_drawingEffect->applyMedianFilteringPass(width, height, texelWidth, texelHeight,
 								 runningPreset.medianFilteringKernelSize,
-								 textureTarget.get(), textureTemporary1.get(),
-								 textureSource.get());
-			std::swap(textureSource, textureTarget);
+								 r8Target.get(), r8Temporary1.get(),
+								 r8Source.get());
+			std::swap(r8Source, r8Target);
 		}
 
 		if (runningPreset.motionAdaptiveFilteringStrength > 0.0) {
 			_drawingEffect->applyMotionAdaptiveFilteringPass(
 				width, height, texelWidth, texelHeight, runningPreset.motionMapKernelSize,
 				runningPreset.motionAdaptiveFilteringStrength,
-				runningPreset.motionAdaptiveFilteringMotionThreshold, textureTarget.get(),
-				textureMotionMap.get(), textureTemporary2.get(), textureSource.get(),
-				texturePreviousLuminance.get());
-			std::swap(textureSource, textureTarget);
+				runningPreset.motionAdaptiveFilteringMotionThreshold, r8Target.get(),
+				r8MotionMap.get(), r8Temporary1.get(), r8Source.get(),
+				r8PreviousGrayscale.get());
+			std::swap(r8Source, r8Target);
 
-			gs_copy_texture(texturePreviousLuminance.get(), textureSource.get());
+			gs_copy_texture(r8PreviousGrayscale.get(), r8Source.get());
 		}
+
+		readerGrayscale->stage(r8Source.get());
 	}
 
 	if (extractionMode >= ExtractionMode::SobelMagnitude) {
-		unique_gs_texture_t &textureComplexSobel = textureTemporary1;
-
-		_drawingEffect->applySobelPass(width, height, texelWidth, texelHeight, textureComplexSobel.get(),
-					       textureSource.get());
+		_drawingEffect->applySobelPass(width, height, texelWidth, texelHeight, bgrxComplexSobel.get(),
+					       r8Source.get());
 
 		_drawingEffect->applyFinalizeSobelMagnitudePass(width, height,
 								runningPreset.sobelMagnitudeFinalizationUseLog,
 								sobelMagnitudeFinalizationScalingFactor,
-								textureSource.get(), textureComplexSobel.get());
+								r8FinalSobelMagnitude.get(), bgrxComplexSobel.get());
 
 		if (runningPreset.morphologyOpeningErosionKernelSize > 1) {
 			_drawingEffect->applyMorphologyPass(width, height, _drawingEffect->techHorizontalErosion,
 							    _drawingEffect->techVerticalErosion, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyOpeningErosionKernelSize,
-							    textureTarget.get(), textureTemporary2.get(),
-							    textureSource.get());
-			std::swap(textureSource, textureTarget);
+							    bgrxTarget.get(), bgrxTemporary2.get(),
+							    bgrxSource.get());
+			std::swap(bgrxSource, bgrxTarget);
 		}
 
 		if (runningPreset.morphologyOpeningDilationKernelSize > 1) {
@@ -644,9 +649,9 @@ void ShowDrawFilterContext::videoRender()
 							    _drawingEffect->techVerticalDilation, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyOpeningDilationKernelSize,
-							    textureTarget.get(), textureTemporary2.get(),
-							    textureSource.get());
-			std::swap(textureSource, textureTarget);
+							    bgrxTarget.get(), bgrxTemporary2.get(),
+							    bgrxSource.get());
+			std::swap(bgrxSource, bgrxTarget);
 		}
 
 		if (runningPreset.morphologyClosingDilationKernelSize > 1) {
@@ -654,9 +659,9 @@ void ShowDrawFilterContext::videoRender()
 							    _drawingEffect->techVerticalDilation, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyClosingDilationKernelSize,
-							    textureTarget.get(), textureTemporary2.get(),
-							    textureSource.get());
-			std::swap(textureSource, textureTarget);
+							    bgrxTarget.get(), bgrxTemporary2.get(),
+							    bgrxSource.get());
+			std::swap(bgrxSource, bgrxTarget);
 		}
 
 		if (runningPreset.morphologyClosingErosionKernelSize > 1) {
@@ -664,47 +669,9 @@ void ShowDrawFilterContext::videoRender()
 							    _drawingEffect->techVerticalErosion, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyClosingErosionKernelSize,
-							    textureTarget.get(), textureTemporary2.get(),
-							    textureSource.get());
-			std::swap(textureSource, textureTarget);
-		}
-
-		gs_copy_texture(textureFinalSobelMagnitude.get(), textureSource.get());
-		gs_copy_texture(textureSource.get(), textureComplexSobel.get());
-	}
-
-	if (extractionMode >= ExtractionMode::EdgeDetection) {
-		_drawingEffect->applySuppressNonMaximumPass(width, height, texelWidth, texelHeight, textureTarget.get(),
-							    textureSource.get());
-		std::swap(textureSource, textureTarget);
-
-		_drawingEffect->applyHysteresisClassifyPass(width, height, texelWidth, texelHeight,
-							    runningPreset.hysteresisHighThreshold,
-							    runningPreset.hysteresisLowThreshold, textureTarget.get(),
-							    textureSource.get());
-		std::swap(textureSource, textureTarget);
-
-		for (int i = 0; i < runningPreset.hysteresisPropagationIterations; i++) {
-			_drawingEffect->applyHysteresisPropagatePass(width, height, texelWidth, texelHeight,
-								     textureTarget.get(), textureSource.get());
-			std::swap(textureSource, textureTarget);
-		}
-
-		_drawingEffect->applyHysteresisFinalizePass(width, height, texelWidth, texelHeight, textureTarget.get(),
-							    textureSource.get());
-		std::swap(textureSource, textureTarget);
-
-		gs_copy_texture(textureCannyEdge.get(), textureSource.get());
-		readerCannyEdge->stage(textureCannyEdge.get());
-	}
-
-	if (extractionMode == ExtractionMode::ShowDetectedContours) {
-		std::lock_guard<std::mutex> lock(contourImageMutex);
-		if (!contourImage.empty()) {
-			const uint8_t *data = contourImage.data;
-			textureContour = make_unique_gs_texture(width, height, GS_BGRA, 1, &data, 0);
-			_drawingEffect->drawWithBlending(width, height, textureFinalSobelMagnitude.get(),
-							 textureContour.get());
+							    bgrxTarget.get(), bgrxTemporary2.get(),
+							    bgrxSource.get());
+			std::swap(bgrxSource, bgrxTarget);
 		}
 	}
 
@@ -712,13 +679,22 @@ void ShowDrawFilterContext::videoRender()
 	gs_projection_pop();
 	gs_matrix_pop();
 
-	if (extractionMode == ExtractionMode::MotionMapCalculation) {
-		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureMotionMap.get());
-	} else if (extractionMode == ExtractionMode::SobelMagnitude ||
-		   extractionMode == ExtractionMode::ShowDetectedContours) {
-		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureFinalSobelMagnitude.get());
-	} else {
-		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureSource.get());
+	if (extractionMode == ExtractionMode::Passthrough) {
+		_drawingEffect->drawColoredImage(width, height, defaultRenderTarget, bgrxSource.get());
+	} else if (extractionMode == ExtractionMode::ConvertGrayscale) {
+		_drawingEffect->drawGrayscaleTexture(width, height, defaultRenderTarget, r8Source.get());
+	} else if (extractionMode == ExtractionMode::MotionMapCalculation) {
+		_drawingEffect->drawGrayscaleTexture(width, height, defaultRenderTarget, r8MotionMap.get());
+	} else if (extractionMode == ExtractionMode::SobelMagnitude) {
+		_drawingEffect->drawGrayscaleTexture(width, height, defaultRenderTarget, r8FinalSobelMagnitude.get());
+	} else if (extractionMode == ExtractionMode::EdgeDetection) {
+		unique_gs_texture_t bgrxCannyEdge;
+		{
+			std::lock_guard<std::mutex> lock(cannyEdgeImageMutex);
+			const uint8_t *data = cannyEdgeImage.data;
+			bgrxCannyEdge = make_unique_gs_texture(cannyEdgeImage.cols, cannyEdgeImage.rows, GS_R8, 1, &data, 0);
+		}
+		_drawingEffect->drawGrayscaleTexture(width, height, defaultRenderTarget, bgrxCannyEdge.get());
 	}
 
 	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
@@ -781,40 +757,49 @@ try {
 	throw;
 }
 
-void ensureTexture(unique_gs_texture_t &texture, uint32_t width, uint32_t height)
+void ensureTexture(unique_gs_texture_t &texture, uint32_t width, uint32_t height, gs_color_format format = GS_BGRA)
 {
 	if (!texture || gs_texture_get_width(texture.get()) != width ||
 	    gs_texture_get_height(texture.get()) != height) {
 		unique_gs_texture_t newTexture =
-			make_unique_gs_texture(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
+			make_unique_gs_texture(width, height, format, 1, NULL, GS_RENDER_TARGET);
 		texture = unique_gs_texture_t(std::move(newTexture));
 	}
 }
 
-void ensureTextureReader(std::unique_ptr<AsyncTextureReader<2>> &textureReader, uint32_t width, uint32_t height)
+void ensureTextureReader(std::unique_ptr<AsyncTextureReader<2>> &textureReader, uint32_t width, uint32_t height, gs_color_format format = GS_BGRA)
 {
 	if (!textureReader || textureReader->getWidth() != width || textureReader->getHeight() != height) {
-		textureReader = std::make_unique<AsyncTextureReader<2>>(width, height);
+		textureReader = std::make_unique<AsyncTextureReader<2>>(width, height, format);
 	}
 }
 
 void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 {
-	ensureTexture(textureSource, width, height);
-	ensureTexture(textureTarget, width, height);
-	ensureTexture(textureTemporary1, width, height);
-	ensureTexture(textureTemporary2, width, height);
-	ensureTexture(texturePreviousLuminance, width, height);
-	ensureTexture(textureMotionMap, width, height);
-	ensureTexture(textureFinalSobelMagnitude, width, height);
+	ensureTexture(bgrxSource, width, height, GS_BGRX);
+	ensureTexture(bgrxTarget, width, height, GS_BGRX);
+	ensureTexture(r8Source, width, height, GS_R8);
+	ensureTexture(r8Target, width, height, GS_R8);
+	ensureTexture(bgrxTemporary1, width, height, GS_BGRX);
+	ensureTexture(bgrxTemporary2, width, height, GS_BGRX);
+	ensureTexture(r8Temporary1, width, height, GS_R8);
+
+	ensureTexture(r8PreviousGrayscale, width, height, GS_R8);
+	ensureTexture(r8MotionMap, width, height, GS_R8);
+	ensureTexture(bgrxComplexSobel, width, height, GS_BGRX);
+	ensureTexture(r8FinalSobelMagnitude, width, height, GS_R8);
+
+	ensureTexture(textureContour, width, height);
 	ensureTexture(textureCannyEdge, width, height);
+
 	ensureTextureReader(readerCannyEdge, width, height);
+	ensureTextureReader(readerGrayscale, width, height, GS_R8);
 }
 
 void ShowDrawFilterContext::processFrame(const TaskQueue::CancellationToken &token) noexcept
 try {
 	if (!readerCannyEdge) {
-		slog(LOG_ERROR) << "Texture reader not initialized yet";
+		slog(LOG_DEBUG) << "Texture reader not initialized yet";
 		return;
 	}
 
@@ -822,40 +807,19 @@ try {
 		return;
 	}
 
-	cv::Mat cannyEdgeImage;
+	cv::Mat grayscaleImage;
 	{
-		std::lock_guard<std::mutex> lock(readerCannyEdgeMutex);
-		cannyEdgeImage = cv::Mat(height, width, CV_8UC4, readerCannyEdge->getBuffer().data(),
-					 readerCannyEdge->getBufferLinesize());
+		std::lock_guard<std::mutex> lock(readerGrayscaleMutex);
+		grayscaleImage = cv::Mat(height, width, CV_8UC1, readerGrayscale->getBuffer().data(),
+					 readerGrayscale->getBufferLinesize());
 	}
 
-	cv::Mat singleChannelImage;
-	cv::extractChannel(cannyEdgeImage, singleChannelImage, 0);
-
-	std::vector<std::vector<cv::Point>> contours;
-	std::vector<cv::Vec4i> hierarchy;
-	cv::findContours(singleChannelImage, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
-
-	std::vector<std::vector<cv::Point>> largeQuadrilaterals;
-	for (const auto &contour : contours) {
-		std::vector<cv::Point> approx;
-		cv::approxPolyDP(contour, approx, cv::arcLength(contour, true) * 0.02, true);
-
-		if (cv::isContourConvex(approx)) {
-			double area = cv::contourArea(approx);
-			// Adjust the threshold as needed
-			if (area > 1000) {
-				largeQuadrilaterals.push_back(approx);
-			}
-		}
-	}
-	slog(LOG_INFO) << "Found " << contours.size() << " contours, filtered to " << largeQuadrilaterals.size()
-		       << " large quadrilaterals";
+	cv::Mat _edgeImage;
+	cv::Canny(grayscaleImage, _edgeImage, runningPreset.hysteresisHighThreshold * 255, runningPreset.hysteresisLowThreshold * 255);
 
 	{
-		std::lock_guard<std::mutex> lock(contourImageMutex);
-		contourImage = cv::Mat::zeros(height, width, CV_8UC4);
-		cv::drawContours(contourImage, largeQuadrilaterals, -1, cv::Scalar(255, 0, 0, 255), 2, cv::LINE_AA);
+		std::lock_guard<std::mutex> lock(cannyEdgeImageMutex);
+		cannyEdgeImage = _edgeImage;
 	}
 } catch (const std::exception &e) {
 	slog(LOG_ERROR) << "Failed to process frame: " << e.what();

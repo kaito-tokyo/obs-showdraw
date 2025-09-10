@@ -15,6 +15,12 @@ float4 PSDraw(VertInOut vert_in) : TARGET
 	return image.Sample(def_sampler, vert_in.uv);
 }
 
+float4 PSDrawGrayscale(VertInOut vert_in) : TARGET
+{
+	float luma = image.Sample(def_sampler, vert_in.uv).r;
+	return float4(luma, luma, luma, 1.0f);
+}
+
 //
 // Role:      Converts a color image to a grayscale luminance map. This is the starting point for most subsequent operations.
 // Prerequisite: Original Source (e.g., video input from OBS).
@@ -22,11 +28,11 @@ float4 PSDraw(VertInOut vert_in) : TARGET
 // Uniforms:  None.
 // Output:    A grayscale image with the luminance value stored in the .rgb channels (r=g=b).
 //
-float4 PSExtractLuminance(VertInOut vert_in) : TARGET
+float PSConvertGrayscale(VertInOut vert_in) : TARGET
 {
 	float4 color = image.Sample(def_sampler, vert_in.uv);
 	float luma = saturate(dot(color.rgb, float3(0.2126, 0.7152, 0.0722)));
-	return float4(luma, luma, luma, 1.0);
+	return luma;
 }
 
 #define MEDIAN_SWAP(a, b) { float temp=a; a=min(a,b); b=max(temp,b); }
@@ -220,7 +226,7 @@ float4 PSVerticalMedian9(VertInOut vert_in) : TARGET
 
 //
 // Role:      Calculates a motion map by comparing two frames to detect areas of movement.
-// Prerequisite: Two separate luminance maps (e.g., from two PSExtractLuminance passes on different frames).
+// Prerequisite: Two separate luminance maps (e.g., from two PSConvertGrayscale passes on different frames).
 // Input:     'image.r' (current frame luminance), 'image1.r' (previous frame luminance).
 // Uniforms:  kernelSize, texelWidth, texelHeight.
 // Output:    A motion map with the amount of motion (SAD: Sum of Absolute Differences) in the .rgb channels.
@@ -329,7 +335,7 @@ float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
 
 //
 // Role:      [Canny Step 1] Applies the Sobel operator to calculate the gradient magnitude and direction.
-// Prerequisite: PSExtractLuminance or PSMedianFiltering.
+// Prerequisite: PSConvertGrayscale or PSMedianFiltering.
 // Input:     A grayscale image in 'image.r'.
 // Uniforms:  texelWidth, texelHeight.
 // Output:    .r = Gradient Magnitude (normalized), .g = Gx (encoded to [0,1]), .b = Gy (encoded to [0,1]).

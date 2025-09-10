@@ -31,7 +31,7 @@ namespace obs_showdraw {
 enum class ExtractionMode {
 	Default = 0,
 	Passthrough = 100,
-	LuminanceExtraction = 200,
+	ConvertGrayscale = 200,
 	MotionMapCalculation = 300,
 	SobelMagnitude = 400,
 	EdgeDetection = 500,

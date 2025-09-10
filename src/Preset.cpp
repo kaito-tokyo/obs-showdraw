@@ -75,7 +75,7 @@ std::optional<std::string> Preset::validate() const noexcept
 	switch (extractionMode) {
 	case ExtractionMode::Default:
 	case ExtractionMode::Passthrough:
-	case ExtractionMode::LuminanceExtraction:
+	case ExtractionMode::ConvertGrayscale:
 	case ExtractionMode::SobelMagnitude:
 	case ExtractionMode::EdgeDetection:
 		break;

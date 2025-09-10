@@ -118,15 +118,21 @@ private:
 
 	double sobelMagnitudeFinalizationScalingFactor = 1.0;
 
-	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureSource = nullptr;
-	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureTarget = nullptr;
-	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureTemporary1 = nullptr;
-	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureTemporary2 = nullptr;
-	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t texturePreviousLuminance = nullptr;
-	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureMotionMap = nullptr;
-	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureFinalSobelMagnitude = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxSource = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxTarget = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8Source = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8Target = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxTemporary1 = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxTemporary2 = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8Temporary1 = nullptr;
+
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8PreviousGrayscale = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8MotionMap = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxComplexSobel = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8FinalSobelMagnitude = nullptr;
 	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureCannyEdge = nullptr;
 	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureContour = nullptr;
+
 
 	std::unique_ptr<AsyncTextureReader<2>> readerCannyEdge = nullptr;
 	std::mutex readerCannyEdgeMutex;
@@ -137,6 +143,12 @@ private:
 	std::mutex contourImageMutex;
 
 	cv::Mat filterVideoImage;
+
+	std::unique_ptr<AsyncTextureReader<2>> readerGrayscale = nullptr;
+	std::mutex readerGrayscaleMutex;
+
+	cv::Mat cannyEdgeImage;
+	std::mutex cannyEdgeImageMutex;
 };
 
 } // namespace obs_showdraw

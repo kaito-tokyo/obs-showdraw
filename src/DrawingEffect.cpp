@@ -97,7 +97,7 @@ DrawingEffect::DrawingEffect(unique_gs_effect_t _effect)
 	  floatLowThreshold(getEffectParam(effect, "lowThreshold")),
 	  boolUseLog(getEffectParam(effect, "useLog")),
 	  floatScalingFactor(getEffectParam(effect, "scalingFactor")),
-	  techExtractLuminance(getEffectTech(effect, "ExtractLuminance")),
+	  techConvertGrayscale(getEffectTech(effect, "ConvertGrayscale")),
 	  techHorizontalMedian3(getEffectTech(effect, "HorizontalMedian3")),
 	  techHorizontalMedian5(getEffectTech(effect, "HorizontalMedian5")),
 	  techHorizontalMedian7(getEffectTech(effect, "HorizontalMedian7")),
@@ -119,16 +119,17 @@ DrawingEffect::DrawingEffect(unique_gs_effect_t _effect)
 	  techVerticalErosion(getEffectTech(effect, "VerticalErosion")),
 	  techHorizontalDilation(getEffectTech(effect, "HorizontalDilation")),
 	  techVerticalDilation(getEffectTech(effect, "VerticalDilation")),
-	  techDraw(getEffectTech(effect, "Draw"))
+	  techDraw(getEffectTech(effect, "Draw")),
+	  techDrawGrayscale(getEffectTech(effect, "DrawGrayscale"))
 {
 }
 
-void DrawingEffect::applyLuminanceExtractionPass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+void DrawingEffect::applyConvertGrayscalePass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
 						 gs_texture_t *sourceTexture) noexcept
 {
 	RenderingGuard guard(targetTexture);
 
-	gs_technique_t *tech = techExtractLuminance;
+	gs_technique_t *tech = techConvertGrayscale;
 	std::size_t passes = gs_technique_begin(tech);
 	for (std::size_t i = 0; i < passes; i++) {
 		if (gs_technique_begin_pass(tech, i)) {
@@ -211,7 +212,7 @@ void DrawingEffect::applyMotionAdaptiveFilteringPass(std::uint32_t width, std::u
 						     gs_texture_t *targetMotionMapTexture,
 						     gs_texture_t *targetIntermediateTexture,
 						     gs_texture_t *sourceTexture,
-						     gs_texture_t *sourcePreviousLuminanceTexture) noexcept
+						     gs_texture_t *sourcePreviousGrayscaleTexture) noexcept
 {
 	{
 		RenderingGuard guard(targetIntermediateTexture);
@@ -220,7 +221,7 @@ void DrawingEffect::applyMotionAdaptiveFilteringPass(std::uint32_t width, std::u
 		for (std::size_t i = 0; i < passes; i++) {
 			if (gs_technique_begin_pass(tech, i)) {
 				gs_effect_set_texture(textureImage, sourceTexture);
-				gs_effect_set_texture(textureImage1, sourcePreviousLuminanceTexture);
+				gs_effect_set_texture(textureImage1, sourcePreviousGrayscaleTexture);
 
 				gs_effect_set_float(floatTexelWidth, texelWidth);
 				gs_effect_set_int(intKernelSize, kernelSize);
@@ -257,7 +258,7 @@ void DrawingEffect::applyMotionAdaptiveFilteringPass(std::uint32_t width, std::u
 		for (std::size_t i = 0; i < passes; i++) {
 			if (gs_technique_begin_pass(tech, i)) {
 				gs_effect_set_texture(textureImage, sourceTexture);
-				gs_effect_set_texture(textureImage1, sourcePreviousLuminanceTexture);
+				gs_effect_set_texture(textureImage1, sourcePreviousGrayscaleTexture);
 				gs_effect_set_texture(textureMotionMap, targetMotionMapTexture);
 
 				gs_effect_set_float(floatStrength, strength);
@@ -456,12 +457,30 @@ void DrawingEffect::drawWithBlending(std::uint32_t width, std::uint32_t height, 
 	gs_technique_end(tech);
 }
 
-void DrawingEffect::drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+void DrawingEffect::drawColoredImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
 				   gs_texture_t *sourceTexture) noexcept
 {
 	RenderingGuard guard(targetTexture);
 
 	gs_technique_t *tech = techDraw;
+	size_t passes = gs_technique_begin(tech);
+	for (size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(tech, i)) {
+			gs_effect_set_texture(textureImage, sourceTexture);
+
+			gs_draw_sprite(nullptr, 0, width, height);
+			gs_technique_end_pass(tech);
+		}
+	}
+	gs_technique_end(tech);
+}
+
+void DrawingEffect::drawGrayscaleTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+					       gs_texture_t *sourceTexture) noexcept
+{
+	RenderingGuard guard(targetTexture);
+
+	gs_technique_t *tech = techDrawGrayscale;
 	size_t passes = gs_technique_begin(tech);
 	for (size_t i = 0; i < passes; i++) {
 		if (gs_technique_begin_pass(tech, i)) {

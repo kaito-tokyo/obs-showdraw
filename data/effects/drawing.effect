@@ -56,12 +56,21 @@ technique Draw
 	}
 }
 
-technique ExtractLuminance
+technique DrawGrayscale
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSExtractLuminance(vert_in);
+		pixel_shader = PSDrawGrayscale(vert_in);
+	}
+}
+
+technique ConvertGrayscale
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader = PSConvertGrayscale(vert_in);
 	}
 }
 

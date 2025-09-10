@@ -53,7 +53,7 @@ public:
 	gs_eparam_t *const floatHighThreshold;
 	gs_eparam_t *const floatLowThreshold;
 
-	gs_technique_t *const techExtractLuminance;
+	gs_technique_t *const techConvertGrayscale;
 
 	gs_technique_t *const techHorizontalMedian3;
 	gs_technique_t *const techHorizontalMedian5;
@@ -81,8 +81,9 @@ public:
 	gs_technique_t *const techVerticalDilation;
 
 	gs_technique_t *const techDraw;
+	gs_technique_t *const techDrawGrayscale;
 
-	void applyLuminanceExtractionPass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+	void applyConvertGrayscalePass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
 					  gs_texture_t *sourceTexture) noexcept;
 
 	void applyMedianFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
@@ -93,7 +94,7 @@ public:
 					      float texelHeight, int kernelSize, float strength, float motionThreshold,
 					      gs_texture_t *targetTexture, gs_texture_t *targetMotionMapTexture,
 					      gs_texture_t *targetIntermediateTexture, gs_texture_t *sourceTexture,
-					      gs_texture_t *sourcePreviousLuminanceTexture) noexcept;
+					      gs_texture_t *sourcePreviousGrayscaleTexture) noexcept;
 
 	void applySobelPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
 			    gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept;
@@ -124,8 +125,11 @@ public:
 	void drawWithBlending(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
 			      gs_texture_t *sourceTexture) noexcept;
 
-	void drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+	void drawColoredImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
 			    gs_texture_t *sourceTexture) noexcept;
+
+	void drawGrayscaleTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+				    gs_texture_t *sourceTexture) noexcept;
 };
 
 } // namespace obs_showdraw
