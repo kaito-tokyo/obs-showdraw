@@ -841,41 +841,40 @@ try {
 	cv::findContours(_edgeImage, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
 	double maxArea = 0;
-    std::vector<cv::Point> paperContour;
-    bool found = false;
-    for (const auto& contour : contours) {
-        // (a) 面積でフィルタリング
-        double area = cv::contourArea(contour);
-        if (area < 1000) { // 小さすぎる輪郭はノイズとして除外
-            continue;
-        }
+	std::vector<cv::Point> paperContour;
+	bool found = false;
+	for (const auto &contour : contours) {
+		// (a) 面積でフィルタリング
+		double area = cv::contourArea(contour);
+		if (area < 1000) { // 小さすぎる輪郭はノイズとして除外
+			continue;
+		}
 
-        // (b) 輪郭を多角形で近似
-        double peri = cv::arcLength(contour, true);
-        std::vector<cv::Point> approx;
-        cv::approxPolyDP(contour, approx, 0.02 * peri, true);
+		// (b) 輪郭を多角形で近似
+		double peri = cv::arcLength(contour, true);
+		std::vector<cv::Point> approx;
+		cv::approxPolyDP(contour, approx, 0.02 * peri, true);
 
-        // (c) 近似した多角形が四角形かチェック
-        // if (approx.size() == 4) {
-             // 最も面積が大きい四角形を紙として採用
-            if (area > maxArea) {
-                maxArea = area;
-                paperContour = approx;
-                found = true;
-            }
-        // }
-    }
+		// (c) 近似した多角形が四角形かチェック
+		// if (approx.size() == 4) {
+		// 最も面積が大きい四角形を紙として採用
+		if (area > maxArea) {
+			maxArea = area;
+			paperContour = approx;
+			found = true;
+		}
+		// }
+	}
 
 	cv::Mat _detectedContourImage = cv::Mat::zeros(_edgeImage.size(), CV_8UC4);
 	if (found) {
-        std::cout << "Paper contour found!" << std::endl;
-        // 検出した輪郭を緑色で描画
-        std::vector<std::vector<cv::Point>> contoursToDraw = {paperContour};
-        cv::drawContours(_detectedContourImage, contoursToDraw, -1, cv::Scalar(0, 255, 0), 3);
-    } else {
-        std::cout << "Paper contour not found." << std::endl;
-    }
-
+		std::cout << "Paper contour found!" << std::endl;
+		// 検出した輪郭を緑色で描画
+		std::vector<std::vector<cv::Point>> contoursToDraw = {paperContour};
+		cv::drawContours(_detectedContourImage, contoursToDraw, -1, cv::Scalar(0, 255, 0), 3);
+	} else {
+		std::cout << "Paper contour not found." << std::endl;
+	}
 
 	cv::drawContours(_detectedContourImage, contours, -1, cv::Scalar(0, 255, 0), 3);
 
