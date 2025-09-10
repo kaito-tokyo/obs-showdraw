@@ -574,12 +574,15 @@ void ShowDrawFilterContext::videoRender()
 	// 		readerCannyEdge->sync();
 	// 	}
 	// }
+
 	{
 		std::lock_guard<std::mutex> lock(readerGrayscaleMutex);
 		if (readerGrayscale) {
 			readerGrayscale->sync();
 		}
 	}
+
+	readerComplexSobel->sync();
 
 	gs_texture_t *defaultRenderTarget = gs_get_render_target();
 
@@ -709,6 +712,14 @@ void ShowDrawFilterContext::videoRender()
 		_drawingEffect->drawColoredImage(width, height, defaultRenderTarget, bgrxDetectedContours.get());
 	}
 
+	if (extractionMode >= ExtractionMode::ConvertGrayscale) {
+		readerGrayscale->stage(r8PreviousGrayscale.get());
+	}
+
+	if (extractionMode > ExtractionMode::EdgeDetection) {
+		readerComplexSobel->stage(bgrxComplexSobel.get());
+	}
+
 	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
 }
 
@@ -805,6 +816,7 @@ void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 	ensureTexture(textureContour, width, height);
 	ensureTexture(textureCannyEdge, width, height);
 
+	ensureTextureReader(readerComplexSobel, width, height, GS_BGRX);
 	ensureTextureReader(readerCannyEdge, width, height);
 	ensureTextureReader(readerGrayscale, width, height, GS_R8);
 }

@@ -136,6 +136,8 @@ private:
 	std::unique_ptr<AsyncTextureReader> readerCannyEdge = nullptr;
 	std::mutex readerCannyEdgeMutex;
 
+	std::unique_ptr<AsyncTextureReader> readerComplexSobel = nullptr;
+
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
 
 	cv::Mat contourImage;
