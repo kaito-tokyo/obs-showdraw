@@ -46,26 +46,11 @@ public:
 
 	ExtractionMode extractionMode;
 
-	std::int64_t medianFilteringKernelSize;
-
-	std::int64_t motionMapKernelSize;
-
 	double motionAdaptiveFilteringStrength;
 	double motionAdaptiveFilteringMotionThreshold;
 
 	bool sobelMagnitudeFinalizationUseLog;
 	double sobelMagnitudeFinalizationScalingFactorDb;
-
-	double hysteresisHighThreshold;
-	double hysteresisLowThreshold;
-
-	std::int64_t hysteresisPropagationIterations;
-
-	std::int64_t morphologyOpeningErosionKernelSize;
-	std::int64_t morphologyOpeningDilationKernelSize;
-
-	std::int64_t morphologyClosingDilationKernelSize;
-	std::int64_t morphologyClosingErosionKernelSize;
 
 	bool isSystem() const noexcept;
 	bool isUser() const noexcept;

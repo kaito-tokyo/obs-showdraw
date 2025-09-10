@@ -41,7 +41,6 @@ public:
 
 	gs_eparam_t *const floatTexelWidth;
 	gs_eparam_t *const floatTexelHeight;
-	gs_eparam_t *const intKernelSize;
 
 	gs_eparam_t *const textureMotionMap;
 	gs_eparam_t *const floatStrength;
@@ -77,8 +76,8 @@ public:
 				       gs_texture_t *sourceTexture) noexcept;
 
 	void applyMedianFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
-				      int kernelSize, gs_texture_t *targetTexture,
-				      gs_texture_t *targetIntermediateTexture, gs_texture_t *sourceTexture) noexcept;
+				      gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
+				      gs_texture_t *sourceTexture) noexcept;
 
 	void applyMotionAdaptiveFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth,
 					      float texelHeight, float strength, float motionThreshold,

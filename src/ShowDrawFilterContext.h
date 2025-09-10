@@ -72,7 +72,7 @@ public:
 	static const char *getName() noexcept;
 
 	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept;
-	void afterCreate(obs_data_t *settings, obs_source_t *source);
+	void startup(obs_data_t *settings, obs_source_t *source);
 
 	~ShowDrawFilterContext() noexcept;
 	void shutdown() noexcept;
@@ -103,20 +103,20 @@ private:
 	void ensureTextures(uint32_t width, uint32_t height);
 	void processFrame(const TaskQueue::CancellationToken &token) noexcept;
 
-	obs_data_t *settings;
-	obs_source_t *filter;
+	obs_data_t *settings = nullptr;
+	obs_source_t *filter = nullptr;
 
-	std::unique_ptr<TaskQueue> taskQueueProcessFrame;
-	std::shared_ptr<DrawingEffect> drawingEffect;
+	std::unique_ptr<TaskQueue> taskQueueProcessFrame = nullptr;
+	std::shared_ptr<DrawingEffect> drawingEffect = nullptr;
 
 	Preset runningPreset;
 
-	uint32_t width;
-	uint32_t height;
-	float texelWidth;
-	float texelHeight;
+	uint32_t width = 0;
+	uint32_t height = 0;
+	float texelWidth = 0.0f;
+	float texelHeight = 0.0f;
 
-	double sobelMagnitudeFinalizationScalingFactor = 1.0;
+	double sobelMagnitudeFinalizationScalingFactor = 0.0;
 
 	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxSource = nullptr;
 	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxTarget = nullptr;
@@ -139,20 +139,6 @@ private:
 	std::unique_ptr<AsyncTextureReader> readerComplexSobel = nullptr;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
-
-	cv::Mat contourImage;
-	std::mutex contourImageMutex;
-
-	cv::Mat filterVideoImage;
-
-	std::unique_ptr<AsyncTextureReader> readerGrayscale = nullptr;
-	std::mutex readerGrayscaleMutex;
-
-	cv::Mat cannyEdgeImage;
-	std::mutex cannyEdgeImageMutex;
-
-	cv::Mat detectedContoursImage;
-	std::mutex detectedContoursImageMutex;
 };
 
 } // namespace obs_showdraw

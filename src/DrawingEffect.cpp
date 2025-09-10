@@ -89,7 +89,6 @@ DrawingEffect::DrawingEffect(unique_gs_effect_t _effect)
 	  textureImage1(getEffectParam(effect, "image1")),
 	  floatTexelWidth(getEffectParam(effect, "texelWidth")),
 	  floatTexelHeight(getEffectParam(effect, "texelHeight")),
-	  intKernelSize(getEffectParam(effect, "kernelSize")),
 	  textureMotionMap(getEffectParam(effect, "motionMap")),
 	  floatStrength(getEffectParam(effect, "strength")),
 	  floatMotionThreshold(getEffectParam(effect, "motionThreshold")),
