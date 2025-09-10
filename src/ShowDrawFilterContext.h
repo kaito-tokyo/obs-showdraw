@@ -133,8 +133,7 @@ private:
 	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureCannyEdge = nullptr;
 	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureContour = nullptr;
 
-
-	std::unique_ptr<AsyncTextureReader<2>> readerCannyEdge = nullptr;
+	std::unique_ptr<AsyncTextureReader> readerCannyEdge = nullptr;
 	std::mutex readerCannyEdgeMutex;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
@@ -144,7 +143,7 @@ private:
 
 	cv::Mat filterVideoImage;
 
-	std::unique_ptr<AsyncTextureReader<2>> readerGrayscale = nullptr;
+	std::unique_ptr<AsyncTextureReader> readerGrayscale = nullptr;
 	std::mutex readerGrayscaleMutex;
 
 	cv::Mat cannyEdgeImage;

@@ -94,9 +94,7 @@ public:
 			if (stopped) {
 				throw std::runtime_error("push on stopped TaskQueue");
 			}
-			queue.push({[user_task, token] {
-                user_task(token);
-            }, token});
+			queue.push({[user_task, token] { user_task(token); }, token});
 		}
 		cond.notify_one();
 		return token;

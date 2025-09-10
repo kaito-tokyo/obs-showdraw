@@ -84,7 +84,7 @@ public:
 	gs_technique_t *const techDrawGrayscale;
 
 	void applyConvertGrayscalePass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-					  gs_texture_t *sourceTexture) noexcept;
+				       gs_texture_t *sourceTexture) noexcept;
 
 	void applyMedianFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth, float texelHeight,
 				      int kernelSize, gs_texture_t *targetTexture,
@@ -126,10 +126,10 @@ public:
 			      gs_texture_t *sourceTexture) noexcept;
 
 	void drawColoredImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-			    gs_texture_t *sourceTexture) noexcept;
+			      gs_texture_t *sourceTexture) noexcept;
 
 	void drawGrayscaleTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-				    gs_texture_t *sourceTexture) noexcept;
+				  gs_texture_t *sourceTexture) noexcept;
 };
 
 } // namespace obs_showdraw

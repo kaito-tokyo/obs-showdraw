@@ -125,7 +125,7 @@ DrawingEffect::DrawingEffect(unique_gs_effect_t _effect)
 }
 
 void DrawingEffect::applyConvertGrayscalePass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-						 gs_texture_t *sourceTexture) noexcept
+					      gs_texture_t *sourceTexture) noexcept
 {
 	RenderingGuard guard(targetTexture);
 
@@ -458,7 +458,7 @@ void DrawingEffect::drawWithBlending(std::uint32_t width, std::uint32_t height, 
 }
 
 void DrawingEffect::drawColoredImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-				   gs_texture_t *sourceTexture) noexcept
+				     gs_texture_t *sourceTexture) noexcept
 {
 	RenderingGuard guard(targetTexture);
 
@@ -476,7 +476,7 @@ void DrawingEffect::drawColoredImage(std::uint32_t width, std::uint32_t height, 
 }
 
 void DrawingEffect::drawGrayscaleTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-					       gs_texture_t *sourceTexture) noexcept
+					 gs_texture_t *sourceTexture) noexcept
 {
 	RenderingGuard guard(targetTexture);
 

@@ -605,8 +605,7 @@ void ShowDrawFilterContext::videoRender()
 		if (runningPreset.medianFilteringKernelSize > 1) {
 			_drawingEffect->applyMedianFilteringPass(width, height, texelWidth, texelHeight,
 								 runningPreset.medianFilteringKernelSize,
-								 r8Target.get(), r8Temporary1.get(),
-								 r8Source.get());
+								 r8Target.get(), r8Temporary1.get(), r8Source.get());
 			std::swap(r8Source, r8Target);
 		}
 
@@ -614,9 +613,8 @@ void ShowDrawFilterContext::videoRender()
 			_drawingEffect->applyMotionAdaptiveFilteringPass(
 				width, height, texelWidth, texelHeight, runningPreset.motionMapKernelSize,
 				runningPreset.motionAdaptiveFilteringStrength,
-				runningPreset.motionAdaptiveFilteringMotionThreshold, r8Target.get(),
-				r8MotionMap.get(), r8Temporary1.get(), r8Source.get(),
-				r8PreviousGrayscale.get());
+				runningPreset.motionAdaptiveFilteringMotionThreshold, r8Target.get(), r8MotionMap.get(),
+				r8Temporary1.get(), r8Source.get(), r8PreviousGrayscale.get());
 			std::swap(r8Source, r8Target);
 
 			gs_copy_texture(r8PreviousGrayscale.get(), r8Source.get());
@@ -639,8 +637,7 @@ void ShowDrawFilterContext::videoRender()
 							    _drawingEffect->techVerticalErosion, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyOpeningErosionKernelSize,
-							    bgrxTarget.get(), bgrxTemporary2.get(),
-							    bgrxSource.get());
+							    bgrxTarget.get(), bgrxTemporary2.get(), bgrxSource.get());
 			std::swap(bgrxSource, bgrxTarget);
 		}
 
@@ -649,8 +646,7 @@ void ShowDrawFilterContext::videoRender()
 							    _drawingEffect->techVerticalDilation, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyOpeningDilationKernelSize,
-							    bgrxTarget.get(), bgrxTemporary2.get(),
-							    bgrxSource.get());
+							    bgrxTarget.get(), bgrxTemporary2.get(), bgrxSource.get());
 			std::swap(bgrxSource, bgrxTarget);
 		}
 
@@ -659,8 +655,7 @@ void ShowDrawFilterContext::videoRender()
 							    _drawingEffect->techVerticalDilation, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyClosingDilationKernelSize,
-							    bgrxTarget.get(), bgrxTemporary2.get(),
-							    bgrxSource.get());
+							    bgrxTarget.get(), bgrxTemporary2.get(), bgrxSource.get());
 			std::swap(bgrxSource, bgrxTarget);
 		}
 
@@ -669,8 +664,7 @@ void ShowDrawFilterContext::videoRender()
 							    _drawingEffect->techVerticalErosion, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyClosingErosionKernelSize,
-							    bgrxTarget.get(), bgrxTemporary2.get(),
-							    bgrxSource.get());
+							    bgrxTarget.get(), bgrxTemporary2.get(), bgrxSource.get());
 			std::swap(bgrxSource, bgrxTarget);
 		}
 	}
@@ -691,8 +685,13 @@ void ShowDrawFilterContext::videoRender()
 		unique_gs_texture_t bgrxCannyEdge;
 		{
 			std::lock_guard<std::mutex> lock(cannyEdgeImageMutex);
+			if (cannyEdgeImage.empty()) {
+				slog(LOG_DEBUG) << "Canny edge image is empty, skipping rendering";
+				throw skip_video_filter_exception();
+			}
 			const uint8_t *data = cannyEdgeImage.data;
-			bgrxCannyEdge = make_unique_gs_texture(cannyEdgeImage.cols, cannyEdgeImage.rows, GS_R8, 1, &data, 0);
+			bgrxCannyEdge =
+				make_unique_gs_texture(cannyEdgeImage.cols, cannyEdgeImage.rows, GS_R8, 1, &data, 0);
 		}
 		_drawingEffect->drawGrayscaleTexture(width, height, defaultRenderTarget, bgrxCannyEdge.get());
 	}
@@ -767,10 +766,11 @@ void ensureTexture(unique_gs_texture_t &texture, uint32_t width, uint32_t height
 	}
 }
 
-void ensureTextureReader(std::unique_ptr<AsyncTextureReader<2>> &textureReader, uint32_t width, uint32_t height, gs_color_format format = GS_BGRA)
+void ensureTextureReader(std::unique_ptr<AsyncTextureReader> &textureReader, uint32_t width, uint32_t height,
+			 gs_color_format format = GS_BGRA)
 {
 	if (!textureReader || textureReader->getWidth() != width || textureReader->getHeight() != height) {
-		textureReader = std::make_unique<AsyncTextureReader<2>>(width, height, format);
+		textureReader = std::make_unique<AsyncTextureReader>(width, height, format);
 	}
 }
 
@@ -815,7 +815,8 @@ try {
 	}
 
 	cv::Mat _edgeImage;
-	cv::Canny(grayscaleImage, _edgeImage, runningPreset.hysteresisHighThreshold * 255, runningPreset.hysteresisLowThreshold * 255);
+	cv::Canny(grayscaleImage, _edgeImage, runningPreset.hysteresisHighThreshold * 255,
+		  runningPreset.hysteresisLowThreshold * 255);
 
 	{
 		std::lock_guard<std::mutex> lock(cannyEdgeImageMutex);
