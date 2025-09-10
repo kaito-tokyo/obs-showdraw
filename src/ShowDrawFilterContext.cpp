@@ -337,21 +337,6 @@ obs_properties_t *ShowDrawFilterContext::getProperties()
 
 	obs_properties_add_text(props, "isUpdateAvailable", updateAvailableText, OBS_TEXT_INFO);
 
-	/*
-	obs_properties_add_button2(
-		props, "openPresetWindow", obs_module_text("openPresetWindow"),
-		[](obs_properties_t *props, obs_property_t *property, void *data) {
-			UNUSED_PARAMETER(props);
-			UNUSED_PARAMETER(property);
-			auto this_ = static_cast<ShowDrawFilterContext *>(data);
-			PresetWindow *window = new PresetWindow(this_->shared_from_this(),
-								static_cast<QWidget *>(obs_frontend_get_main_window()));
-			window->exec();
-			return true;
-		},
-		this);
-	*/
-
 	obs_property_t *propExtractionMode = obs_properties_add_list(
 		props, "extractionMode", obs_module_text("extractionMode"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeDefault"),
@@ -364,30 +349,6 @@ obs_properties_t *ShowDrawFilterContext::getProperties()
 				  static_cast<long long>(ExtractionMode::MotionMapCalculation));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeSobelMagnitude"),
 				  static_cast<long long>(ExtractionMode::SobelMagnitude));
-	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeEdgeDetection"),
-				  static_cast<long long>(ExtractionMode::EdgeDetection));
-	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeShowDetectedContours"),
-				  static_cast<long long>(ExtractionMode::ShowDetectedContours));
-
-	obs_property_t *propMedianFilteringKernelSize = obs_properties_add_list(
-		props, "medianFilteringKernelSize", obs_module_text("medianFilteringKernelSize"), OBS_COMBO_TYPE_LIST,
-		OBS_COMBO_FORMAT_INT);
-
-	obs_property_list_add_int(propMedianFilteringKernelSize, obs_module_text("medianFilteringKernelSize1"), 1);
-	obs_property_list_add_int(propMedianFilteringKernelSize, obs_module_text("medianFilteringKernelSize3"), 3);
-	obs_property_list_add_int(propMedianFilteringKernelSize, obs_module_text("medianFilteringKernelSize5"), 5);
-	obs_property_list_add_int(propMedianFilteringKernelSize, obs_module_text("medianFilteringKernelSize7"), 7);
-	obs_property_list_add_int(propMedianFilteringKernelSize, obs_module_text("medianFilteringKernelSize9"), 9);
-
-	obs_property_t *propMMotionMapKernelSize = obs_properties_add_list(props, "motionMapKernelSize",
-									   obs_module_text("motionMapKernelSize"),
-									   OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-
-	obs_property_list_add_int(propMMotionMapKernelSize, obs_module_text("motionMapKernelSize1"), 1);
-	obs_property_list_add_int(propMMotionMapKernelSize, obs_module_text("motionMapKernelSize3"), 3);
-	obs_property_list_add_int(propMMotionMapKernelSize, obs_module_text("motionMapKernelSize5"), 5);
-	obs_property_list_add_int(propMMotionMapKernelSize, obs_module_text("motionMapKernelSize7"), 7);
-	obs_property_list_add_int(propMMotionMapKernelSize, obs_module_text("motionMapKernelSize9"), 9);
 
 	obs_properties_add_float_slider(props, "motionAdaptiveFilteringStrength",
 					obs_module_text("motionAdaptiveFilteringStrength"), 0.0, 1.0, 0.001);
@@ -399,24 +360,6 @@ obs_properties_t *ShowDrawFilterContext::getProperties()
 	obs_properties_add_float_slider(props, "sobelMagnitudeFinalizationScalingFactorDb",
 					obs_module_text("sobelMagnitudeFinalizationScalingFactorDb"), -20.0, 20.0,
 					0.01);
-
-	obs_properties_add_float_slider(props, "hysteresisHighThreshold", obs_module_text("hysteresisHighThreshold"),
-					0.0, 1.0, 0.001);
-	obs_properties_add_float_slider(props, "hysteresisLowThreshold", obs_module_text("hysteresisLowThreshold"), 0.0,
-					1.0, 0.0001);
-
-	obs_properties_add_int_slider(props, "hysteresisPropagationIterations",
-				      obs_module_text("HysteresisPropagationIterations"), 0, 30, 1);
-
-	obs_properties_add_int_slider(props, "morphologyOpeningErosionKernelSize",
-				      obs_module_text("morphologyOpeningErosionKernelSize"), 1, 31, 2);
-	obs_properties_add_int_slider(props, "morphologyOpeningDilationKernelSize",
-				      obs_module_text("morphologyOpeningDilationKernelSize"), 1, 31, 2);
-
-	obs_properties_add_int_slider(props, "morphologyClosingDilationKernelSize",
-				      obs_module_text("morphologyClosingDilationKernelSize"), 1, 31, 2);
-	obs_properties_add_int_slider(props, "morphologyClosingErosionKernelSize",
-				      obs_module_text("morphologyClosingErosionKernelSize"), 1, 31, 2);
 
 	return props;
 }

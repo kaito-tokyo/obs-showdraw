@@ -77,7 +77,6 @@ public:
 	~ShowDrawFilterContext() noexcept;
 	void shutdown() noexcept;
 
-	std::pair<uint32_t, uint32_t> getDimensions() const noexcept;
 	uint32_t getWidth() const noexcept;
 	uint32_t getHeight() const noexcept;
 
