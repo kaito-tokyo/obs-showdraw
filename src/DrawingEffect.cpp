@@ -89,7 +89,6 @@ DrawingEffect::DrawingEffect(unique_gs_effect_t _effect)
 	  textureImage1(getEffectParam(effect, "image1")),
 	  floatTexelWidth(getEffectParam(effect, "texelWidth")),
 	  floatTexelHeight(getEffectParam(effect, "texelHeight")),
-	  intKernelSize(getEffectParam(effect, "kernelSize")),
 	  textureMotionMap(getEffectParam(effect, "motionMap")),
 	  floatStrength(getEffectParam(effect, "strength")),
 	  floatMotionThreshold(getEffectParam(effect, "motionThreshold")),
@@ -99,26 +98,16 @@ DrawingEffect::DrawingEffect(unique_gs_effect_t _effect)
 	  floatScalingFactor(getEffectParam(effect, "scalingFactor")),
 	  techConvertGrayscale(getEffectTech(effect, "ConvertGrayscale")),
 	  techHorizontalMedian3(getEffectTech(effect, "HorizontalMedian3")),
-	  techHorizontalMedian5(getEffectTech(effect, "HorizontalMedian5")),
-	  techHorizontalMedian7(getEffectTech(effect, "HorizontalMedian7")),
-	  techHorizontalMedian9(getEffectTech(effect, "HorizontalMedian9")),
 	  techVerticalMedian3(getEffectTech(effect, "VerticalMedian3")),
-	  techVerticalMedian5(getEffectTech(effect, "VerticalMedian5")),
-	  techVerticalMedian7(getEffectTech(effect, "VerticalMedian7")),
-	  techVerticalMedian9(getEffectTech(effect, "VerticalMedian9")),
-	  techCalculateHorizontalMotionMap(getEffectTech(effect, "CalculateHorizontalMotionMap")),
-	  techCalculateVerticalMotionMap(getEffectTech(effect, "CalculateVerticalMotionMap")),
+	  techCalculateHorizontalMotionMap3(getEffectTech(effect, "CalculateHorizontalMotionMap3")),
+	  techCalculateVerticalMotionMap3(getEffectTech(effect, "CalculateVerticalMotionMap3")),
 	  techMotionAdaptiveFiltering(getEffectTech(effect, "MotionAdaptiveFiltering")),
 	  techApplySobel(getEffectTech(effect, "ApplySobel")),
 	  techFinalizeSobelMagnitude(getEffectTech(effect, "FinalizeSobelMagnitude")),
-	  techSuppressNonMaximum(getEffectTech(effect, "SuppressNonMaximum")),
-	  techHysteresisClassify(getEffectTech(effect, "HysteresisClassify")),
-	  techHysteresisPropagate(getEffectTech(effect, "HysteresisPropagate")),
-	  techHysteresisFinalize(getEffectTech(effect, "HysteresisFinalize")),
-	  techHorizontalErosion(getEffectTech(effect, "HorizontalErosion")),
-	  techVerticalErosion(getEffectTech(effect, "VerticalErosion")),
-	  techHorizontalDilation(getEffectTech(effect, "HorizontalDilation")),
-	  techVerticalDilation(getEffectTech(effect, "VerticalDilation")),
+	  techHorizontalErosion3(getEffectTech(effect, "HorizontalErosion3")),
+	  techVerticalErosion3(getEffectTech(effect, "VerticalErosion3")),
+	  techHorizontalDilation3(getEffectTech(effect, "HorizontalDilation3")),
+	  techVerticalDilation3(getEffectTech(effect, "VerticalDilation3")),
 	  techDraw(getEffectTech(effect, "Draw")),
 	  techDrawGrayscale(getEffectTech(effect, "DrawGrayscale"))
 {
@@ -143,37 +132,13 @@ void DrawingEffect::applyConvertGrayscalePass(std::uint32_t width, std::uint32_t
 }
 
 void DrawingEffect::applyMedianFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth,
-					     float texelHeight, int kernelSize, gs_texture_t *targetTexture,
+					     float texelHeight, gs_texture_t *targetTexture,
 					     gs_texture_t *targetIntermediateTexture,
 					     gs_texture_t *sourceTexture) noexcept
 {
-	gs_technique_t *techHorizontal, *techVertical;
-	switch (kernelSize) {
-	case 3:
-		techHorizontal = techHorizontalMedian3;
-		techVertical = techVerticalMedian3;
-		break;
-	case 5:
-		techHorizontal = techHorizontalMedian5;
-		techVertical = techVerticalMedian5;
-		break;
-	case 7:
-		techHorizontal = techHorizontalMedian7;
-		techVertical = techVerticalMedian7;
-		break;
-	case 9:
-		techHorizontal = techHorizontalMedian9;
-		techVertical = techVerticalMedian9;
-		break;
-	default:
-		obs_log(LOG_WARNING, "Invalid median filtering kernel size: %d", kernelSize);
-		gs_copy_texture(targetTexture, sourceTexture);
-		return;
-	}
-
 	{
 		RenderingGuard guard(targetIntermediateTexture);
-		gs_technique_t *tech = techHorizontal;
+		gs_technique_t *tech = techHorizontalMedian3;
 		std::size_t passes = gs_technique_begin(tech);
 		for (std::size_t i = 0; i < passes; i++) {
 			if (gs_technique_begin_pass(tech, i)) {
@@ -190,7 +155,7 @@ void DrawingEffect::applyMedianFilteringPass(std::uint32_t width, std::uint32_t 
 
 	{
 		RenderingGuard guard(targetTexture);
-		gs_technique_t *tech = techVertical;
+		gs_technique_t *tech = techVerticalMedian3;
 		std::size_t passes = gs_technique_begin(tech);
 		for (std::size_t i = 0; i < passes; i++) {
 			if (gs_technique_begin_pass(tech, i)) {
@@ -207,16 +172,15 @@ void DrawingEffect::applyMedianFilteringPass(std::uint32_t width, std::uint32_t 
 }
 
 void DrawingEffect::applyMotionAdaptiveFilteringPass(std::uint32_t width, std::uint32_t height, float texelWidth,
-						     float texelHeight, int kernelSize, float strength,
-						     float motionThreshold, gs_texture_t *targetTexture,
-						     gs_texture_t *targetMotionMapTexture,
+						     float texelHeight, float strength, float motionThreshold,
+						     gs_texture_t *targetTexture, gs_texture_t *targetMotionMapTexture,
 						     gs_texture_t *targetIntermediateTexture,
 						     gs_texture_t *sourceTexture,
 						     gs_texture_t *sourcePreviousGrayscaleTexture) noexcept
 {
 	{
 		RenderingGuard guard(targetIntermediateTexture);
-		gs_technique_t *tech = techCalculateHorizontalMotionMap;
+		gs_technique_t *tech = techCalculateHorizontalMotionMap3;
 		std::size_t passes = gs_technique_begin(tech);
 		for (std::size_t i = 0; i < passes; i++) {
 			if (gs_technique_begin_pass(tech, i)) {
@@ -224,7 +188,6 @@ void DrawingEffect::applyMotionAdaptiveFilteringPass(std::uint32_t width, std::u
 				gs_effect_set_texture(textureImage1, sourcePreviousGrayscaleTexture);
 
 				gs_effect_set_float(floatTexelWidth, texelWidth);
-				gs_effect_set_int(intKernelSize, kernelSize);
 
 				gs_draw_sprite(nullptr, 0, width, height);
 				gs_technique_end_pass(tech);
@@ -235,14 +198,13 @@ void DrawingEffect::applyMotionAdaptiveFilteringPass(std::uint32_t width, std::u
 
 	{
 		RenderingGuard guard(targetMotionMapTexture);
-		gs_technique_t *tech = techCalculateVerticalMotionMap;
+		gs_technique_t *tech = techCalculateVerticalMotionMap3;
 		std::size_t passes = gs_technique_begin(tech);
 		for (std::size_t i = 0; i < passes; i++) {
 			if (gs_technique_begin_pass(tech, i)) {
 				gs_effect_set_texture(textureImage, targetIntermediateTexture);
 
 				gs_effect_set_float(floatTexelHeight, texelHeight);
-				gs_effect_set_int(intKernelSize, kernelSize);
 
 				gs_draw_sprite(nullptr, 0, width, height);
 				gs_technique_end_pass(tech);
@@ -311,96 +273,10 @@ void DrawingEffect::applyFinalizeSobelMagnitudePass(std::uint32_t width, std::ui
 	}
 }
 
-void DrawingEffect::applySuppressNonMaximumPass(std::uint32_t width, std::uint32_t height, float texelWidth,
-						float texelHeight, gs_texture_t *targetTexture,
-						gs_texture_t *sourceTexture) noexcept
-{
-	RenderingGuard guard(targetTexture);
-	gs_technique_t *tech = techSuppressNonMaximum;
-	std::size_t passes = gs_technique_begin(tech);
-	for (std::size_t i = 0; i < passes; i++) {
-		if (gs_technique_begin_pass(tech, i)) {
-			gs_effect_set_texture(textureImage, sourceTexture);
-
-			gs_effect_set_float(floatTexelWidth, texelWidth);
-			gs_effect_set_float(floatTexelHeight, texelHeight);
-
-			gs_draw_sprite(nullptr, 0, width, height);
-			gs_technique_end_pass(tech);
-		}
-	}
-	gs_technique_end(tech);
-}
-
-void DrawingEffect::applyHysteresisClassifyPass(std::uint32_t width, std::uint32_t height, float texelWidth,
-						float texelHeight, float highThreshold, float lowThreshold,
-						gs_texture_t *targetTexture, gs_texture_t *sourceTexture) noexcept
-{
-	RenderingGuard guard(targetTexture);
-	gs_technique_t *tech = techHysteresisClassify;
-	std::size_t passes = gs_technique_begin(tech);
-	for (std::size_t i = 0; i < passes; i++) {
-		if (gs_technique_begin_pass(tech, i)) {
-			gs_effect_set_texture(textureImage, sourceTexture);
-
-			gs_effect_set_float(floatTexelWidth, texelWidth);
-			gs_effect_set_float(floatTexelHeight, texelHeight);
-			gs_effect_set_float(floatHighThreshold, highThreshold);
-			gs_effect_set_float(floatLowThreshold, lowThreshold);
-
-			gs_draw_sprite(nullptr, 0, width, height);
-			gs_technique_end_pass(tech);
-		}
-	}
-	gs_technique_end(tech);
-}
-
-void DrawingEffect::applyHysteresisPropagatePass(std::uint32_t width, std::uint32_t height, float texelWidth,
-						 float texelHeight, gs_texture_t *targetTexture,
-						 gs_texture_t *sourceTexture) noexcept
-{
-	RenderingGuard guard(targetTexture);
-	gs_technique_t *tech = techHysteresisPropagate;
-	std::size_t passes = gs_technique_begin(tech);
-	for (std::size_t i = 0; i < passes; i++) {
-		if (gs_technique_begin_pass(tech, i)) {
-			gs_effect_set_texture(textureImage, sourceTexture);
-
-			gs_effect_set_float(floatTexelWidth, texelWidth);
-			gs_effect_set_float(floatTexelHeight, texelHeight);
-
-			gs_draw_sprite(nullptr, 0, width, height);
-			gs_technique_end_pass(tech);
-		}
-	}
-	gs_technique_end(tech);
-}
-
-void DrawingEffect::applyHysteresisFinalizePass(std::uint32_t width, std::uint32_t height, float texelWidth,
-						float texelHeight, gs_texture_t *targetTexture,
-						gs_texture_t *sourceTexture) noexcept
-{
-	RenderingGuard guard(targetTexture);
-	gs_technique_t *tech = techHysteresisFinalize;
-	std::size_t passes = gs_technique_begin(tech);
-	for (std::size_t i = 0; i < passes; i++) {
-		if (gs_technique_begin_pass(tech, i)) {
-			gs_effect_set_texture(textureImage, sourceTexture);
-
-			gs_effect_set_float(floatTexelWidth, texelWidth);
-			gs_effect_set_float(floatTexelHeight, texelHeight);
-
-			gs_draw_sprite(nullptr, 0, width, height);
-			gs_technique_end_pass(tech);
-		}
-	}
-	gs_technique_end(tech);
-}
-
 void DrawingEffect::applyMorphologyPass(std::uint32_t width, std::uint32_t height, gs_technique_t *horizontalTechnique,
 					gs_technique_t *verticalTechnique, float texelWidth, float texelHeight,
-					int kernelSize, gs_texture_t *targetTexture,
-					gs_texture_t *targetIntermediateTexture, gs_texture_t *sourceTexture) noexcept
+					gs_texture_t *targetTexture, gs_texture_t *targetIntermediateTexture,
+					gs_texture_t *sourceTexture) noexcept
 {
 	{
 		RenderingGuard guard(targetIntermediateTexture);
@@ -411,7 +287,6 @@ void DrawingEffect::applyMorphologyPass(std::uint32_t width, std::uint32_t heigh
 				gs_effect_set_texture(textureImage, sourceTexture);
 
 				gs_effect_set_float(floatTexelWidth, texelWidth);
-				gs_effect_set_int(intKernelSize, kernelSize);
 
 				gs_draw_sprite(nullptr, 0, width, height);
 				gs_technique_end_pass(tech);
@@ -429,7 +304,6 @@ void DrawingEffect::applyMorphologyPass(std::uint32_t width, std::uint32_t heigh
 				gs_effect_set_texture(textureImage, targetIntermediateTexture);
 
 				gs_effect_set_float(floatTexelHeight, texelHeight);
-				gs_effect_set_int(intKernelSize, kernelSize);
 
 				gs_draw_sprite(nullptr, 0, width, height);
 				gs_technique_end_pass(tech);
@@ -439,11 +313,8 @@ void DrawingEffect::applyMorphologyPass(std::uint32_t width, std::uint32_t heigh
 	}
 }
 
-void DrawingEffect::drawWithBlending(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-				     gs_texture_t *sourceTexture) noexcept
+void DrawingEffect::drawTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *sourceTexture) noexcept
 {
-	RenderingGuard guard(targetTexture, GS_BLEND_ONE, GS_BLEND_INVSRCALPHA);
-
 	gs_technique_t *tech = techDraw;
 	size_t passes = gs_technique_begin(tech);
 	for (size_t i = 0; i < passes; i++) {
@@ -457,29 +328,9 @@ void DrawingEffect::drawWithBlending(std::uint32_t width, std::uint32_t height, 
 	gs_technique_end(tech);
 }
 
-void DrawingEffect::drawColoredImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-				     gs_texture_t *sourceTexture) noexcept
-{
-	RenderingGuard guard(targetTexture);
-
-	gs_technique_t *tech = techDraw;
-	size_t passes = gs_technique_begin(tech);
-	for (size_t i = 0; i < passes; i++) {
-		if (gs_technique_begin_pass(tech, i)) {
-			gs_effect_set_texture(textureImage, sourceTexture);
-
-			gs_draw_sprite(nullptr, 0, width, height);
-			gs_technique_end_pass(tech);
-		}
-	}
-	gs_technique_end(tech);
-}
-
-void DrawingEffect::drawGrayscaleTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+void DrawingEffect::drawGrayscaleTexture(std::uint32_t width, std::uint32_t height,
 					 gs_texture_t *sourceTexture) noexcept
 {
-	RenderingGuard guard(targetTexture);
-
 	gs_technique_t *tech = techDrawGrayscale;
 	size_t passes = gs_technique_begin(tech);
 	for (size_t i = 0; i < passes; i++) {

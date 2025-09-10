@@ -5,7 +5,6 @@ uniform texture2d image1;
 // Common parameters
 uniform float texelWidth;
 uniform float texelHeight;
-uniform int kernelSize;
 
 // Motion adaptive filtering parameters
 uniform texture2d motionMap;
@@ -19,11 +18,6 @@ uniform float scalingFactor;
 // Canny edge detection parameters
 uniform float highThreshold;
 uniform float lowThreshold;
-
-#define PI 3.14159265359f
-#define SQRT_20 4.472136f
-#define TAN_22_5 0.41421356f
-#define TAN_67_5 2.41421356f
 
 sampler_state def_sampler
 {
@@ -47,24 +41,6 @@ VertInOut VSDefault(VertInOut vert_in)
 
 #include "drawing-pixelshaders.effect"
 
-technique Draw
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSDraw(vert_in);
-	}
-}
-
-technique DrawGrayscale
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSDrawGrayscale(vert_in);
-	}
-}
-
 technique ConvertGrayscale
 {
 	pass
@@ -83,33 +59,6 @@ technique HorizontalMedian3
 	}
 }
 
-technique HorizontalMedian5
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSHorizontalMedian5(vert_in);
-	}
-}
-
-technique HorizontalMedian7
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSHorizontalMedian7(vert_in);
-	}
-}
-
-technique HorizontalMedian9
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSHorizontalMedian9(vert_in);
-	}
-}
-
 technique VerticalMedian3
 {
 	pass
@@ -119,48 +68,21 @@ technique VerticalMedian3
 	}
 }
 
-technique VerticalMedian5
+technique CalculateHorizontalMotionMap3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSVerticalMedian5(vert_in);
+		pixel_shader = PSCalculateHorizontalMotionMap3(vert_in);
 	}
 }
 
-technique VerticalMedian7
+technique CalculateVerticalMotionMap3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSVerticalMedian7(vert_in);
-	}
-}
-
-technique VerticalMedian9
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSVerticalMedian9(vert_in);
-	}
-}
-
-technique CalculateHorizontalMotionMap
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSCalculateHorizontalMotionMap(vert_in);
-	}
-}
-
-technique CalculateVerticalMotionMap
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSCalculateVerticalMotionMap(vert_in);
+		pixel_shader = PSCalculateVerticalMotionMap3(vert_in);
 	}
 }
 
@@ -191,74 +113,56 @@ technique FinalizeSobelMagnitude
 	}
 }
 
-technique SuppressNonMaximum
+technique HorizontalErosion3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSSuppressNonMaximum(vert_in);
+		pixel_shader = PSHorizontalErosion3(vert_in);
 	}
 }
 
-technique HysteresisClassify
+technique VerticalErosion3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSHysteresisClassify(vert_in);
+		pixel_shader = PSVerticalErosion3(vert_in);
 	}
 }
 
-technique HysteresisPropagate
+technique HorizontalDilation3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSHysteresisPropagate(vert_in);
+		pixel_shader = PSHorizontalDilation3(vert_in);
 	}
 }
 
-technique HysteresisFinalize
+technique VerticalDilation3
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSHysteresisFinalize(vert_in);
+		pixel_shader = PSVerticalDilation3(vert_in);
 	}
 }
 
-technique HorizontalErosion
+technique Draw
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSHorizontalErosion(vert_in);
+		pixel_shader = PSDraw(vert_in);
 	}
 }
 
-technique VerticalErosion
+technique DrawGrayscale
 {
 	pass
 	{
 		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSVerticalErosion(vert_in);
-	}
-}
-
-technique HorizontalDilation
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSHorizontalDilation(vert_in);
-	}
-}
-
-technique VerticalDilation
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader = PSVerticalDilation(vert_in);
+		pixel_shader = PSDrawGrayscale(vert_in);
 	}
 }
