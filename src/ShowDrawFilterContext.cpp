@@ -829,12 +829,27 @@ try {
 	std::vector<std::vector<cv::Point>> contours;
 	std::vector<cv::Vec4i> hierarchy;
 	cv::findContours(singleChannelImage, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
-	slog(LOG_INFO) << "Found " << contours.size() << " contours";
-    
+
+	std::vector<std::vector<cv::Point>> largeQuadrilaterals;
+	for (const auto &contour : contours) {
+		std::vector<cv::Point> approx;
+		cv::approxPolyDP(contour, approx, cv::arcLength(contour, true) * 0.02, true);
+
+		if (cv::isContourConvex(approx)) {
+			double area = cv::contourArea(approx);
+			// Adjust the threshold as needed
+			if (area > 1000) {
+				largeQuadrilaterals.push_back(approx);
+			}
+		}
+	}
+	slog(LOG_INFO) << "Found " << contours.size() << " contours, filtered to " << largeQuadrilaterals.size()
+		       << " large quadrilaterals";
+
 	{
 		std::lock_guard<std::mutex> lock(contourImageMutex);
 		contourImage = cv::Mat::zeros(height, width, CV_8UC4);
-		cv::drawContours(contourImage, contours, -1, cv::Scalar(255, 0, 0, 255), 2, cv::LINE_AA);
+		cv::drawContours(contourImage, largeQuadrilaterals, -1, cv::Scalar(255, 0, 0, 255), 2, cv::LINE_AA);
 	}
 } catch (const std::exception &e) {
 	slog(LOG_ERROR) << "Failed to process frame: " << e.what();
