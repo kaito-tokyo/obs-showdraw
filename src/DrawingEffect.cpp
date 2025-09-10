@@ -35,7 +35,8 @@ struct RenderingGuard {
 	gs_zstencil_t *previousZStencil;
 	gs_color_space previousColorSpace;
 
-	RenderingGuard(gs_texture_t *targetTexture, gs_zstencil_t *targetZStencil = nullptr,
+	RenderingGuard(gs_texture_t *targetTexture, gs_blend_type srcBlendType = GS_BLEND_ONE,
+		       gs_blend_type dstBlendType = GS_BLEND_ZERO, gs_zstencil_t *targetZStencil = nullptr,
 		       gs_color_space targetColorSpace = GS_CS_SRGB)
 		: previousRenderTarget(gs_get_render_target()),
 		  previousZStencil(gs_get_zstencil_target()),
@@ -43,7 +44,7 @@ struct RenderingGuard {
 	{
 		gs_set_render_target_with_color_space(targetTexture, targetZStencil, targetColorSpace);
 		gs_blend_state_push();
-		gs_blend_function(GS_BLEND_ONE, GS_BLEND_ZERO);
+		gs_blend_function(srcBlendType, dstBlendType);
 	}
 
 	~RenderingGuard()
@@ -58,7 +59,7 @@ gs_eparam_t *getEffectParam(const unique_gs_effect_t &effect, const char *name)
 	gs_eparam_t *param = gs_effect_get_param_by_name(effect.get(), name);
 
 	if (!param) {
-		slog(LOG_ERROR) << "Effect parameter " << name << " not found";
+		obs_log(LOG_ERROR, "Effect parameter %s not found", name);
 		throw std::runtime_error("Effect parameter not found");
 	}
 
@@ -70,7 +71,7 @@ gs_technique_t *getEffectTech(const unique_gs_effect_t &effect, const char *name
 	gs_technique_t *tech = gs_effect_get_technique(effect.get(), name);
 
 	if (!tech) {
-		slog(LOG_ERROR) << "Effect technique " << name << " not found";
+		obs_log(LOG_ERROR, "Effect technique %s not found", name);
 		throw std::runtime_error("Effect technique not found");
 	}
 
@@ -96,7 +97,7 @@ DrawingEffect::DrawingEffect(unique_gs_effect_t _effect)
 	  floatLowThreshold(getEffectParam(effect, "lowThreshold")),
 	  boolUseLog(getEffectParam(effect, "useLog")),
 	  floatScalingFactor(getEffectParam(effect, "scalingFactor")),
-	  techExtractLuminance(getEffectTech(effect, "ExtractLuminance")),
+	  techConvertGrayscale(getEffectTech(effect, "ConvertGrayscale")),
 	  techHorizontalMedian3(getEffectTech(effect, "HorizontalMedian3")),
 	  techHorizontalMedian5(getEffectTech(effect, "HorizontalMedian5")),
 	  techHorizontalMedian7(getEffectTech(effect, "HorizontalMedian7")),
@@ -118,16 +119,17 @@ DrawingEffect::DrawingEffect(unique_gs_effect_t _effect)
 	  techVerticalErosion(getEffectTech(effect, "VerticalErosion")),
 	  techHorizontalDilation(getEffectTech(effect, "HorizontalDilation")),
 	  techVerticalDilation(getEffectTech(effect, "VerticalDilation")),
-	  techDraw(getEffectTech(effect, "Draw"))
+	  techDraw(getEffectTech(effect, "Draw")),
+	  techDrawGrayscale(getEffectTech(effect, "DrawGrayscale"))
 {
 }
 
-void DrawingEffect::applyLuminanceExtractionPass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-						 gs_texture_t *sourceTexture) noexcept
+void DrawingEffect::applyConvertGrayscalePass(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+					      gs_texture_t *sourceTexture) noexcept
 {
 	RenderingGuard guard(targetTexture);
 
-	gs_technique_t *tech = techExtractLuminance;
+	gs_technique_t *tech = techConvertGrayscale;
 	std::size_t passes = gs_technique_begin(tech);
 	for (std::size_t i = 0; i < passes; i++) {
 		if (gs_technique_begin_pass(tech, i)) {
@@ -210,7 +212,7 @@ void DrawingEffect::applyMotionAdaptiveFilteringPass(std::uint32_t width, std::u
 						     gs_texture_t *targetMotionMapTexture,
 						     gs_texture_t *targetIntermediateTexture,
 						     gs_texture_t *sourceTexture,
-						     gs_texture_t *sourcePreviousLuminanceTexture) noexcept
+						     gs_texture_t *sourcePreviousGrayscaleTexture) noexcept
 {
 	{
 		RenderingGuard guard(targetIntermediateTexture);
@@ -219,7 +221,7 @@ void DrawingEffect::applyMotionAdaptiveFilteringPass(std::uint32_t width, std::u
 		for (std::size_t i = 0; i < passes; i++) {
 			if (gs_technique_begin_pass(tech, i)) {
 				gs_effect_set_texture(textureImage, sourceTexture);
-				gs_effect_set_texture(textureImage1, sourcePreviousLuminanceTexture);
+				gs_effect_set_texture(textureImage1, sourcePreviousGrayscaleTexture);
 
 				gs_effect_set_float(floatTexelWidth, texelWidth);
 				gs_effect_set_int(intKernelSize, kernelSize);
@@ -256,7 +258,7 @@ void DrawingEffect::applyMotionAdaptiveFilteringPass(std::uint32_t width, std::u
 		for (std::size_t i = 0; i < passes; i++) {
 			if (gs_technique_begin_pass(tech, i)) {
 				gs_effect_set_texture(textureImage, sourceTexture);
-				gs_effect_set_texture(textureImage1, sourcePreviousLuminanceTexture);
+				gs_effect_set_texture(textureImage1, sourcePreviousGrayscaleTexture);
 				gs_effect_set_texture(textureMotionMap, targetMotionMapTexture);
 
 				gs_effect_set_float(floatStrength, strength);
@@ -437,12 +439,48 @@ void DrawingEffect::applyMorphologyPass(std::uint32_t width, std::uint32_t heigh
 	}
 }
 
-void DrawingEffect::drawFinalImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
-				   gs_texture_t *sourceTexture) noexcept
+void DrawingEffect::drawWithBlending(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+				     gs_texture_t *sourceTexture) noexcept
+{
+	RenderingGuard guard(targetTexture, GS_BLEND_ONE, GS_BLEND_INVSRCALPHA);
+
+	gs_technique_t *tech = techDraw;
+	size_t passes = gs_technique_begin(tech);
+	for (size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(tech, i)) {
+			gs_effect_set_texture(textureImage, sourceTexture);
+
+			gs_draw_sprite(nullptr, 0, width, height);
+			gs_technique_end_pass(tech);
+		}
+	}
+	gs_technique_end(tech);
+}
+
+void DrawingEffect::drawColoredImage(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+				     gs_texture_t *sourceTexture) noexcept
 {
 	RenderingGuard guard(targetTexture);
 
 	gs_technique_t *tech = techDraw;
+	size_t passes = gs_technique_begin(tech);
+	for (size_t i = 0; i < passes; i++) {
+		if (gs_technique_begin_pass(tech, i)) {
+			gs_effect_set_texture(textureImage, sourceTexture);
+
+			gs_draw_sprite(nullptr, 0, width, height);
+			gs_technique_end_pass(tech);
+		}
+	}
+	gs_technique_end(tech);
+}
+
+void DrawingEffect::drawGrayscaleTexture(std::uint32_t width, std::uint32_t height, gs_texture_t *targetTexture,
+					 gs_texture_t *sourceTexture) noexcept
+{
+	RenderingGuard guard(targetTexture);
+
+	gs_technique_t *tech = techDrawGrayscale;
 	size_t passes = gs_technique_begin(tech);
 	for (size_t i = 0; i < passes; i++) {
 		if (gs_technique_begin_pass(tech, i)) {

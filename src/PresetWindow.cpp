@@ -41,10 +41,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "ShowDrawFilterContext.h"
 
-using kaito_tokyo::obs_bridge_utils::slog;
-using kaito_tokyo::obs_bridge_utils::unique_obs_data_t;
-
-using kaito_tokyo::obs_showdraw::Preset;
+using namespace kaito_tokyo::obs_bridge_utils;
+using namespace kaito_tokyo::obs_showdraw;
 
 namespace kaito_tokyo {
 namespace obs_showdraw {

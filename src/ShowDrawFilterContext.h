@@ -51,10 +51,13 @@ void showdraw_module_unload(void);
 #include <memory>
 #include <optional>
 
+#include <opencv2/core.hpp>
+
 #include "AsyncTextureReader.hpp"
 #include "DrawingEffect.hpp"
 #include "Preset.hpp"
 #include "UpdateChecker.hpp"
+#include "TaskQueue.hpp"
 
 namespace kaito_tokyo {
 namespace obs_showdraw {
@@ -69,10 +72,10 @@ public:
 	static const char *getName() noexcept;
 
 	ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept;
-
 	void afterCreate(obs_data_t *settings, obs_source_t *source);
 
 	~ShowDrawFilterContext() noexcept;
+	void shutdown() noexcept;
 
 	std::pair<uint32_t, uint32_t> getDimensions() const noexcept;
 	uint32_t getWidth() const noexcept;
@@ -98,30 +101,56 @@ public:
 private:
 	void reloadDrawingEffectInGraphics();
 	void ensureTextures(uint32_t width, uint32_t height);
+	void processFrame(const TaskQueue::CancellationToken &token) noexcept;
 
 	obs_data_t *settings;
 	obs_source_t *filter;
+
+	std::unique_ptr<TaskQueue> taskQueueProcessFrame;
+	std::shared_ptr<DrawingEffect> drawingEffect;
+
+	Preset runningPreset;
+
 	uint32_t width;
 	uint32_t height;
 	float texelWidth;
 	float texelHeight;
-	std::shared_ptr<DrawingEffect> drawingEffect;
-	Preset runningPreset;
 
 	double sobelMagnitudeFinalizationScalingFactor = 1.0;
 
-	std::shared_ptr<gs_texture_t> textureSource = nullptr;
-	std::shared_ptr<gs_texture_t> textureTarget = nullptr;
-	std::shared_ptr<gs_texture_t> textureTemporary1 = nullptr;
-	std::shared_ptr<gs_texture_t> textureTemporary2 = nullptr;
-	std::shared_ptr<gs_texture_t> texturePreviousLuminance = nullptr;
-	std::shared_ptr<gs_texture_t> textureMotionMap = nullptr;
-	std::shared_ptr<gs_texture_t> textureFinalSobelMagnitude = nullptr;
-	std::shared_ptr<gs_texture_t> textureCannyEdge = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxSource = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxTarget = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8Source = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8Target = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxTemporary1 = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxTemporary2 = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8Temporary1 = nullptr;
 
-	std::unique_ptr<AsyncTextureReader<2>> readerCannyEdge = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8PreviousGrayscale = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8MotionMap = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t bgrxComplexSobel = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t r8FinalSobelMagnitude = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureCannyEdge = nullptr;
+	kaito_tokyo::obs_bridge_utils::unique_gs_texture_t textureContour = nullptr;
+
+	std::unique_ptr<AsyncTextureReader> readerCannyEdge = nullptr;
+	std::mutex readerCannyEdgeMutex;
 
 	std::shared_future<std::optional<LatestVersion>> futureLatestVersion;
+
+	cv::Mat contourImage;
+	std::mutex contourImageMutex;
+
+	cv::Mat filterVideoImage;
+
+	std::unique_ptr<AsyncTextureReader> readerGrayscale = nullptr;
+	std::mutex readerGrayscaleMutex;
+
+	cv::Mat cannyEdgeImage;
+	std::mutex cannyEdgeImageMutex;
+
+	cv::Mat detectedContoursImage;
+	std::mutex detectedContoursImageMutex;
 };
 
 } // namespace obs_showdraw

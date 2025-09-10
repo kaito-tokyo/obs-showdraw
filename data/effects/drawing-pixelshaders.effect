@@ -15,6 +15,12 @@ float4 PSDraw(VertInOut vert_in) : TARGET
 	return image.Sample(def_sampler, vert_in.uv);
 }
 
+float4 PSDrawGrayscale(VertInOut vert_in) : TARGET
+{
+	float luma = image.Sample(def_sampler, vert_in.uv).r;
+	return float4(luma, luma, luma, 1.0f);
+}
+
 //
 // Role:      Converts a color image to a grayscale luminance map. This is the starting point for most subsequent operations.
 // Prerequisite: Original Source (e.g., video input from OBS).
@@ -22,11 +28,11 @@ float4 PSDraw(VertInOut vert_in) : TARGET
 // Uniforms:  None.
 // Output:    A grayscale image with the luminance value stored in the .rgb channels (r=g=b).
 //
-float4 PSExtractLuminance(VertInOut vert_in) : TARGET
+float PSConvertGrayscale(VertInOut vert_in) : TARGET
 {
 	float4 color = image.Sample(def_sampler, vert_in.uv);
 	float luma = saturate(dot(color.rgb, float3(0.2126, 0.7152, 0.0722)));
-	return float4(luma, luma, luma, 1.0);
+	return luma;
 }
 
 #define MEDIAN_SWAP(a, b) { float temp=a; a=min(a,b); b=max(temp,b); }
@@ -220,7 +226,7 @@ float4 PSVerticalMedian9(VertInOut vert_in) : TARGET
 
 //
 // Role:      Calculates a motion map by comparing two frames to detect areas of movement.
-// Prerequisite: Two separate luminance maps (e.g., from two PSExtractLuminance passes on different frames).
+// Prerequisite: Two separate luminance maps (e.g., from two PSConvertGrayscale passes on different frames).
 // Input:     'image.r' (current frame luminance), 'image1.r' (previous frame luminance).
 // Uniforms:  kernelSize, texelWidth, texelHeight.
 // Output:    A motion map with the amount of motion (SAD: Sum of Absolute Differences) in the .rgb channels.
@@ -329,7 +335,7 @@ float4 PSMotionAdaptiveFiltering(VertInOut vert_in) : TARGET
 
 //
 // Role:      [Canny Step 1] Applies the Sobel operator to calculate the gradient magnitude and direction.
-// Prerequisite: PSExtractLuminance or PSMedianFiltering.
+// Prerequisite: PSConvertGrayscale or PSMedianFiltering.
 // Input:     A grayscale image in 'image.r'.
 // Uniforms:  texelWidth, texelHeight.
 // Output:    .r = Gradient Magnitude (normalized), .g = Gx (encoded to [0,1]), .b = Gy (encoded to [0,1]).
@@ -388,36 +394,83 @@ float4 PSFinalizeSobelMagnitude(VertInOut vert_in) : TARGET
 //
 float4 PSSuppressNonMaximum(VertInOut vert_in) : TARGET
 {
-	float4 encoded = image.Sample(def_sampler, vert_in.uv);
-	float encoded_magnitude = encoded.r;
-	float gx = (encoded.g - 0.5f) * 8.0f;
-	float gy = (encoded.b - 0.5f) * 8.0f;
+    // 1. Sobelパスからの勾配強度と方向を取得
+    float4 sobel_data = image.Sample(def_sampler, vert_in.uv);
+    float center_mag = sobel_data.r;
 
-	float2 offset = float2(0.0f, 0.0f);
-	float gx_abs = abs(gx);
-	float gy_abs = abs(gy);
+    // 強度がほぼ0のピクセルはエッジではないので、すぐに処理を終了
+    if (center_mag < 0.001f) {
+        return float4(0.0f, 0.0f, 0.0f, 1.0f);
+    }
+    
+    // Gx, Gyを [-4, 4] の範囲にデコード
+    float gx = (sobel_data.g - 0.5f) * 8.0f;
+    float gy = (sobel_data.b - 0.5f) * 8.0f;
 
-	if (gy_abs < gx_abs * TAN_22_5) {
-		offset = float2(texelWidth, 0.0f);
-	} else if (gy_abs > gx_abs * TAN_67_5) {
-		offset = float2(0.0f, texelHeight);
-	} else {
-		offset = float2(texelWidth, texelHeight);
-		// If gradient is in the 2nd or 4th quadrant (e.g., top-right to bottom-left edge),
-		// flip the y-component of the offset.
-		if ((gx > 0.0f && gy < 0.0f) || (gx < 0.0f && gy > 0.0f)) {
-			offset.y = -texelHeight;
-		}
-	}
+    float2 texel_size = float2(texelWidth, texelHeight);
+    float mag_a = 0.0f; // 勾配方向の補間された強度
+    float mag_b = 0.0f; // 勾配と逆方向の補間された強度
 
-	float neighbor_encoded_magnitude1 = image.Sample(def_sampler, vert_in.uv + offset).r;
-	float neighbor_encoded_magnitude2 = image.Sample(def_sampler, vert_in.uv - offset).r;
+    // 2. 勾配の方向に応じて補間処理を分岐
+    // 勾配が水平に近い場合 (X方向の変化がY方向より大きい)
+    if (abs(gx) > abs(gy)) 
+    {
+        // 補間の重みを計算 (傾き)
+        float weight = abs(gy / gx);
 
-	if (encoded_magnitude < neighbor_encoded_magnitude1 || encoded_magnitude < neighbor_encoded_magnitude2) {
-		encoded_magnitude = 0.0f;
-	}
+        // 水平方向の隣接ピクセルの値を取得
+        float mag_e = image.Sample(def_sampler, vert_in.uv + float2(texel_size.x, 0.0f)).r; // East
+        float mag_w = image.Sample(def_sampler, vert_in.uv - float2(texel_size.x, 0.0f)).r; // West
 
-	return float4(encoded_magnitude, encoded_magnitude, encoded_magnitude, 1.0f);
+        // 勾配のY成分の符号に応じて、斜め方向のピクセルを選択
+        if (gy > 0) // 右下 or 左下
+        {
+            float mag_se = image.Sample(def_sampler, vert_in.uv + float2(texel_size.x, texel_size.y)).r; // South-East
+            float mag_sw = image.Sample(def_sampler, vert_in.uv - float2(texel_size.x, -texel_size.y)).r; // South-West
+            mag_a = lerp(mag_e, mag_se, weight);
+            mag_b = lerp(mag_w, mag_sw, weight);
+        }
+        else // 右上 or 左上
+        {
+            float mag_ne = image.Sample(def_sampler, vert_in.uv + float2(texel_size.x, -texel_size.y)).r; // North-East
+            float mag_nw = image.Sample(def_sampler, vert_in.uv - float2(texel_size.x, texel_size.y)).r; // North-West
+            mag_a = lerp(mag_e, mag_ne, weight);
+            mag_b = lerp(mag_w, mag_nw, weight);
+        }
+    }
+    // 勾配が垂直に近い場合 (Y方向の変化がX方向以上)
+    else 
+    {
+        // 補間の重みを計算 (傾き)
+        float weight = abs(gx / gy);
+
+        // 垂直方向の隣接ピクセルの値を取得
+        float mag_n = image.Sample(def_sampler, vert_in.uv - float2(0.0f, texel_size.y)).r; // North
+        float mag_s = image.Sample(def_sampler, vert_in.uv + float2(0.0f, texel_size.y)).r; // South
+
+        // 勾配のX成分の符号に応じて、斜め方向のピクセルを選択
+        if (gx > 0) // 右下 or 右上
+        {
+            float mag_se = image.Sample(def_sampler, vert_in.uv + float2(texel_size.x, texel_size.y)).r;  // South-East
+            float mag_ne = image.Sample(def_sampler, vert_in.uv + float2(texel_size.x, -texel_size.y)).r; // North-East
+            mag_a = lerp(mag_s, mag_se, weight);
+            mag_b = lerp(mag_n, mag_ne, weight);
+        }
+        else // 左下 or 左上
+        {
+            float mag_sw = image.Sample(def_sampler, vert_in.uv - float2(texel_size.x, texel_size.y)).r;  // South-West
+            float mag_nw = image.Sample(def_sampler, vert_in.uv - float2(texel_size.x, -texel_size.y)).r; // North-West
+            mag_a = lerp(mag_s, mag_sw, weight);
+            mag_b = lerp(mag_n, mag_nw, weight);
+        }
+    }
+
+    // 3. 中心のピクセルが補間された値より小さい場合は抑制（0にする）
+    if (center_mag < mag_a || center_mag < mag_b) {
+        center_mag = 0.0f;
+    }
+
+    return float4(center_mag, center_mag, center_mag, 1.0f);
 }
 
 //

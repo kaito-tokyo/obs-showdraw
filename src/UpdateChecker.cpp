@@ -41,19 +41,19 @@ LatestVersion::LatestVersion(const std::string &version) : version(version) {}
 bool LatestVersion::isUpdateAvailable(const std::string &currentVersion) const noexcept
 {
 	if (version.empty()) {
-		slog(LOG_INFO) << "Latest version information is not available.";
+		obs_log(LOG_INFO, "Latest version information is not available.");
 		return false;
 	}
 
 	semver::version latest, current;
 
 	if (!semver::parse(version, latest)) {
-		slog(LOG_WARNING) << "Failed to parse latest version: " << version;
+		obs_log(LOG_WARNING, "Failed to parse latest version: %s", version.data());
 		return false;
 	}
 
 	if (!semver::parse(currentVersion, current)) {
-		slog(LOG_WARNING) << "Failed to parse current version: " << currentVersion;
+		obs_log(LOG_WARNING, "Failed to parse current version: %s", currentVersion.data());
 		return false;
 	}
 
@@ -76,7 +76,7 @@ std::optional<LatestVersion> UpdateChecker::fetch()
 	if (r.status_code == 200) {
 		return LatestVersion(r.text);
 	} else {
-		slog(LOG_WARNING) << "Failed to fetch latest version information: HTTP " << r.status_code;
+		obs_log(LOG_WARNING, "Failed to fetch latest version information: HTTP %ld", r.status_code);
 		return std::nullopt;
 	}
 }

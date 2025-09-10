@@ -19,7 +19,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #pragma once
 
 #include <obs-bridge-utils/gs_unique.hpp>
-#include <obs-bridge-utils/obs_log_ostream.hpp>
 #include <obs-bridge-utils/unique_bfree.hpp>
 #include <obs-bridge-utils/unique_obs_data_array.hpp>
 #include <obs-bridge-utils/unique_obs_data.hpp>

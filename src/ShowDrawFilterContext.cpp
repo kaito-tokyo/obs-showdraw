@@ -52,16 +52,20 @@ try {
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to create showdraw context: %s", e.what());
 	return nullptr;
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to create showdraw context: unknown error");
+	return nullptr;
 }
 
 void showdraw_destroy(void *data)
 try {
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_destroy called with null data";
+		obs_log(LOG_ERROR, "showdraw_destroy called with null data");
 		return;
 	}
 
 	auto self = static_cast<std::shared_ptr<ShowDrawFilterContext> *>(data);
+	self->get()->shutdown();
 	delete self;
 
 	{
@@ -70,6 +74,13 @@ try {
 	}
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to destroy showdraw context: %s", e.what());
+
+	{
+		graphics_context_guard guard;
+		kaito_tokyo::obs_bridge_utils::gs_unique::drain();
+	}
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to destroy showdraw context: unknown error");
 
 	{
 		graphics_context_guard guard;
@@ -107,7 +118,7 @@ void showdraw_get_defaults(obs_data_t *data)
 obs_properties_t *showdraw_get_properties(void *data)
 try {
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_get_properties called with null data";
+		obs_log(LOG_ERROR, "showdraw_get_properties called with null data");
 		return nullptr;
 	}
 
@@ -116,12 +127,15 @@ try {
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to get properties: %s", e.what());
 	return nullptr;
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to get properties: unknown error");
+	return nullptr;
 }
 
 void showdraw_update(void *data, obs_data_t *settings)
 try {
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_update called with null data";
+		obs_log(LOG_ERROR, "showdraw_update called with null data");
 		return;
 	}
 
@@ -129,6 +143,8 @@ try {
 	self->get()->update(settings);
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to update showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to update showdraw context: unknown error");
 }
 
 void showdraw_activate(void *data)
@@ -142,6 +158,8 @@ try {
 	self->get()->activate();
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to activate showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to activate showdraw context: unknown error");
 }
 
 void showdraw_deactivate(void *data)
@@ -149,7 +167,7 @@ try {
 	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
 
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_deactivate called with null data";
+		obs_log(LOG_ERROR, "showdraw_deactivate called with null data");
 		return;
 	}
 
@@ -157,6 +175,8 @@ try {
 	self->get()->deactivate();
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to deactivate showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to deactivate showdraw context: unknown error");
 }
 
 void showdraw_show(void *data)
@@ -164,7 +184,7 @@ try {
 	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
 
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_show called with null data";
+		obs_log(LOG_ERROR, "showdraw_show called with null data");
 		return;
 	}
 
@@ -172,6 +192,8 @@ try {
 	self->get()->show();
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to show showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to show showdraw context: unknown error");
 }
 
 void showdraw_hide(void *data)
@@ -179,7 +201,7 @@ try {
 	using kaito_tokyo::obs_showdraw::ShowDrawFilterContext;
 
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_hide called with null data";
+		obs_log(LOG_ERROR, "showdraw_hide called with null data");
 		return;
 	}
 
@@ -187,12 +209,14 @@ try {
 	self->get()->hide();
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to hide showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to hide showdraw context: unknown error");
 }
 
 void showdraw_video_tick(void *data, float seconds)
 try {
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_video_tick called with null data";
+		obs_log(LOG_ERROR, "showdraw_video_tick called with null data");
 		return;
 	}
 
@@ -200,6 +224,8 @@ try {
 	self->get()->videoTick(seconds);
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to tick showdraw context: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to tick showdraw context: unknown error");
 }
 
 void showdraw_video_render(void *data, gs_effect_t *effect)
@@ -222,25 +248,14 @@ try {
 	}
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to render video in showdraw context: %s", e.what());
-}
-
-void showdraw_module_load()
-{
-	// Nothing to do
-}
-
-void showdraw_module_unload()
-try {
-	graphics_context_guard guard;
-	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
-} catch (const std::exception &e) {
-	obs_log(LOG_ERROR, "Failed to unload showdraw module: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to render video in showdraw context: unknown error");
 }
 
 struct obs_source_frame *showdraw_filter_video(void *data, struct obs_source_frame *frame)
 try {
 	if (!data) {
-		slog(LOG_ERROR) << "showdraw_filter_video called with null data";
+		obs_log(LOG_ERROR, "showdraw_filter_video called with null data");
 		return frame;
 	}
 
@@ -249,6 +264,28 @@ try {
 } catch (const std::exception &e) {
 	obs_log(LOG_ERROR, "Failed to filter video in showdraw context: %s", e.what());
 	return frame;
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to filter video in showdraw context: unknown error");
+	return frame;
+}
+
+void showdraw_module_load()
+try {
+	// Nothing to do
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to load showdraw module: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to load showdraw module: unknown error");
+}
+
+void showdraw_module_unload()
+try {
+	graphics_context_guard guard;
+	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to unload showdraw module: %s", e.what());
+} catch (...) {
+	obs_log(LOG_ERROR, "Failed to unload showdraw module: unknown error");
 }
 
 namespace kaito_tokyo {
@@ -262,6 +299,7 @@ const char *ShowDrawFilterContext::getName() noexcept
 ShowDrawFilterContext::ShowDrawFilterContext(obs_data_t *settings, obs_source_t *source) noexcept
 	: settings(settings),
 	  filter(source),
+	  taskQueueProcessFrame(std::make_unique<TaskQueue>()),
 	  drawingEffect(nullptr)
 {
 	runningPreset.presetName = " running";
@@ -271,7 +309,7 @@ void ShowDrawFilterContext::afterCreate(obs_data_t *settings, obs_source_t *sour
 {
 	UNUSED_PARAMETER(source);
 
-	slog(LOG_INFO) << "Creating showdraw filter context";
+	obs_log(LOG_INFO, "Creating showdraw filter context");
 
 	update(settings);
 
@@ -283,7 +321,12 @@ void ShowDrawFilterContext::afterCreate(obs_data_t *settings, obs_source_t *sour
 
 ShowDrawFilterContext::~ShowDrawFilterContext() noexcept
 {
-	slog(LOG_INFO) << "Destroying showdraw filter context";
+	obs_log(LOG_INFO, "Destroying showdraw filter context");
+}
+
+void ShowDrawFilterContext::shutdown() noexcept
+{
+	taskQueueProcessFrame.reset();
 }
 
 uint32_t ShowDrawFilterContext::getWidth() const noexcept
@@ -320,6 +363,9 @@ void ShowDrawFilterContext::getDefaults(obs_data_t *data) noexcept
 
 	obs_data_set_default_double(data, "hysteresisHighThreshold", defaultPreset.hysteresisHighThreshold);
 	obs_data_set_default_double(data, "hysteresisLowThreshold", defaultPreset.hysteresisLowThreshold);
+
+	obs_data_set_default_int(data, "hysteresisPropagationIterations",
+				 static_cast<long long>(defaultPreset.hysteresisPropagationIterations));
 
 	obs_data_set_default_int(data, "morphologyOpeningErosionKernelSize",
 				 static_cast<long long>(defaultPreset.morphologyOpeningErosionKernelSize));
@@ -364,14 +410,16 @@ obs_properties_t *ShowDrawFilterContext::getProperties()
 				  static_cast<long long>(ExtractionMode::Default));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModePassthrough"),
 				  static_cast<long long>(ExtractionMode::Passthrough));
-	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeLuminanceExtraction"),
-				  static_cast<long long>(ExtractionMode::LuminanceExtraction));
+	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeConvertGrayscale"),
+				  static_cast<long long>(ExtractionMode::ConvertGrayscale));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeMotionMapCalculation"),
 				  static_cast<long long>(ExtractionMode::MotionMapCalculation));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeSobelMagnitude"),
 				  static_cast<long long>(ExtractionMode::SobelMagnitude));
 	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeEdgeDetection"),
 				  static_cast<long long>(ExtractionMode::EdgeDetection));
+	obs_property_list_add_int(propExtractionMode, obs_module_text("extractionModeShowDetectedContours"),
+				  static_cast<long long>(ExtractionMode::ShowDetectedContours));
 
 	obs_property_t *propMedianFilteringKernelSize = obs_properties_add_list(
 		props, "medianFilteringKernelSize", obs_module_text("medianFilteringKernelSize"), OBS_COMBO_TYPE_LIST,
@@ -408,6 +456,9 @@ obs_properties_t *ShowDrawFilterContext::getProperties()
 					0.0, 1.0, 0.001);
 	obs_properties_add_float_slider(props, "hysteresisLowThreshold", obs_module_text("hysteresisLowThreshold"), 0.0,
 					1.0, 0.0001);
+
+	obs_properties_add_int_slider(props, "hysteresisPropagationIterations",
+				      obs_module_text("HysteresisPropagationIterations"), 0, 30, 1);
 
 	obs_properties_add_int_slider(props, "morphologyOpeningErosionKernelSize",
 				      obs_module_text("morphologyOpeningErosionKernelSize"), 1, 31, 2);
@@ -461,7 +512,7 @@ void ShowDrawFilterContext::update(obs_data_t *settings)
 		reloadDrawingEffectInGraphics();
 	} catch (const std::exception &e) {
 		obs_leave_graphics();
-		slog(LOG_ERROR) << "Failed to reload drawing effect: " << e.what();
+		obs_log(LOG_ERROR, "Failed to reload drawing effect: %s", e.what());
 		return;
 	}
 	obs_leave_graphics();
@@ -469,39 +520,45 @@ void ShowDrawFilterContext::update(obs_data_t *settings)
 
 void ShowDrawFilterContext::activate()
 {
-	slog(LOG_INFO) << "Activating showdraw filter context";
+	obs_log(LOG_INFO, "Activating showdraw filter context");
 }
 
 void ShowDrawFilterContext::deactivate()
 {
-	slog(LOG_INFO) << "Deactivating showdraw filter context";
+	obs_log(LOG_INFO, "Deactivating showdraw filter context");
 }
 
 void ShowDrawFilterContext::show()
 {
-	slog(LOG_INFO) << "Showing showdraw filter context";
+	obs_log(LOG_INFO, "Showing showdraw filter context");
 }
 
 void ShowDrawFilterContext::hide()
 {
-	slog(LOG_INFO) << "Hiding showdraw filter context";
+	obs_log(LOG_INFO, "Hiding showdraw filter context");
 }
 
 void ShowDrawFilterContext::videoTick(float seconds)
 {
-	UNUSED_PARAMETER(seconds);
+	taskQueueProcessFrame->push([self = weak_from_this(), seconds](const TaskQueue::CancellationToken &token) {
+		if (auto s = self.lock()) {
+			s->processFrame(token);
+		} else {
+			obs_log(LOG_DEBUG, "ShowDrawFilterContext has been destroyed, skipping processFrame");
+		}
+	});
 }
 
 void ShowDrawFilterContext::videoRender()
 {
 	auto _drawingEffect = std::atomic_load(&drawingEffect);
 	if (!_drawingEffect) {
-		slog(LOG_DEBUG) << "Drawing effect not loaded";
+		obs_log(LOG_DEBUG, "Drawing effect not loaded");
 		throw skip_video_filter_exception();
 	}
 
 	if (width == 0 || height == 0) {
-		slog(LOG_DEBUG) << "Target source has zero width or height";
+		obs_log(LOG_DEBUG, "Target source has zero width or height");
 		throw skip_video_filter_exception();
 	}
 
@@ -511,25 +568,27 @@ void ShowDrawFilterContext::videoRender()
 						? DefaultExtractionMode
 						: runningPreset.extractionMode;
 
-	readerCannyEdge->sync();
-	cv::Mat cannyEdgeImage(height, width, CV_8UC4, readerCannyEdge->getBuffer().data(),
-			       readerCannyEdge->getBufferLinesize());
-
+	// {
+	// 	std::lock_guard<std::mutex> lock(readerCannyEdgeMutex);
+	// 	if (readerCannyEdge) {
+	// 		readerCannyEdge->sync();
+	// 	}
+	// }
 	{
-		cv::Mat singleChannelImage;
-		cv::extractChannel(cannyEdgeImage, singleChannelImage, 0);
-		int whitePixelCount = cv::countNonZero(singleChannelImage);
-		slog(LOG_INFO) << "Canny edge white pixel count: " << whitePixelCount;
+		std::lock_guard<std::mutex> lock(readerGrayscaleMutex);
+		if (readerGrayscale) {
+			readerGrayscale->sync();
+		}
 	}
 
 	gs_texture_t *defaultRenderTarget = gs_get_render_target();
 
 	if (!obs_source_process_filter_begin(filter, GS_BGRA, OBS_ALLOW_DIRECT_RENDERING)) {
-		slog(LOG_ERROR) << "Could not begin processing filter";
+		obs_log(LOG_ERROR, "Could not begin processing filter");
 		throw skip_video_filter_exception();
 	}
 
-	gs_set_render_target(textureSource.get(), NULL);
+	gs_set_render_target(bgrxSource.get(), NULL);
 
 	gs_viewport_push();
 	gs_projection_push();
@@ -540,50 +599,46 @@ void ShowDrawFilterContext::videoRender()
 
 	obs_source_process_filter_end(filter, _drawingEffect.get()->effect.get(), 0, 0);
 
-	if (extractionMode >= ExtractionMode::LuminanceExtraction) {
-		_drawingEffect->applyLuminanceExtractionPass(width, height, textureTarget.get(), textureSource.get());
-		std::swap(textureSource, textureTarget);
+	if (extractionMode >= ExtractionMode::ConvertGrayscale) {
+		_drawingEffect->applyConvertGrayscalePass(width, height, r8Source.get(), bgrxSource.get());
 
 		if (runningPreset.medianFilteringKernelSize > 1) {
 			_drawingEffect->applyMedianFilteringPass(width, height, texelWidth, texelHeight,
 								 runningPreset.medianFilteringKernelSize,
-								 textureTarget.get(), textureTemporary1.get(),
-								 textureSource.get());
-			std::swap(textureSource, textureTarget);
+								 r8Target.get(), r8Temporary1.get(), r8Source.get());
+			std::swap(r8Source, r8Target);
 		}
 
 		if (runningPreset.motionAdaptiveFilteringStrength > 0.0) {
 			_drawingEffect->applyMotionAdaptiveFilteringPass(
 				width, height, texelWidth, texelHeight, runningPreset.motionMapKernelSize,
 				runningPreset.motionAdaptiveFilteringStrength,
-				runningPreset.motionAdaptiveFilteringMotionThreshold, textureTarget.get(),
-				textureMotionMap.get(), textureTemporary2.get(), textureSource.get(),
-				texturePreviousLuminance.get());
-			std::swap(textureSource, textureTarget);
+				runningPreset.motionAdaptiveFilteringMotionThreshold, r8Target.get(), r8MotionMap.get(),
+				r8Temporary1.get(), r8Source.get(), r8PreviousGrayscale.get());
+			std::swap(r8Source, r8Target);
 
-			gs_copy_texture(texturePreviousLuminance.get(), textureSource.get());
+			gs_copy_texture(r8PreviousGrayscale.get(), r8Source.get());
 		}
+
+		readerGrayscale->stage(r8Source.get());
 	}
 
 	if (extractionMode >= ExtractionMode::SobelMagnitude) {
-		std::shared_ptr<gs_texture_t> textureComplexSobel = textureTemporary1;
-
-		_drawingEffect->applySobelPass(width, height, texelWidth, texelHeight, textureComplexSobel.get(),
-					       textureSource.get());
+		_drawingEffect->applySobelPass(width, height, texelWidth, texelHeight, bgrxComplexSobel.get(),
+					       r8Source.get());
 
 		_drawingEffect->applyFinalizeSobelMagnitudePass(width, height,
 								runningPreset.sobelMagnitudeFinalizationUseLog,
 								sobelMagnitudeFinalizationScalingFactor,
-								textureSource.get(), textureComplexSobel.get());
+								r8FinalSobelMagnitude.get(), bgrxComplexSobel.get());
 
 		if (runningPreset.morphologyOpeningErosionKernelSize > 1) {
 			_drawingEffect->applyMorphologyPass(width, height, _drawingEffect->techHorizontalErosion,
 							    _drawingEffect->techVerticalErosion, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyOpeningErosionKernelSize,
-							    textureTarget.get(), textureTemporary2.get(),
-							    textureSource.get());
-			std::swap(textureSource, textureTarget);
+							    bgrxTarget.get(), bgrxTemporary2.get(), bgrxSource.get());
+			std::swap(bgrxSource, bgrxTarget);
 		}
 
 		if (runningPreset.morphologyOpeningDilationKernelSize > 1) {
@@ -591,9 +646,8 @@ void ShowDrawFilterContext::videoRender()
 							    _drawingEffect->techVerticalDilation, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyOpeningDilationKernelSize,
-							    textureTarget.get(), textureTemporary2.get(),
-							    textureSource.get());
-			std::swap(textureSource, textureTarget);
+							    bgrxTarget.get(), bgrxTemporary2.get(), bgrxSource.get());
+			std::swap(bgrxSource, bgrxTarget);
 		}
 
 		if (runningPreset.morphologyClosingDilationKernelSize > 1) {
@@ -601,9 +655,8 @@ void ShowDrawFilterContext::videoRender()
 							    _drawingEffect->techVerticalDilation, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyClosingDilationKernelSize,
-							    textureTarget.get(), textureTemporary2.get(),
-							    textureSource.get());
-			std::swap(textureSource, textureTarget);
+							    bgrxTarget.get(), bgrxTemporary2.get(), bgrxSource.get());
+			std::swap(bgrxSource, bgrxTarget);
 		}
 
 		if (runningPreset.morphologyClosingErosionKernelSize > 1) {
@@ -611,50 +664,49 @@ void ShowDrawFilterContext::videoRender()
 							    _drawingEffect->techVerticalErosion, texelWidth,
 							    texelHeight,
 							    (int)runningPreset.morphologyClosingErosionKernelSize,
-							    textureTarget.get(), textureTemporary2.get(),
-							    textureSource.get());
-			std::swap(textureSource, textureTarget);
+							    bgrxTarget.get(), bgrxTemporary2.get(), bgrxSource.get());
+			std::swap(bgrxSource, bgrxTarget);
 		}
-
-		gs_copy_texture(textureFinalSobelMagnitude.get(), textureSource.get());
-		gs_copy_texture(textureSource.get(), textureComplexSobel.get());
-	}
-
-	if (extractionMode >= ExtractionMode::EdgeDetection) {
-		_drawingEffect->applySuppressNonMaximumPass(width, height, texelWidth, texelHeight, textureTarget.get(),
-							    textureSource.get());
-		std::swap(textureSource, textureTarget);
-
-		_drawingEffect->applyHysteresisClassifyPass(width, height, texelWidth, texelHeight,
-							    runningPreset.hysteresisHighThreshold,
-							    runningPreset.hysteresisLowThreshold, textureTarget.get(),
-							    textureSource.get());
-		std::swap(textureSource, textureTarget);
-
-		for (int i = 0; i < runningPreset.hysteresisPropagationIterations; i++) {
-			_drawingEffect->applyHysteresisPropagatePass(width, height, texelWidth, texelHeight,
-								     textureTarget.get(), textureSource.get());
-			std::swap(textureSource, textureTarget);
-		}
-
-		_drawingEffect->applyHysteresisFinalizePass(width, height, texelWidth, texelHeight, textureTarget.get(),
-							    textureSource.get());
-		std::swap(textureSource, textureTarget);
-
-		gs_copy_texture(textureCannyEdge.get(), textureSource.get());
-		readerCannyEdge->stage(textureCannyEdge.get());
 	}
 
 	gs_viewport_pop();
 	gs_projection_pop();
 	gs_matrix_pop();
 
-	if (extractionMode == ExtractionMode::MotionMapCalculation) {
-		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureMotionMap.get());
+	if (extractionMode == ExtractionMode::Passthrough) {
+		_drawingEffect->drawColoredImage(width, height, defaultRenderTarget, bgrxSource.get());
+	} else if (extractionMode == ExtractionMode::ConvertGrayscale) {
+		_drawingEffect->drawGrayscaleTexture(width, height, defaultRenderTarget, r8Source.get());
+	} else if (extractionMode == ExtractionMode::MotionMapCalculation) {
+		_drawingEffect->drawGrayscaleTexture(width, height, defaultRenderTarget, r8MotionMap.get());
 	} else if (extractionMode == ExtractionMode::SobelMagnitude) {
-		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureFinalSobelMagnitude.get());
-	} else {
-		_drawingEffect->drawFinalImage(width, height, defaultRenderTarget, textureSource.get());
+		_drawingEffect->drawGrayscaleTexture(width, height, defaultRenderTarget, r8FinalSobelMagnitude.get());
+	} else if (extractionMode == ExtractionMode::EdgeDetection) {
+		unique_gs_texture_t bgrxCannyEdge;
+		{
+			std::lock_guard<std::mutex> lock(cannyEdgeImageMutex);
+			if (cannyEdgeImage.empty()) {
+				obs_log(LOG_DEBUG, "Canny edge image is empty, skipping rendering");
+				throw skip_video_filter_exception();
+			}
+			const uint8_t *data = cannyEdgeImage.data;
+			bgrxCannyEdge =
+				make_unique_gs_texture(cannyEdgeImage.cols, cannyEdgeImage.rows, GS_R8, 1, &data, 0);
+		}
+		_drawingEffect->drawGrayscaleTexture(width, height, defaultRenderTarget, bgrxCannyEdge.get());
+	} else if (extractionMode == ExtractionMode::ShowDetectedContours) {
+		unique_gs_texture_t bgrxDetectedContours;
+		{
+			std::lock_guard<std::mutex> lock(detectedContoursImageMutex);
+			if (detectedContoursImage.empty()) {
+				obs_log(LOG_DEBUG, "Detected contours image is empty, skipping rendering");
+				throw skip_video_filter_exception();
+			}
+			const uint8_t *data = detectedContoursImage.data;
+			bgrxDetectedContours = make_unique_gs_texture(detectedContoursImage.cols,
+								      detectedContoursImage.rows, GS_BGRX, 1, &data, 0);
+		}
+		_drawingEffect->drawColoredImage(width, height, defaultRenderTarget, bgrxDetectedContours.get());
 	}
 
 	kaito_tokyo::obs_bridge_utils::gs_unique::drain();
@@ -713,38 +765,125 @@ try {
 
 	std::atomic_store(&drawingEffect, newDrawingEffect);
 } catch (const std::exception &e) {
-	slog(LOG_ERROR) << "Failed to load drawing effect: " << e.what();
+	obs_log(LOG_ERROR, "Failed to load drawing effect: %s", e.what());
 	throw;
 }
 
-void ensureTexture(std::shared_ptr<gs_texture_t> &texture, uint32_t width, uint32_t height)
+void ensureTexture(unique_gs_texture_t &texture, uint32_t width, uint32_t height, gs_color_format format = GS_BGRA)
 {
 	if (!texture || gs_texture_get_width(texture.get()) != width ||
 	    gs_texture_get_height(texture.get()) != height) {
 		unique_gs_texture_t newTexture =
-			make_unique_gs_texture(width, height, GS_BGRA, 1, NULL, GS_RENDER_TARGET);
-		texture = std::shared_ptr<gs_texture_t>(std::move(newTexture));
+			make_unique_gs_texture(width, height, format, 1, NULL, GS_RENDER_TARGET);
+		texture = unique_gs_texture_t(std::move(newTexture));
 	}
 }
 
-void ensureTextureReader(std::unique_ptr<AsyncTextureReader<2>> &textureReader, uint32_t width, uint32_t height)
+void ensureTextureReader(std::unique_ptr<AsyncTextureReader> &textureReader, uint32_t width, uint32_t height,
+			 gs_color_format format = GS_BGRA)
 {
 	if (!textureReader || textureReader->getWidth() != width || textureReader->getHeight() != height) {
-		textureReader = std::make_unique<AsyncTextureReader<2>>(width, height);
+		textureReader = std::make_unique<AsyncTextureReader>(width, height, format);
 	}
 }
 
 void ShowDrawFilterContext::ensureTextures(uint32_t width, uint32_t height)
 {
-	ensureTexture(textureSource, width, height);
-	ensureTexture(textureTarget, width, height);
-	ensureTexture(textureTemporary1, width, height);
-	ensureTexture(textureTemporary2, width, height);
-	ensureTexture(texturePreviousLuminance, width, height);
-	ensureTexture(textureMotionMap, width, height);
-	ensureTexture(textureFinalSobelMagnitude, width, height);
+	ensureTexture(bgrxSource, width, height, GS_BGRX);
+	ensureTexture(bgrxTarget, width, height, GS_BGRX);
+	ensureTexture(r8Source, width, height, GS_R8);
+	ensureTexture(r8Target, width, height, GS_R8);
+	ensureTexture(bgrxTemporary1, width, height, GS_BGRX);
+	ensureTexture(bgrxTemporary2, width, height, GS_BGRX);
+	ensureTexture(r8Temporary1, width, height, GS_R8);
+
+	ensureTexture(r8PreviousGrayscale, width, height, GS_R8);
+	ensureTexture(r8MotionMap, width, height, GS_R8);
+	ensureTexture(bgrxComplexSobel, width, height, GS_BGRX);
+	ensureTexture(r8FinalSobelMagnitude, width, height, GS_R8);
+
+	ensureTexture(textureContour, width, height);
 	ensureTexture(textureCannyEdge, width, height);
+
 	ensureTextureReader(readerCannyEdge, width, height);
+	ensureTextureReader(readerGrayscale, width, height, GS_R8);
+}
+
+void ShowDrawFilterContext::processFrame(const TaskQueue::CancellationToken &token) noexcept
+try {
+	if (!readerCannyEdge) {
+		obs_log(LOG_DEBUG, "Texture reader not initialized yet");
+		return;
+	}
+
+	if (token->load()) {
+		return;
+	}
+
+	cv::Mat grayscaleImage;
+	{
+		std::lock_guard<std::mutex> lock(readerGrayscaleMutex);
+		grayscaleImage = cv::Mat(height, width, CV_8UC1, readerGrayscale->getBuffer().data(),
+					 readerGrayscale->getBufferLinesize());
+	}
+
+	cv::Mat _edgeImage;
+	cv::Canny(grayscaleImage, _edgeImage, runningPreset.hysteresisHighThreshold * 255,
+		  runningPreset.hysteresisLowThreshold * 255);
+
+	{
+		std::lock_guard<std::mutex> lock(cannyEdgeImageMutex);
+		cannyEdgeImage = _edgeImage;
+	}
+
+	std::vector<std::vector<cv::Point>> contours;
+	std::vector<cv::Vec4i> hierarchy;
+	cv::findContours(_edgeImage, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+	double maxArea = 0;
+	std::vector<cv::Point> paperContour;
+	bool found = false;
+	for (const auto &contour : contours) {
+		// (a) 面積でフィルタリング
+		double area = cv::contourArea(contour);
+		if (area < 1000) { // 小さすぎる輪郭はノイズとして除外
+			continue;
+		}
+
+		// (b) 輪郭を多角形で近似
+		double peri = cv::arcLength(contour, true);
+		std::vector<cv::Point> approx;
+		cv::approxPolyDP(contour, approx, 0.02 * peri, true);
+
+		// (c) 近似した多角形が四角形かチェック
+		// if (approx.size() == 4) {
+		// 最も面積が大きい四角形を紙として採用
+		if (area > maxArea) {
+			maxArea = area;
+			paperContour = approx;
+			found = true;
+		}
+		// }
+	}
+
+	cv::Mat _detectedContourImage = cv::Mat::zeros(_edgeImage.size(), CV_8UC4);
+	if (found) {
+		std::cout << "Paper contour found!" << std::endl;
+		// 検出した輪郭を緑色で描画
+		std::vector<std::vector<cv::Point>> contoursToDraw = {paperContour};
+		cv::drawContours(_detectedContourImage, contoursToDraw, -1, cv::Scalar(0, 255, 0), 3);
+	} else {
+		std::cout << "Paper contour not found." << std::endl;
+	}
+
+	cv::drawContours(_detectedContourImage, contours, -1, cv::Scalar(0, 255, 0), 3);
+
+	{
+		std::lock_guard<std::mutex> lock(detectedContoursImageMutex);
+		detectedContoursImage = _detectedContourImage;
+	}
+} catch (const std::exception &e) {
+	obs_log(LOG_ERROR, "Failed to process frame: %s", e.what());
 }
 
 } // namespace obs_showdraw

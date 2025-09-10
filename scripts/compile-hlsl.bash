@@ -12,7 +12,7 @@ mkdir -p "$OUTPUT_DIR"
 # Array of pixel shader entry points
 PIXEL_SHADERS=(
     "PSDraw"
-    "PSExtractLuminance"
+    "PSConvertGrayscale"
     "PSHorizontalMedian3"
     "PSHorizontalMedian5"
     "PSHorizontalMedian7"
