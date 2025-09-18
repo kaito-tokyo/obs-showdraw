@@ -27,7 +27,6 @@
         "png",
         "webp"
       ]
-    },
-    "backward-cpp"
+    }
   ]
 }
