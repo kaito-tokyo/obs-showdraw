@@ -28,10 +28,10 @@ using namespace KaitoTokyo::BridgeUtils;
 namespace KaitoTokyo {
 namespace ShowDraw {
 
-MainPluginContext::MainPluginContext(obs_data_t *settings, obs_source_t *_source)
-	: source{_source},
-	  logger("[" PLUGIN_NAME "] "),
-	  mainEffect(unique_obs_module_file("effects/masin.effect"))
+MainPluginContext::MainPluginContext(const BridgeUtils::ILogger &_logger, obs_data_t *settings, obs_source_t *_source)
+	: logger(_logger),
+	  source{_source},
+	  mainEffect(unique_obs_module_file("effects/main.effect"))
 {
 	std::atomic_store(&preset, std::make_shared<const Preset>());
 	update(settings);

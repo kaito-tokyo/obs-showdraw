@@ -34,8 +34,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include "../BridgeUtils/ObsLogger.hpp"
 
+#include "../BridgeUtils/ILogger.hpp"
 #include "../BridgeUtils/ThrottledTaskQueue.hpp"
 
 #include "Preset.hpp"
@@ -52,14 +52,14 @@ public:
 
 class MainPluginContext : public std::enable_shared_from_this<MainPluginContext> {
 public:
+	const KaitoTokyo::BridgeUtils::ILogger &logger;
 	obs_source_t *const source;
-	const KaitoTokyo::BridgeUtils::ObsLogger logger;
 	const MainEffect mainEffect;
 
 	std::shared_ptr<const Preset> preset;
 	std::shared_ptr<RenderingContext> renderingContext = nullptr;
 
-	MainPluginContext(obs_data_t *settings, obs_source_t *source);
+	MainPluginContext(const BridgeUtils::ILogger &_logger, obs_data_t *settings, obs_source_t *source);
 	~MainPluginContext() noexcept;
 
 	void startup() noexcept;
