@@ -71,6 +71,7 @@ find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenCV CONFIG REQUIRED core imgproc imgcodecs)
 find_package(semver CONFIG REQUIRED)
+find_package(Backward CONFIG REQUIRED)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE NOMINMAX)
 
