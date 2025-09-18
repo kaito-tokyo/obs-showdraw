@@ -18,11 +18,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#if defined(__linux__)
-#define BACKWARD_HAS_DW 1
-#define BACKWARD_HAS_LIBUNWIND 1
-#endif
-
 #include <backward.hpp>
 
 #include <util/base.h>
