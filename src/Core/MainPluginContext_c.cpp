@@ -29,7 +29,12 @@ using namespace KaitoTokyo::ShowDraw;
 using namespace KaitoTokyo::BridgeUtils;
 
 #ifdef BUILD_TESTING
+#if defined(_MSC_VER)
+#include <intrin.h>
+#define RETHROW_IF_TESTING() __debugbreak()
+#else
 #define RETHROW_IF_TESTING() throw
+#endif
 #else
 #define RETHROW_IF_TESTING()
 #endif
