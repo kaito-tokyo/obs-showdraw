@@ -28,6 +28,16 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 using namespace KaitoTokyo::ShowDraw;
 using namespace KaitoTokyo::BridgeUtils;
 
+namespace {
+
+inline ILogger &logger()
+{
+	static ObsLogger instance("[" PLUGIN_NAME "] ");
+	return instance;
+}
+
+} // namespace
+
 const char *main_plugin_context_get_name(void *)
 {
 	return obs_module_text("pluginName");
@@ -39,17 +49,19 @@ try {
 	auto self = std::make_shared<MainPluginContext>(settings, source);
 	return new std::shared_ptr<MainPluginContext>(self);
 } catch (const std::exception &e) {
-	printf("error: [" PLUGIN_NAME "] Failed to create context: %s", e.what());
+	logger().logException(e, "Failed to create context");
 	return nullptr;
 } catch (...) {
-	printf("error: [" PLUGIN_NAME "] Failed to create context: unknown error");
+	logger().error("Failed to create context: unknown error");
 	return nullptr;
 }
 
 void main_plugin_context_destroy(void *data)
 try {
-	if (!data)
-		throw std::invalid_argument("data is null");
+	if (!data) {
+		logger().error("Failed to destroy context: data is null");
+		return;
+	}
 
 	auto selfPtr = static_cast<std::shared_ptr<MainPluginContext> *>(data);
 	(*selfPtr)->shutdown();
@@ -58,9 +70,9 @@ try {
 	GraphicsContextGuard guard;
 	GsUnique::drain();
 } catch (const std::exception &e) {
-	printf("error: [" PLUGIN_NAME "] Failed to destroy context: %s", e.what());
+	logger().logException(e, "Failed to destroy context");
 } catch (...) {
-	printf("error: [" PLUGIN_NAME "] Failed to destroy context: unknown error");
+	logger().error("Failed to destroy context: unknown error");
 }
 
 #define GET_CONTEXT(data) static_cast<std::shared_ptr<MainPluginContext> *>(data)->get()
@@ -70,7 +82,7 @@ std::uint32_t main_plugin_context_get_width(void *data)
 	if (data) {
 		return GET_CONTEXT(data)->getWidth();
 	} else {
-		printf("error: [" PLUGIN_NAME "] Failed to get width: data is null");
+		logger().error("Failed to get width: data is null");
 		return 0;
 	}
 }
@@ -80,7 +92,7 @@ std::uint32_t main_plugin_context_get_height(void *data)
 	if (data) {
 		return GET_CONTEXT(data)->getHeight();
 	} else {
-		printf("error: [" PLUGIN_NAME "] Failed to get height: data is null");
+		logger().error("Failed to get height: data is null");
 		return 0;
 	}
 }
@@ -93,10 +105,9 @@ void main_plugin_context_get_defaults(obs_data_t *data)
 obs_properties_t *main_plugin_context_get_properties(void *data)
 {
 	if (data) {
-		printf("error: [" PLUGIN_NAME "] OK");
 		return GET_CONTEXT(data)->getProperties();
 	} else {
-		printf("error: [" PLUGIN_NAME "] Failed to get properties: data is null");
+		logger().error("Failed to get properties: data is null");
 		return obs_properties_create();
 	}
 }
@@ -106,7 +117,7 @@ void main_plugin_context_update(void *data, obs_data_t *settings)
 	if (data) {
 		GET_CONTEXT(data)->update(settings);
 	} else {
-		printf("error: [" PLUGIN_NAME "] Failed to update settings: data is null");
+		logger().error("Failed to update settings: data is null");
 	}
 }
 
@@ -115,7 +126,7 @@ void main_plugin_context_activate(void *data)
 	if (data) {
 		GET_CONTEXT(data)->activate();
 	} else {
-		printf("error: [" PLUGIN_NAME "] Failed to activate context: data is null");
+		logger().error("Failed to activate context: data is null");
 	}
 }
 void main_plugin_context_deactivate(void *data)
@@ -123,7 +134,7 @@ void main_plugin_context_deactivate(void *data)
 	if (data) {
 		GET_CONTEXT(data)->deactivate();
 	} else {
-		printf("error: [" PLUGIN_NAME "] Failed to deactivate context: data is null");
+		logger().error("Failed to deactivate context: data is null");
 	}
 }
 void main_plugin_context_show(void *data)
@@ -131,7 +142,7 @@ void main_plugin_context_show(void *data)
 	if (data) {
 		GET_CONTEXT(data)->show();
 	} else {
-		printf("error: [" PLUGIN_NAME "] Failed to show context: data is null");
+		logger().error("Failed to show context: data is null");
 	}
 }
 void main_plugin_context_hide(void *data)
@@ -139,7 +150,7 @@ void main_plugin_context_hide(void *data)
 	if (data) {
 		GET_CONTEXT(data)->hide();
 	} else {
-		printf("error: [" PLUGIN_NAME "] Failed to hide context: data is null");
+		logger().error("Failed to hide context: data is null");
 	}
 }
 void main_plugin_context_video_tick(void *data, float s)
@@ -147,7 +158,7 @@ void main_plugin_context_video_tick(void *data, float s)
 	if (data) {
 		GET_CONTEXT(data)->videoTick(s);
 	} else {
-		printf("error: [" PLUGIN_NAME "] Failed to tick video: data is null");
+		logger().error("Failed to tick video: data is null");
 	}
 }
 
@@ -156,22 +167,27 @@ try {
 	if (data) {
 		GET_CONTEXT(data)->videoRender();
 	} else {
-		blog(LOG_ERROR, "[" PLUGIN_NAME "] Failed to render video: data is null");
+		logger().error("Failed to render video: data is null");
 	}
 } catch (const std::exception &e) {
-	printf("error: [" PLUGIN_NAME "] Failed to render video: %s", e.what());
+	logger().logException(e, "Failed to render video");
 } catch (...) {
-	printf("error: [" PLUGIN_NAME "] Failed to render video: unknown error");
+	logger().error("Failed to render video: unknown error");
 }
 
 struct obs_source_frame *main_plugin_context_filter_video(void *data, struct obs_source_frame *frame)
 try {
-	return data ? GET_CONTEXT(data)->filterVideo(frame) : frame;
+	if (frame) {
+		return GET_CONTEXT(data)->filterVideo(frame);
+	} else {
+		logger().error("Failed to filter video: frame is null");
+		return frame;
+	}
 } catch (const std::exception &e) {
-	printf("error: [" PLUGIN_NAME "] Failed to filter video: %s", e.what());
+	logger().logException(e, "Failed to filter video");
 	return frame;
 } catch (...) {
-	printf("error: [" PLUGIN_NAME "] Failed to filter video: unknown error");
+	logger().error("Failed to filter video: unknown error");
 	return frame;
 }
 
@@ -185,7 +201,7 @@ try {
 	GraphicsContextGuard guard;
 	GsUnique::drain();
 } catch (const std::exception &e) {
-	printf("error: [" PLUGIN_NAME "] Failed to unload main plugin context: %s", e.what());
+	logger().logException(e, "Failed to unload main plugin context");
 } catch (...) {
-	printf("error: [" PLUGIN_NAME "] Failed to unload main plugin context: unknown error");
+	logger().error("Failed to unload main plugin context: unknown error");
 }

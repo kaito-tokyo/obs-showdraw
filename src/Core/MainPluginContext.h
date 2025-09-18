@@ -32,6 +32,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <atomic>
 #include <future>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include "../BridgeUtils/ObsLogger.hpp"
 
@@ -55,7 +56,7 @@ public:
 	const KaitoTokyo::BridgeUtils::ObsLogger logger;
 	const MainEffect mainEffect;
 
-	Preset preset;
+	std::shared_ptr<const Preset> preset;
 	std::shared_ptr<RenderingContext> renderingContext = nullptr;
 
 	MainPluginContext(obs_data_t *settings, obs_source_t *source);
@@ -82,7 +83,6 @@ public:
 	void videoRender();
 
 	obs_source_t *getFilter() const noexcept;
-	Preset getRunningPreset() const noexcept;
 };
 
 } // namespace ShowDraw

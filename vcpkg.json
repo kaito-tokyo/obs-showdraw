@@ -15,6 +15,7 @@
       "name": "directxtk",
       "platform": "windows"
     },
+    "fmt",
     "gtest",
     "neargye-semver",
     "nlohmann-json",
@@ -27,6 +28,6 @@
         "webp"
       ]
     },
-    "fmt"
+    "backward-cpp"
   ]
 }

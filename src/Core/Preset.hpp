@@ -29,6 +29,18 @@ enum class ExtractionMode {
 	SobelMagnitude = 400,
 };
 
+struct DecibelField {
+	double db;
+	double linear;
+
+	static DecibelField fromDbPow(double dbValue) { return DecibelField(dbValue, std::pow(10.0, dbValue / 10.0)); }
+
+	static DecibelField fromDbAmp(double dbValue) { return DecibelField(dbValue, std::pow(10.0, dbValue / 20.0)); }
+
+private:
+	DecibelField(double _dbValue, double _linearValue) : db(_dbValue), linear(_linearValue) {}
+};
+
 struct Preset {
 public:
 	ExtractionMode extractionMode = ExtractionMode::Default;
@@ -39,14 +51,7 @@ public:
 	double motionAdaptiveFilteringMotionThreshold = 0.3;
 
 	bool sobelUseLog = true;
-	double sobelScalingFactorDb = 10.0;
-	double sobelScalingFactor = 3.1622776602; // = pow(10, 10/20)
-
-	void setSobelScalingFactorDb(double v)
-	{
-		sobelScalingFactorDb = v;
-		sobelScalingFactor = std::pow(10.0, v / 20.0);
-	}
+	DecibelField sobelScalingFactor = DecibelField::fromDbPow(10.0);
 };
 
 } // namespace ShowDraw

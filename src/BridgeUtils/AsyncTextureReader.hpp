@@ -20,6 +20,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <array>
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <mutex>
@@ -30,7 +31,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 namespace KaitoTokyo {
 namespace BridgeUtils {
 
-namespace async_texture_reader_detail {
+namespace AsyncTextureReaderDetail {
 
 inline std::uint32_t getBytesPerPixel(const gs_color_format format)
 {
@@ -88,7 +89,7 @@ struct ScopedStageSurfMap {
 	ScopedStageSurfMap &operator=(ScopedStageSurfMap &&) = delete;
 };
 
-} // namespace async_texture_reader_detail
+} // namespace AsyncTextureReaderDetail
 
 /**
  * @class AsyncTextureReader
@@ -222,7 +223,7 @@ private:
 	std::array<std::vector<std::uint8_t>, 2> cpuBuffers;
 	std::atomic<std::size_t> activeCpuBufferIndex = {0};
 
-	std::array<kaito_tokyo::obs_bridge_utils::unique_gs_stagesurf_t, 2> stagesurfs;
+	std::array<KaitoTokyo::BridgeUtils::gs_stagesurf_t, 2> stagesurfs;
 	std::size_t gpuWriteIndex = 0;
 	std::mutex gpuMutex;
 };

@@ -29,14 +29,12 @@ namespace KaitoTokyo {
 namespace ShowDraw {
 
 RenderingContext::RenderingContext(obs_source_t *_source, const KaitoTokyo::BridgeUtils::ILogger &_logger,
-				   const MainEffect &_mainEffect, std::uint32_t _width, std::uint32_t _height,
-				   const Preset &_preset)
+				   const MainEffect &_mainEffect, std::uint32_t _width, std::uint32_t _height)
 	: source(_source),
 	  logger(_logger),
 	  mainEffect(_mainEffect),
 	  width(_width),
 	  height(_height),
-	  preset(_preset),
 	  bgrxSource(make_unique_gs_texture(width, height, GS_BGRX, 1, nullptr, GS_RENDER_TARGET)),
 	  r8SourceGrayscale(make_unique_gs_texture(width, height, GS_R8, 1, nullptr, GS_RENDER_TARGET)),
 	  r8MedianFilteredGrayscale(make_unique_gs_texture(width, height, GS_R8, 1, nullptr, GS_RENDER_TARGET)),
@@ -63,9 +61,9 @@ obs_source_frame *RenderingContext::filterVideo(obs_source_frame *frame)
 	return frame;
 }
 
-void RenderingContext::videoRender()
+void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 {
-	ExtractionMode extractionMode = getExtractionMode();
+	ExtractionMode extractionMode = getExtractionMode(*preset);
 
 	bool isProcessingNewFrame = doesNextVideoRenderReceiveNewFrame.exchange(false);
 
@@ -80,19 +78,19 @@ void RenderingContext::videoRender()
 			mainEffect.applyConvertToGrayscale(r8SourceGrayscale, bgrxSource);
 			grayscaleResult = &r8SourceGrayscale;
 
-			if (preset.medianFilterEnabled) {
+			if (preset->medianFilterEnabled) {
 				mainEffect.applyMedianFilter(r8MedianFilteredGrayscale, r32fIntermediate,
 							     *grayscaleResult);
 				grayscaleResult = &r8MedianFilteredGrayscale;
 			}
 
-			if (preset.motionAdaptiveFilteringStrength > 0.0) {
+			if (preset->motionAdaptiveFilteringStrength > 0.0) {
 				std::swap(r8MotionAdaptiveGrayscales[0], r8MotionAdaptiveGrayscales[1]);
 				mainEffect.applyMotionAdaptiveFilter(
 					r8MotionAdaptiveGrayscales[0], r8MotionMap, r32fIntermediate, *grayscaleResult,
 					r8MotionAdaptiveGrayscales[1],
-					static_cast<float>(preset.motionAdaptiveFilteringStrength),
-					static_cast<float>(preset.motionAdaptiveFilteringMotionThreshold));
+					static_cast<float>(preset->motionAdaptiveFilteringStrength),
+					static_cast<float>(preset->motionAdaptiveFilteringMotionThreshold));
 				grayscaleResult = &r8MotionAdaptiveGrayscales[0];
 			}
 		}
@@ -100,8 +98,8 @@ void RenderingContext::videoRender()
 		if (extractionMode >= ExtractionMode::SobelMagnitude) {
 			mainEffect.applySobel(bgrxComplexSobel, *grayscaleResult);
 			mainEffect.applyFinalizeSobelMagnitude(r8FinalSobelMagnitude, bgrxComplexSobel,
-							       preset.sobelUseLog,
-							       static_cast<float>(preset.sobelScalingFactor));
+							       preset->sobelUseLog,
+							       static_cast<float>(preset->sobelScalingFactor.linear));
 		}
 	}
 
@@ -114,11 +112,6 @@ void RenderingContext::videoRender()
 	} else if (extractionMode == ExtractionMode::SobelMagnitude) {
 		mainEffect.drawGrayscaleTexture(r8FinalSobelMagnitude);
 	}
-}
-
-void RenderingContext::updatePreset(const Preset &newPreset)
-{
-	preset = newPreset;
 }
 
 } // namespace ShowDraw

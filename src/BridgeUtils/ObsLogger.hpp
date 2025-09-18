@@ -18,6 +18,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
+#include <backward.hpp>
+
 #include <util/base.h>
 
 #include "ILogger.hpp"
@@ -31,7 +33,7 @@ public:
 	ObsLogger(const std::string &_prefix) : prefix(_prefix) {}
 
 protected:
-	virtual void log(LogLevel level, std::string_view message) const noexcept
+	void log(LogLevel level, std::string_view message) const noexcept override
 	{
 		int blogLevel;
 		switch (level) {
@@ -55,8 +57,25 @@ protected:
 		blog(blogLevel, "%.*s", static_cast<int>(message.length()), message.data());
 	}
 
+	void logException(const std::exception &e, std::string_view context) const noexcept override
+	try {
+		error("{}: {}", context, e.what());
+
+		backward::StackTrace st;
+		st.load_here(32);
+
+		std::stringstream ss;
+		backward::Printer p;
+		p.print(st, ss);
+		log(LogLevel::Error, fmt::format("{}--- Stack Trace ---\n{}", getPrefix(), ss.str()));
+	} catch (const std::exception &log_ex) {
+		fprintf(stderr, "[LOGGER FATAL] Failed during exception logging: %s\n", log_ex.what());
+	} catch (...) {
+		fprintf(stderr, "[LOGGER FATAL] Unknown error during exception logging.\n");
+	}
+
 protected:
-	virtual std::string_view getPrefix() const noexcept { return prefix; }
+	std::string_view getPrefix() const noexcept override { return prefix; }
 
 private:
 	const std::string prefix;

@@ -67,10 +67,11 @@ set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed")
 list(PREPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
 find_package(cpr CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenCV CONFIG REQUIRED core imgproc imgcodecs)
 find_package(semver CONFIG REQUIRED)
-find_package(fmt CONFIG REQUIRED)
+find_package(Backward CONFIG REQUIRED)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE NOMINMAX)
 
@@ -85,6 +86,7 @@ target_link_libraries(
     opencv_imgproc
     opencv_imgcodecs
     fmt::fmt
+    Backward::Interface
 )
 
 target_sources(
@@ -95,6 +97,10 @@ target_sources(
     src/Core/RenderingContext.cpp
     src/plugin-main.c
 )
+
+if(BUILD_TESTING)
+  target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE BUILD_TESTING)
+endif()
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 

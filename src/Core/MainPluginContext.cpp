@@ -31,8 +31,9 @@ namespace ShowDraw {
 MainPluginContext::MainPluginContext(obs_data_t *settings, obs_source_t *_source)
 	: source{_source},
 	  logger("[" PLUGIN_NAME "] "),
-	  mainEffect(unique_obs_module_file("effects/main.effect"))
+	  mainEffect(unique_obs_module_file("effects/masin.effect"))
 {
+	std::atomic_store(&preset, std::make_shared<const Preset>());
 	update(settings);
 }
 
@@ -59,14 +60,14 @@ uint32_t MainPluginContext::getHeight() const noexcept
 
 void MainPluginContext::getDefaults(obs_data_t *data)
 {
-	Preset preset;
-	obs_data_set_default_int(data, "extractionMode", static_cast<int>(preset.extractionMode));
-	obs_data_set_default_bool(data, "medianFilterEnabled", preset.medianFilterEnabled);
-	obs_data_set_default_double(data, "motionAdaptiveFilteringStrength", preset.motionAdaptiveFilteringStrength);
+	Preset p;
+	obs_data_set_default_int(data, "extractionMode", static_cast<int>(p.extractionMode));
+	obs_data_set_default_bool(data, "medianFilterEnabled", p.medianFilterEnabled);
+	obs_data_set_default_double(data, "motionAdaptiveFilteringStrength", p.motionAdaptiveFilteringStrength);
 	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold",
-				    preset.motionAdaptiveFilteringMotionThreshold);
-	obs_data_set_default_bool(data, "sobelUseLog", preset.sobelUseLog);
-	obs_data_set_default_double(data, "sobelScalingFactorDb", preset.sobelScalingFactorDb);
+				    p.motionAdaptiveFilteringMotionThreshold);
+	obs_data_set_default_bool(data, "sobelUseLog", p.sobelUseLog);
+	obs_data_set_default_double(data, "sobelScalingFactorDb", p.sobelScalingFactor.db);
 }
 
 obs_properties_t *MainPluginContext::getProperties()
@@ -103,17 +104,17 @@ obs_properties_t *MainPluginContext::getProperties()
 
 void MainPluginContext::update(obs_data_t *data)
 {
-	preset.extractionMode = static_cast<ExtractionMode>(obs_data_get_int(data, "extractionMode"));
-	preset.medianFilterEnabled = obs_data_get_bool(data, "medianFilterEnabled");
-	preset.motionAdaptiveFilteringStrength = obs_data_get_double(data, "motionAdaptiveFilteringStrength");
-	preset.motionAdaptiveFilteringMotionThreshold =
-		obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold");
-	preset.sobelUseLog = obs_data_get_bool(data, "sobelUseLog");
-	preset.setSobelScalingFactorDb(obs_data_get_double(data, "sobelScalingFactorDb"));
+	Preset newPreset = *std::atomic_load(&preset);
 
-	if (renderingContext) {
-		renderingContext->updatePreset(preset);
-	}
+	newPreset.extractionMode = static_cast<ExtractionMode>(obs_data_get_int(data, "extractionMode"));
+	newPreset.medianFilterEnabled = obs_data_get_bool(data, "medianFilterEnabled");
+	newPreset.motionAdaptiveFilteringStrength = obs_data_get_double(data, "motionAdaptiveFilteringStrength");
+	newPreset.motionAdaptiveFilteringMotionThreshold =
+		obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold");
+	newPreset.sobelUseLog = obs_data_get_bool(data, "sobelUseLog");
+	newPreset.sobelScalingFactor = DecibelField::fromDbAmp(obs_data_get_double(data, "sobelScalingFactorDb"));
+
+	std::atomic_store(&preset, std::make_shared<const Preset>(newPreset));
 }
 
 void MainPluginContext::activate()
@@ -139,7 +140,7 @@ void MainPluginContext::videoTick(float) {}
 void MainPluginContext::videoRender()
 {
 	if (renderingContext) {
-		renderingContext->videoRender();
+		renderingContext->videoRender(preset);
 	}
 }
 
@@ -157,8 +158,8 @@ try {
 
 	if (!renderingContext || frame->width != renderingContext->width || frame->height != renderingContext->height) {
 		GraphicsContextGuard guard;
-		renderingContext = std::make_shared<RenderingContext>(source, logger, mainEffect, frame->width,
-								      frame->height, preset);
+		renderingContext =
+			std::make_shared<RenderingContext>(source, logger, mainEffect, frame->width, frame->height);
 		GsUnique::drain();
 	}
 

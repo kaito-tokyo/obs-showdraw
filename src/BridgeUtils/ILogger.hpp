@@ -21,6 +21,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <cstdint>
 #include <cstdio>
 #include <iterator>
+#include <stdexcept>
 #include <string_view>
 #include <string>
 #include <utility>
@@ -59,6 +60,8 @@ public:
 	{
 		formatAndLog(LogLevel::Error, fmt, std::forward<Args>(args)...);
 	}
+
+	virtual void logException(const std::exception &e, std::string_view context) const noexcept = 0;
 
 protected:
 	enum class LogLevel : std::int8_t { Debug, Info, Warn, Error };
