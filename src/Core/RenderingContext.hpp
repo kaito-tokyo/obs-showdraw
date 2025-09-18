@@ -41,7 +41,7 @@ public:
 	const std::uint32_t width;
 	const std::uint32_t height;
 
-	const Preset &preset;
+	Preset preset;
 
 	const KaitoTokyo::BridgeUtils::unique_gs_texture_t bgrxSource;
 	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r8SourceGrayscale;
@@ -67,6 +67,7 @@ public:
 	void videoTick(float seconds);
 	obs_source_frame *filterVideo(obs_source_frame *frame);
 	void videoRender();
+	void updatePreset(const Preset &preset);
 
 private:
 	ExtractionMode getExtractionMode() const noexcept

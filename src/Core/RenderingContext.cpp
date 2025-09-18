@@ -116,5 +116,9 @@ void RenderingContext::videoRender()
 	}
 }
 
+void RenderingContext::updatePreset(const Preset &newPreset) {
+	preset = newPreset;
+}
+
 } // namespace ShowDraw
 } // namespace KaitoTokyo
