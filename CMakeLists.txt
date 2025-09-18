@@ -81,10 +81,6 @@ target_link_libraries(
     OBS::libobs
     semver::semver
     cpr::cpr
-    nlohmann_json::nlohmann_json
-    opencv_core
-    opencv_imgproc
-    opencv_imgcodecs
     fmt::fmt
     Backward::Interface
 )
