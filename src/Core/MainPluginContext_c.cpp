@@ -92,6 +92,7 @@ void main_plugin_context_get_defaults(obs_data_t *data)
 obs_properties_t *main_plugin_context_get_properties(void *data)
 {
 	if (data) {
+		printf("error: [" PLUGIN_NAME "] OK");
 		return GET_CONTEXT(data)->getProperties();
 	} else {
 		printf("error: [" PLUGIN_NAME "] Failed to get properties: data is null");
