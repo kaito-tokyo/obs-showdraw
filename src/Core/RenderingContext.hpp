@@ -19,6 +19,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <cstdint>
 
 #include <obs.h>
