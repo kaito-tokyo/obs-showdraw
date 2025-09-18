@@ -123,7 +123,7 @@ void MainPluginContext::videoRender()
 
 obs_source_frame *MainPluginContext::filterVideo(obs_source_frame *frame)
 try {
-	if (!frame) { 
+	if (!frame) {
 		logger.error("filterVideo called with null frame");
 		return nullptr;
 	}
@@ -136,7 +136,7 @@ try {
 	if (frame->width != renderingContext->width || frame->height != renderingContext->height) {
 		GraphicsContextGuard guard;
 		renderingContext = std::make_shared<RenderingContext>(source, logger, mainEffect, frame->width,
-									    frame->height, preset);
+								      frame->height, preset);
 		GsUnique::drain();
 	}
 

@@ -174,7 +174,10 @@ try {
 	return frame;
 }
 
-bool main_plugin_context_module_load() { return true;}
+bool main_plugin_context_module_load()
+{
+	return true;
+}
 
 void main_plugin_context_module_unload()
 try {
