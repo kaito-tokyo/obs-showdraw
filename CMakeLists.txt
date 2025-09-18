@@ -84,7 +84,7 @@ target_link_libraries(
 
 target_sources(
   ${CMAKE_PROJECT_NAME}
-  PRIVATE src/Preset.cpp src/UpdateChecker.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp src/plugin-main.c
+  PRIVATE src/Core/MainPluginContext_c.cpp src/Core/MainPluginContext.cpp src/plugin-main.c
 )
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

@@ -26,7 +26,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs.h>
 
-#include <obs-bridge-utils/unique_bfree.hpp>
+#include "ObsUnique.hpp"
 
 namespace KaitoTokyo {
 namespace BridgeUtils {
@@ -126,7 +126,7 @@ struct GsStagesurfDeleter {
 
 using unique_gs_effect_t = std::unique_ptr<gs_effect_t, GsUnique::GsEffectDeleter>;
 
-inline unique_gs_effect_t make_unique_gs_effect_from_file(const unique_gs_effect_t &file)
+inline unique_gs_effect_t make_unique_gs_effect_from_file(const unique_bfree_char_t &file)
 {
 	char *raw_error_string = nullptr;
 	gs_effect_t *raw_effect = gs_effect_create_from_file(file.get(), &raw_error_string);
@@ -175,5 +175,5 @@ public:
 	GraphicsContextGuard &operator=(GraphicsContextGuard &&) = delete;
 };
 
-} // namespace obs_bridge_utils
-} // namespace kaito_tokyo
+} // namespace BridgeUtils
+} // namespace KaitoTokyo

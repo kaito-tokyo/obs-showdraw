@@ -18,26 +18,29 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace KaitoTokyo {
+namespace ShowDraw {
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
+enum class ExtractionMode {
+	Default = 0,
+	Passthrough = 100,
+	ConvertToGrayscale = 200,
+	MotionMapCalculation = 300,
+	SobelMagnitude = 400,
+};
 
-extern const char *PLUGIN_NAME;
-extern const char *PLUGIN_VERSION;
+struct Preset {
+public:
+	ExtractionMode extractionMode = ExtractionMode::Default;
 
-void obs_log(int log_level, const char *format, ...);
+	bool medianFilterEnabled = true;
 
-#ifdef _MSC_VER
-extern __declspec(dllexport) void blogva(int log_level, const char *format, va_list args);
-#else
-extern __attribute__((visibility("default"))) void blogva(int log_level, const char *format, va_list args);
-#endif
+	double motionAdaptiveFilteringStrength = 0.5;
+	double motionAdaptiveFilteringMotionThreshold = 0.3;
 
-#ifdef __cplusplus
-}
-#endif
+	bool sobelMagnitudeFinalizationUseLog = true;
+	double sobelMagnitudeFinalizationScalingFactorDb = 10.0;
+};
+
+} // namespace ShowDraw
+} // namespace KaitoTokyo

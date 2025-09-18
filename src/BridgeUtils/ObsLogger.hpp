@@ -1,5 +1,5 @@
 /*
-obs-bridge-utils
+Bridge Utils
 Copyright (C) 2025 Kaito Udagawa umireon@kaito.tokyo
 
 This program is free software; you can redistribute it and/or modify
@@ -20,11 +20,11 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <util/base.h>
 
-#include "ObsUnique.hpp"
 #include "ILogger.hpp"
+#include "ObsUnique.hpp"
 
-namespace kaito_tokyo {
-namespace obs_bridge_utils {
+namespace KaitoTokyo {
+namespace BridgeUtils {
 
 class ObsLogger final : public ILogger {
 public:
@@ -62,5 +62,5 @@ private:
 	const std::string prefix;
 };
 
-} // namespace obs_bridge_utils
-} // namespace kaito_tokyo
+} // namespace BridgeUtils
+} // namespace KaitoTokyo

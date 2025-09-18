@@ -227,5 +227,5 @@ private:
 	std::mutex gpuMutex;
 };
 
-} // namespace obs_backgroundremoval_lite
-} // namespace kaito_tokyo
+} // namespace BridgeUtils
+} // namespace KaitoTokyo

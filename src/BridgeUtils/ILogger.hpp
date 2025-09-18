@@ -27,8 +27,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <fmt/format.h>
 
-namespace kaito_tokyo {
-namespace obs_bridge_utils {
+namespace KaitoTokyo {
+namespace BridgeUtils {
 
 class ILogger {
 public:
@@ -82,5 +82,5 @@ private:
 	}
 };
 
-} // namespace obs_bridge_utils
-} // namespace kaito_tokyo
+} // namespace BridgeUtils
+} // namespace KaitoTokyo

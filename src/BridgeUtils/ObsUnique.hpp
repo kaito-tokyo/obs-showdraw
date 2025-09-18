@@ -1,5 +1,5 @@
 /*
-obs-bridge-utils
+Bridge Utils
 Copyright (C) 2025 Kaito Udagawa umireon@kaito.tokyo
 
 This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-module.h>
 
 namespace KaitoTokyo {
-namespace ObsBridgeUtils {
+namespace BridgeUtils {
 namespace ObsUnique {
 
 struct BfreeDeleter {
@@ -50,5 +50,5 @@ inline unique_bfree_char_t unique_obs_module_file(const char *file)
 using unique_obs_data_t = std::unique_ptr<obs_data_t, ObsUnique::ObsDataDeleter>;
 using unique_obs_data_array_t = std::unique_ptr<obs_data_array_t, ObsUnique::ObsDataArrayDeleter>;
 
-} // namespace ObsBridgeUtils
+} // namespace BridgeUtils
 } // namespace KaitoTokyo
