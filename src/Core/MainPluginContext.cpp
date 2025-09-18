@@ -108,12 +108,17 @@ void MainPluginContext::update(obs_data_t *data) {
 	preset.motionAdaptiveFilteringMotionThreshold = obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold");
 	preset.sobelUseLog = obs_data_get_bool(data, "sobelUseLog");
 	preset.setSobelScalingFactorDb(obs_data_get_double(data, "sobelScalingFactorDb"));
+
+	if (renderingContext) {
+		renderingContext->updatePreset(preset);
+	}
 }
 
 void MainPluginContext::activate()
 {
 	logger.info("Filter activated");
 }
+
 void MainPluginContext::deactivate()
 {
 	logger.info("Filter deactivated");
