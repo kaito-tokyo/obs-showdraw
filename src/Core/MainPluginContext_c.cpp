@@ -30,10 +30,10 @@ using namespace KaitoTokyo::BridgeUtils;
 
 namespace {
 
-inline ILogger& logger()
+inline ILogger &logger()
 {
-    static ObsLogger instance("[" PLUGIN_NAME "] ");
-    return instance;
+	static ObsLogger instance("[" PLUGIN_NAME "] ");
+	return instance;
 }
 
 } // namespace
