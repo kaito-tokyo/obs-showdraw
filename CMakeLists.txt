@@ -85,6 +85,7 @@ target_link_libraries(
     opencv_imgproc
     opencv_imgcodecs
     fmt::fmt
+    Backward::Interface
 )
 
 target_sources(

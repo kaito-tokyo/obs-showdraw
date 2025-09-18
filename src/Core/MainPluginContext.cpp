@@ -31,7 +31,7 @@ namespace ShowDraw {
 MainPluginContext::MainPluginContext(obs_data_t *settings, obs_source_t *_source)
 	: source{_source},
 	  logger("[" PLUGIN_NAME "] "),
-	  mainEffect(unique_obs_module_file("effects/main.effect"))
+	  mainEffect(unique_obs_module_file("effects/masin.effect"))
 {
 	std::atomic_store(&preset, std::make_shared<const Preset>());
 	update(settings);
