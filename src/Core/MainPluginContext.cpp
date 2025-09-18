@@ -133,7 +133,7 @@ try {
 		return frame;
 	}
 
-	if (frame->width != renderingContext->width || frame->height != renderingContext->height) {
+	if (!renderingContext || frame->width != renderingContext->width || frame->height != renderingContext->height) {
 		GraphicsContextGuard guard;
 		renderingContext = std::make_shared<RenderingContext>(source, logger, mainEffect, frame->width,
 								      frame->height, preset);

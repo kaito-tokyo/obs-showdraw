@@ -35,6 +35,7 @@ const char *main_plugin_context_get_name(void *)
 
 void *main_plugin_context_create(obs_data_t *settings, obs_source_t *source)
 try {
+	GraphicsContextGuard guard;
 	auto self = std::make_shared<MainPluginContext>(settings, source);
 	return new std::shared_ptr<MainPluginContext>(self);
 } catch (const std::exception &e) {
