@@ -23,7 +23,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs-module.h>
 
 #include "../BridgeUtils/GsUnique.hpp"
-#include "BridgeUtils/ObsLogger.hpp"
+#include "../BridgeUtils/ObsLogger.hpp"
 
 using namespace KaitoTokyo::ShowDraw;
 using namespace KaitoTokyo::BridgeUtils;

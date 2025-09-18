@@ -36,8 +36,8 @@
             "bundleId": "tokyo.kaito.showdraw"
         }
     },
-    "name": "obs-showdraw",
-    "displayName": "Emphasize drawing on OBS",
+    "name": "showdraw",
+    "displayName": "ShowDraw",
     "version": "1.0.8",
     "author": "Kaito Udagawa",
     "website": "https://github.com/kaito-tokyo/obs-showdraw",

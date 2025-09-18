@@ -33,8 +33,6 @@ if(ENABLE_QT)
   )
 endif()
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE plugin-support)
-
 if(NOT $ENV{VCPKG_ROOT} STREQUAL "")
   set(VCPKG_ROOT $ENV{VCPKG_ROOT})
 elseif(NOT $ENV{VCPKG_INSTALLATION_ROOT} STREQUAL "")
@@ -72,19 +70,19 @@ find_package(cpr CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenCV CONFIG REQUIRED core imgproc imgcodecs)
 find_package(semver CONFIG REQUIRED)
-
-target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC obs_bridge_utils)
+find_package(fmt CONFIG REQUIRED)
 
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE NOMINMAX)
 
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}
   PRIVATE OBS::libobs semver::semver cpr::cpr nlohmann_json::nlohmann_json opencv_core opencv_imgproc opencv_imgcodecs
+  fmt::fmt
 )
 
 target_sources(
   ${CMAKE_PROJECT_NAME}
-  PRIVATE src/Core/MainPluginContext_c.cpp src/Core/MainPluginContext.cpp src/plugin-main.c
+  PRIVATE src/Core/MainPluginContext_c.cpp src/Core/MainPluginContext.cpp src/Core/RenderingContext.cpp src/plugin-main.c
 )
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})

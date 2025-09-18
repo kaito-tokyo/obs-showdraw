@@ -112,7 +112,7 @@ void MainPluginContext::hide()
 	logger.info("Filter hidden");
 }
 
-void MainPluginContext::videoTick(float seconds) {}
+void MainPluginContext::videoTick(float) {}
 
 void MainPluginContext::videoRender()
 {

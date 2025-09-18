@@ -77,9 +77,8 @@ void RenderingContext::videoRender()
 		}
 
 		if (extractionMode >= ExtractionMode::ConvertToGrayscale) {
-			std::swap(r8SourceGrayscales[0], r8SourceGrayscales[1]);
-			mainEffect.applyConvertToGrayscale(r8SourceGrayscales[0], bgrxSource);
-			grayscaleResult = &r8SourceGrayscales[0];
+			mainEffect.applyConvertToGrayscale(r8SourceGrayscale, bgrxSource);
+			grayscaleResult = &r8SourceGrayscale;
 
 			if (preset.medianFilterEnabled) {
 				mainEffect.applyMedianFilter(r8MedianFilteredGrayscale, r32fIntermediate,
@@ -91,7 +90,7 @@ void RenderingContext::videoRender()
 				std::swap(r8MotionAdaptiveGrayscales[0], r8MotionAdaptiveGrayscales[1]);
 				mainEffect.applyMotionAdaptiveFilter(r8MotionAdaptiveGrayscales[0], r8MotionMap,
 								     r32fIntermediate, *grayscaleResult,
-								     r8PreviousGrayscale,
+								     r8MotionAdaptiveGrayscales[1],
 								     preset.motionAdaptiveFilteringStrength,
 								     preset.motionAdaptiveFilteringMotionThreshold);
 				grayscaleResult = &r8MotionAdaptiveGrayscales[0];
