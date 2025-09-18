@@ -72,6 +72,7 @@ void RenderingContext::videoRender()
 	const unique_gs_texture_t *grayscaleResult;
 
 	if (isProcessingNewFrame) {
+		isProcessingNewFrame = false;
 		if (extractionMode >= ExtractionMode::Passthrough) {
 			mainEffect.drawSource(bgrxSource, source);
 		}
