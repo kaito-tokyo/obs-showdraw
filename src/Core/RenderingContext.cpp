@@ -71,6 +71,8 @@ void RenderingContext::videoRender()
 
 	const unique_gs_texture_t *grayscaleResult;
 
+	const Preset _preset = preset;
+
 	if (isProcessingNewFrame) {
 		isProcessingNewFrame = false;
 		if (extractionMode >= ExtractionMode::Passthrough) {
@@ -102,7 +104,7 @@ void RenderingContext::videoRender()
 			mainEffect.applySobel(bgrxComplexSobel, *grayscaleResult);
 			mainEffect.applyFinalizeSobelMagnitude(r8FinalSobelMagnitude, bgrxComplexSobel,
 							       preset.sobelUseLog,
-							       static_cast<float>(preset.sobelScalingFactor));
+							       static_cast<float>(preset.sobelScalingFactor.linear));
 		}
 	}
 

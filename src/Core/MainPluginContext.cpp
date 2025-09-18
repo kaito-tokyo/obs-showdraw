@@ -66,7 +66,7 @@ void MainPluginContext::getDefaults(obs_data_t *data)
 	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold",
 				    preset.motionAdaptiveFilteringMotionThreshold);
 	obs_data_set_default_bool(data, "sobelUseLog", preset.sobelUseLog);
-	obs_data_set_default_double(data, "sobelScalingFactorDb", preset.sobelScalingFactorDb);
+	obs_data_set_default_double(data, "sobelScalingFactorDb", preset.sobelScalingFactor.db);
 }
 
 obs_properties_t *MainPluginContext::getProperties()
@@ -109,7 +109,7 @@ void MainPluginContext::update(obs_data_t *data)
 	preset.motionAdaptiveFilteringMotionThreshold =
 		obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold");
 	preset.sobelUseLog = obs_data_get_bool(data, "sobelUseLog");
-	preset.setSobelScalingFactorDb(obs_data_get_double(data, "sobelScalingFactorDb"));
+	preset.sobelScalingFactor = DecibelField::fromDbPow(obs_data_get_double(data, "sobelScalingFactorDb"));
 
 	if (renderingContext) {
 		renderingContext->updatePreset(preset);
