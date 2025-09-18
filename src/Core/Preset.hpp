@@ -18,33 +18,36 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <optional>
-#include <string>
+namespace KaitoTokyo {
+namespace ShowDraw {
 
-namespace kaito_tokyo {
-namespace obs_showdraw {
-
-class LatestVersion {
-public:
-	explicit LatestVersion(const std::string &version);
-	bool isUpdateAvailable(const std::string &currentVersion) const noexcept;
-	const std::string &toString() const noexcept;
-
-private:
-	std::string version;
+enum class ExtractionMode {
+	Default = 0,
+	Passthrough = 100,
+	ConvertToGrayscale = 200,
+	MotionMapCalculation = 300,
+	SobelMagnitude = 400,
 };
 
-/**
- * @brief Performs a synchronous check for software updates.
- *
- * @note The calling context is expected to handle any desired asynchronous
- * execution.
- */
-class UpdateChecker {
+struct Preset {
 public:
-	UpdateChecker();
-	std::optional<LatestVersion> fetch();
+	ExtractionMode extractionMode = ExtractionMode::Default;
+
+	bool medianFilterEnabled = true;
+
+	double motionAdaptiveFilteringStrength = 0.5;
+	double motionAdaptiveFilteringMotionThreshold = 0.3;
+
+	bool sobelUseLog = true;
+	double sobelScalingFactorDb = 10.0;
+	double sobelScalingFactor = 3.1622776602; // = pow(10, 10/20)
+
+	void setSobelScalingFactorDb(double v)
+	{
+		sobelScalingFactorDb = v;
+		sobelScalingFactor = std::pow(10.0, v / 20.0);
+	}
 };
 
-} // namespace obs_showdraw
-} // namespace kaito_tokyo
+} // namespace ShowDraw
+} // namespace KaitoTokyo

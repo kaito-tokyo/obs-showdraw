@@ -17,9 +17,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 */
 
 #include <obs-module.h>
-#include "plugin-support.h"
 
-#include "ShowDrawFilterContext.h"
+#include "Core/MainPluginContext.h"
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
@@ -27,32 +26,32 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 struct obs_source_info showdraw_filter = {.id = "showdraw",
 					  .type = OBS_SOURCE_TYPE_FILTER,
 					  .output_flags = OBS_SOURCE_ASYNC_VIDEO,
-					  .get_name = showdraw_get_name,
-					  .create = showdraw_create,
-					  .destroy = showdraw_destroy,
-					  .get_width = showdraw_get_width,
-					  .get_height = showdraw_get_height,
-					  .get_defaults = showdraw_get_defaults,
-					  .get_properties = showdraw_get_properties,
-					  .update = showdraw_update,
-					  .activate = showdraw_activate,
-					  .deactivate = showdraw_deactivate,
-					  .show = showdraw_show,
-					  .hide = showdraw_hide,
-					  .video_tick = showdraw_video_tick,
-					  .video_render = showdraw_video_render,
-					  .filter_video = showdraw_filter_video};
+					  .get_name = main_plugin_context_get_name,
+					  .create = main_plugin_context_create,
+					  .destroy = main_plugin_context_destroy,
+					  .get_width = main_plugin_context_get_width,
+					  .get_height = main_plugin_context_get_height,
+					  .get_defaults = main_plugin_context_get_defaults,
+					  .get_properties = main_plugin_context_get_properties,
+					  .update = main_plugin_context_update,
+					  .activate = main_plugin_context_activate,
+					  .deactivate = main_plugin_context_deactivate,
+					  .show = main_plugin_context_show,
+					  .hide = main_plugin_context_hide,
+					  .video_tick = main_plugin_context_video_tick,
+					  .video_render = main_plugin_context_video_render,
+					  .filter_video = main_plugin_context_filter_video};
 
 bool obs_module_load()
 {
 	obs_register_source(&showdraw_filter);
-	showdraw_module_load();
-	obs_log(LOG_INFO, "plugin loaded successfully (version %s)", PLUGIN_VERSION);
+	main_plugin_context_module_load();
+	blog(LOG_INFO, "plugin loaded successfully (version " PLUGIN_VERSION ")");
 	return true;
 }
 
 void obs_module_unload()
 {
-	showdraw_module_unload();
-	obs_log(LOG_INFO, "plugin unloaded");
+	main_plugin_context_module_unload();
+	blog(LOG_INFO, "plugin unloaded");
 }

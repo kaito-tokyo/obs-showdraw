@@ -1,5 +1,5 @@
 /*
-obs-showdraw
+Bridge Utils
 Copyright (C) 2025 Kaito Udagawa umireon@kaito.tokyo
 
 This program is free software; you can redistribute it and/or modify
@@ -18,32 +18,31 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
-#include <iostream>
-#include <queue>
-#include <thread>
-#include <mutex>
+#include <atomic>
+#include <cassert>
 #include <condition_variable>
 #include <functional>
-#include <optional>
 #include <memory>
-#include <atomic>
-#include <utility>
+#include <mutex>
+#include <optional>
+#include <queue>
 #include <stdexcept>
+#include <thread>
+#include <utility>
 
-#include "plugin-support.h"
-#include <obs.h>
+#include "ILogger.hpp"
 
-namespace kaito_tokyo {
-namespace obs_showdraw {
+namespace KaitoTokyo {
+namespace BridgeUtils {
 
 /**
- * @brief A self-contained thread queue for executing cancellable tasks.
+ * @brief A self-contained thread queue for executing cancellable tasks with a limit.
  *
  * This class manages a single internal worker thread in an RAII style.
  * The thread is started upon object construction and safely joined upon destruction.
- * Pushed tasks can be cancelled externally using a cancellation token.
+ * If the queue is full when a new task is pushed, the oldest task is cancelled and removed.
  */
-class TaskQueue {
+class ThrottledTaskQueue {
 public:
 	/**
      * @brief A cancellation token used to safely share the cancellation state.
@@ -57,27 +56,52 @@ public:
      */
 	using CancellableTask = std::function<void(const CancellationToken &)>;
 
+private:
+	using QueuedTask = std::pair<std::function<void()>, CancellationToken>;
+
+	const ILogger &logger;
+	const std::size_t maxQueueSize;
+	std::thread worker;
+	std::mutex mtx;
+	std::condition_variable cond;
+	std::queue<QueuedTask> queue;
+	bool stopped = false;
+
+public:
 	/**
      * @brief Constructor. Starts the worker thread.
+     * @param _logger The logger to use for internal messages.
+     * @param max_size The maximum number of tasks the queue can hold. Must be at least 1.
      */
-	TaskQueue() : worker(&TaskQueue::workerLoop, this) {}
+	ThrottledTaskQueue(const ILogger &_logger, std::size_t _maxQueueSize)
+		: logger(_logger),
+		  maxQueueSize(_maxQueueSize),
+		  worker(&ThrottledTaskQueue::workerLoop, this)
+	{
+		assert(_maxQueueSize > 0 && "max_size must be greater than 0");
+	}
 
 	/**
      * @brief Destructor. Stops the queue and waits for the worker thread to finish.
      */
-	~TaskQueue()
+	~ThrottledTaskQueue() { shutdown(); }
+
+	// Forbid copy and move semantics to keep ownership simple.
+	ThrottledTaskQueue(const ThrottledTaskQueue &) = delete;
+	ThrottledTaskQueue &operator=(const ThrottledTaskQueue &) = delete;
+	ThrottledTaskQueue(ThrottledTaskQueue &&) = delete;
+	ThrottledTaskQueue &operator=(ThrottledTaskQueue &&) = delete;
+
+	/**
+	 * @brief Stops the queue and waits for the worker thread to finish.
+	 */
+	void shutdown()
 	{
 		if (worker.joinable()) {
 			stop();
 			worker.join();
 		}
 	}
-
-	// Forbid copy and move semantics to keep ownership simple.
-	TaskQueue(const TaskQueue &) = delete;
-	TaskQueue &operator=(const TaskQueue &) = delete;
-	TaskQueue(TaskQueue &&) = delete;
-	TaskQueue &operator=(TaskQueue &&) = delete;
 
 	/**
      * @brief Pushes a cancellable task to the queue.
@@ -92,7 +116,15 @@ public:
 		{
 			std::lock_guard<std::mutex> lock(mtx);
 			if (stopped) {
-				throw std::runtime_error("push on stopped TaskQueue");
+				throw std::runtime_error("push on stopped ThrottledTaskQueue");
+			}
+
+			// If the queue is full, cancel and remove the oldest task.
+			while (queue.size() >= maxQueueSize) {
+				if (queue.front().second) {
+					queue.front().second->store(true); // Cancel
+				}
+				queue.pop();
 			}
 			queue.push({[user_task, token] { user_task(token); }, token});
 		}
@@ -115,9 +147,9 @@ private:
 			try {
 				(*taskOpt)();
 			} catch (const std::exception &e) {
-				obs_log(LOG_ERROR, "TaskQueue: Task threw an exception: %s", e.what());
+				logger.error("ThrottledTaskQueue: Task threw an exception: {}", e.what());
 			} catch (...) {
-				obs_log(LOG_ERROR, "TaskQueue: Task threw an unknown exception.");
+				logger.error("ThrottledTaskQueue: Task threw an unknown exception.");
 			}
 		}
 	}
@@ -154,25 +186,17 @@ private:
 			}
 			stopped = true;
 
+			// Cancel all pending tasks in the queue before shutting down.
 			while (!queue.empty()) {
-				auto &task_pair = queue.front();
-				if (task_pair.second) {
-					task_pair.second->store(true);
+				if (queue.front().second) {
+					queue.front().second->store(true);
 				}
 				queue.pop();
 			}
 		}
 		cond.notify_all();
 	}
-
-	using QueuedTask = std::pair<std::function<void()>, CancellationToken>;
-
-	std::thread worker;
-	std::mutex mtx;
-	std::condition_variable cond;
-	std::queue<QueuedTask> queue;
-	bool stopped = false;
 };
 
-} // namespace obs_showdraw
-} // namespace kaito_tokyo
+} // namespace BridgeUtils
+} // namespace KaitoTokyo
