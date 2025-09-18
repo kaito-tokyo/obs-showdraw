@@ -18,6 +18,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
+#include <mutex>
+#include <sstream>
+#include <string_view>
+
 #include <backward.hpp>
 
 #include <util/base.h>
@@ -35,6 +39,7 @@ public:
 protected:
 	void log(LogLevel level, std::string_view message) const noexcept override
 	{
+		std::lock_guard<std::mutex> lock(mtx);
 		int blogLevel;
 		switch (level) {
 		case LogLevel::Debug:
@@ -54,20 +59,30 @@ protected:
 			return;
 		}
 
-		blog(blogLevel, "%.*s", static_cast<int>(message.length()), message.data());
+		constexpr size_t MAX_LOG_CHUNK_SIZE = 4000;
+
+		if (message.length() <= MAX_LOG_CHUNK_SIZE) {
+			blog(blogLevel, "%.*s", static_cast<int>(message.length()), message.data());
+		} else {
+			for (size_t i = 0; i < message.length(); i += MAX_LOG_CHUNK_SIZE) {
+				const auto chunk = message.substr(i, MAX_LOG_CHUNK_SIZE);
+				blog(blogLevel, "%.*s", static_cast<int>(chunk.length()), chunk.data());
+			}
+		}
 	}
 
 	void logException(const std::exception &e, std::string_view context) const noexcept override
 	try {
-		error("{}: {}", context, e.what());
+		std::stringstream ss;
+		ss << context.data() << ": " << e.what() << "\n";
 
 		backward::StackTrace st;
 		st.load_here(32);
 
-		std::stringstream ss;
 		backward::Printer p;
 		p.print(st, ss);
-		log(LogLevel::Error, fmt::format("{}--- Stack Trace ---\n{}", getPrefix(), ss.str()));
+
+		error("--- Stack Trace ---\n{}", ss.str());
 	} catch (const std::exception &log_ex) {
 		fprintf(stderr, "[LOGGER FATAL] Failed during exception logging: %s\n", log_ex.what());
 	} catch (...) {
@@ -79,6 +94,7 @@ protected:
 
 private:
 	const std::string prefix;
+	mutable std::mutex mtx;
 };
 
 } // namespace BridgeUtils

@@ -30,9 +30,9 @@ using namespace KaitoTokyo::BridgeUtils;
 
 namespace {
 
-inline ILogger &logger()
+inline const ILogger &logger()
 {
-	static ObsLogger instance("[" PLUGIN_NAME "] ");
+	static const ObsLogger instance("[" PLUGIN_NAME "] ");
 	return instance;
 }
 
@@ -46,7 +46,7 @@ const char *main_plugin_context_get_name(void *)
 void *main_plugin_context_create(obs_data_t *settings, obs_source_t *source)
 try {
 	GraphicsContextGuard guard;
-	auto self = std::make_shared<MainPluginContext>(settings, source);
+	auto self = std::make_shared<MainPluginContext>(logger(), settings, source);
 	return new std::shared_ptr<MainPluginContext>(self);
 } catch (const std::exception &e) {
 	logger().logException(e, "Failed to create context");
