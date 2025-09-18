@@ -14,7 +14,6 @@
 !/tests
 !/vcpkg-overlay-ports
 !/vcpkg-triplets
-!/vendor
 !.clang-format
 !.gersemirc
 !.gitignore
