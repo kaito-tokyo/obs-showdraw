@@ -33,6 +33,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <future>
 #include <memory>
 #include <optional>
+#include "../BridgeUtils/ObsLogger.hpp"
 
 #include "../BridgeUtils/ThrottledTaskQueue.hpp"
 

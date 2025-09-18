@@ -20,8 +20,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs.h>
 
-#include "BridgeUtils/GsUnique.hpp"
-#include "BridgeUtils/ObsLogger.hpp"
+#include "../BridgeUtils/GsUnique.hpp"
+#include "../BridgeUtils/ObsLogger.hpp"
 
 using namespace KaitoTokyo::BridgeUtils;
 

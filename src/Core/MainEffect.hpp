@@ -150,7 +150,7 @@ public:
 	MainEffect &operator=(const MainEffect &) = delete;
 	MainEffect &operator=(MainEffect &&) = delete;
 
-	bool drawSource(const unique_gs_texture_t &target, obs_source_t *source) const
+	bool drawSource(const KaitoTokyo::BridgeUtils::unique_gs_texture_t &target, obs_source_t *source) const
 	{
 		const MainEffectDetail::RenderTargetGuard renderTargetGuard;
 		const MainEffectDetail::TransformStateGuard transformStateGuard;
@@ -169,6 +169,7 @@ public:
 		gs_matrix_identity();
 
 		obs_source_process_filter_end(source, effect.get(), width, height);
+		return true;
 	}
 
 	void drawTexture(const KaitoTokyo::BridgeUtils::unique_gs_texture_t &source) const noexcept
