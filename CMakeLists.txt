@@ -97,7 +97,7 @@ target_sources(
 )
 
 if(BUILD_TESTING)
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE BUILD_TESTING)
+  target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE BUILD_TESTING)
 endif()
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
