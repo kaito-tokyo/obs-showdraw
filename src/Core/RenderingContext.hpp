@@ -21,6 +21,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <array>
 #include <atomic>
 #include <cstdint>
+#include <memory>
 
 #include <obs.h>
 
@@ -41,8 +42,6 @@ public:
 	const std::uint32_t width;
 	const std::uint32_t height;
 
-	Preset preset;
-
 	const KaitoTokyo::BridgeUtils::unique_gs_texture_t bgrxSource;
 	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r8SourceGrayscale;
 	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r8MedianFilteredGrayscale;
@@ -61,19 +60,17 @@ private:
 
 public:
 	RenderingContext(obs_source_t *source, const KaitoTokyo::BridgeUtils::ILogger &logger,
-			 const MainEffect &mainEffect, std::uint32_t width, std::uint32_t height, const Preset &preset);
+			 const MainEffect &mainEffect, std::uint32_t width, std::uint32_t height);
 	~RenderingContext() noexcept;
 
 	void videoTick(float seconds);
 	obs_source_frame *filterVideo(obs_source_frame *frame);
-	void videoRender();
-	void updatePreset(const Preset &preset);
+	void videoRender(const std::shared_ptr<const Preset> &preset);
 
 private:
-	ExtractionMode getExtractionMode() const noexcept
+	static ExtractionMode getExtractionMode(const Preset &p) noexcept
 	{
-		return preset.extractionMode == ExtractionMode::Default ? ExtractionMode::SobelMagnitude
-									: preset.extractionMode;
+		return p.extractionMode == ExtractionMode::Default ? ExtractionMode::SobelMagnitude : p.extractionMode;
 	}
 };
 
