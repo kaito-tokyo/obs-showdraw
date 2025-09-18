@@ -19,16 +19,36 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #pragma once
 
 #include <memory>
-#include <obs-data.h>
 
-namespace kaito_tokyo {
-namespace obs_bridge_utils {
+#include <obs-module.h>
 
-struct obs_data_deleter {
+namespace KaitoTokyo {
+namespace ObsBridgeUtils {
+namespace ObsUnique {
+
+struct BfreeDeleter {
+	void operator()(void *ptr) const { bfree(ptr); }
+};
+
+struct ObsDataDeleter {
 	void operator()(obs_data_t *data) const { obs_data_release(data); }
 };
 
-using unique_obs_data_t = std::unique_ptr<obs_data_t, obs_data_deleter>;
+struct ObsDataArrayDeleter {
+	void operator()(obs_data_array_t *array) const { obs_data_array_release(array); }
+};
 
-} // namespace obs_bridge_utils
-} // namespace kaito_tokyo
+} // namespace ObsUnique
+
+using unique_bfree_char_t = std::unique_ptr<char, ObsUnique::BfreeDeleter>;
+
+inline unique_bfree_char_t unique_obs_module_file(const char *file)
+{
+	return unique_bfree_char_t(obs_module_file(file));
+}
+
+using unique_obs_data_t = std::unique_ptr<obs_data_t, ObsUnique::ObsDataDeleter>;
+using unique_obs_data_array_t = std::unique_ptr<obs_data_array_t, ObsUnique::ObsDataArrayDeleter>;
+
+} // namespace ObsBridgeUtils
+} // namespace KaitoTokyo
