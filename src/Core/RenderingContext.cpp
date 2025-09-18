@@ -89,8 +89,8 @@ void RenderingContext::videoRender()
 			if (preset.motionAdaptiveFilteringStrength > 0.0) {
 				std::swap(r8MotionAdaptiveGrayscales[0], r8MotionAdaptiveGrayscales[1]);
 				mainEffect.applyMotionAdaptiveFilter(
-					r8MotionAdaptiveGrayscales[0], r8MotionMap, r32fIntermediate,
-					*grayscaleResult, r8MotionAdaptiveGrayscales[1],
+					r8MotionAdaptiveGrayscales[0], r8MotionMap, r32fIntermediate, *grayscaleResult,
+					r8MotionAdaptiveGrayscales[1],
 					static_cast<float>(preset.motionAdaptiveFilteringStrength),
 					static_cast<float>(preset.motionAdaptiveFilteringMotionThreshold));
 				grayscaleResult = &r8MotionAdaptiveGrayscales[0];
@@ -99,9 +99,9 @@ void RenderingContext::videoRender()
 
 		if (extractionMode >= ExtractionMode::SobelMagnitude) {
 			mainEffect.applySobel(bgrxComplexSobel, *grayscaleResult);
-			mainEffect.applyFinalizeSobelMagnitude(r8FinalSobelMagnitude, bgrxComplexSobel,
-							       preset.sobelMagnitudeFinalizationUseLog,
-							       preset.sobelMagnitudeFinalizationScalingFactorDb);
+			mainEffect.applyFinalizeSobelMagnitude(
+				r8FinalSobelMagnitude, bgrxComplexSobel, preset.sobelScalingFactor,
+				static_cast<float>(preset.sobelUseLog));
 		}
 	}
 
