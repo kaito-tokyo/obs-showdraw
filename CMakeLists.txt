@@ -76,13 +76,24 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE NOMINMAX)
 
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}
-  PRIVATE OBS::libobs semver::semver cpr::cpr nlohmann_json::nlohmann_json opencv_core opencv_imgproc opencv_imgcodecs
-  fmt::fmt
+  PRIVATE
+    OBS::libobs
+    semver::semver
+    cpr::cpr
+    nlohmann_json::nlohmann_json
+    opencv_core
+    opencv_imgproc
+    opencv_imgcodecs
+    fmt::fmt
 )
 
 target_sources(
   ${CMAKE_PROJECT_NAME}
-  PRIVATE src/Core/MainPluginContext_c.cpp src/Core/MainPluginContext.cpp src/Core/RenderingContext.cpp src/plugin-main.c
+  PRIVATE
+    src/Core/MainPluginContext_c.cpp
+    src/Core/MainPluginContext.cpp
+    src/Core/RenderingContext.cpp
+    src/plugin-main.c
 )
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
