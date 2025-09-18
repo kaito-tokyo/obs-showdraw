@@ -42,7 +42,8 @@ public:
 	double sobelScalingFactorDb = 10.0;
 	double sobelScalingFactor = 3.1622776602; // = pow(10, 10/20)
 
-	void setSobelScalingFactorDb(double v) {
+	void setSobelScalingFactorDb(double v)
+	{
 		sobelScalingFactorDb = v;
 		sobelScalingFactor = std::pow(10.0, v / 20.0);
 	}

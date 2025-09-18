@@ -99,9 +99,9 @@ void RenderingContext::videoRender()
 
 		if (extractionMode >= ExtractionMode::SobelMagnitude) {
 			mainEffect.applySobel(bgrxComplexSobel, *grayscaleResult);
-			mainEffect.applyFinalizeSobelMagnitude(
-				r8FinalSobelMagnitude, bgrxComplexSobel, preset.sobelScalingFactor,
-				static_cast<float>(preset.sobelUseLog));
+			mainEffect.applyFinalizeSobelMagnitude(r8FinalSobelMagnitude, bgrxComplexSobel,
+							       preset.sobelUseLog,
+							       static_cast<float>(preset.sobelScalingFactor));
 		}
 	}
 
@@ -116,7 +116,8 @@ void RenderingContext::videoRender()
 	}
 }
 
-void RenderingContext::updatePreset(const Preset &newPreset) {
+void RenderingContext::updatePreset(const Preset &newPreset)
+{
 	preset = newPreset;
 }
 

@@ -57,12 +57,14 @@ uint32_t MainPluginContext::getHeight() const noexcept
 	return renderingContext ? renderingContext->height : 0;
 }
 
-void MainPluginContext::getDefaults(obs_data_t *data) {
+void MainPluginContext::getDefaults(obs_data_t *data)
+{
 	Preset preset;
 	obs_data_set_default_int(data, "extractionMode", static_cast<int>(preset.extractionMode));
 	obs_data_set_default_bool(data, "medianFilterEnabled", preset.medianFilterEnabled);
 	obs_data_set_default_double(data, "motionAdaptiveFilteringStrength", preset.motionAdaptiveFilteringStrength);
-	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold", preset.motionAdaptiveFilteringMotionThreshold);
+	obs_data_set_default_double(data, "motionAdaptiveFilteringMotionThreshold",
+				    preset.motionAdaptiveFilteringMotionThreshold);
 	obs_data_set_default_bool(data, "sobelUseLog", preset.sobelUseLog);
 	obs_data_set_default_double(data, "sobelScalingFactorDb", preset.sobelScalingFactorDb);
 }
@@ -92,20 +94,20 @@ obs_properties_t *MainPluginContext::getProperties()
 	obs_properties_add_float_slider(props, "motionAdaptiveFilteringMotionThreshold",
 					obs_module_text("motionAdaptiveFilteringMotionThreshold"), 0.0, 1.0, 0.001);
 
-	obs_properties_add_bool(props, "sobelUseLog",
-				obs_module_text("sobelUseLog"));
-	obs_properties_add_float_slider(props, "sobelScalingFactorDb",
-					obs_module_text("sobelScalingFactorDb"), -20.0, 20.0,
-					0.01);
+	obs_properties_add_bool(props, "sobelUseLog", obs_module_text("sobelUseLog"));
+	obs_properties_add_float_slider(props, "sobelScalingFactorDb", obs_module_text("sobelScalingFactorDb"), -20.0,
+					20.0, 0.01);
 
 	return props;
 }
 
-void MainPluginContext::update(obs_data_t *data) {
+void MainPluginContext::update(obs_data_t *data)
+{
 	preset.extractionMode = static_cast<ExtractionMode>(obs_data_get_int(data, "extractionMode"));
 	preset.medianFilterEnabled = obs_data_get_bool(data, "medianFilterEnabled");
 	preset.motionAdaptiveFilteringStrength = obs_data_get_double(data, "motionAdaptiveFilteringStrength");
-	preset.motionAdaptiveFilteringMotionThreshold = obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold");
+	preset.motionAdaptiveFilteringMotionThreshold =
+		obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold");
 	preset.sobelUseLog = obs_data_get_bool(data, "sobelUseLog");
 	preset.setSobelScalingFactorDb(obs_data_get_double(data, "sobelScalingFactorDb"));
 
