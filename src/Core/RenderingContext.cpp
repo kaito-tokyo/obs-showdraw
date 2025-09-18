@@ -88,11 +88,11 @@ void RenderingContext::videoRender()
 
 			if (preset.motionAdaptiveFilteringStrength > 0.0) {
 				std::swap(r8MotionAdaptiveGrayscales[0], r8MotionAdaptiveGrayscales[1]);
-				mainEffect.applyMotionAdaptiveFilter(r8MotionAdaptiveGrayscales[0], r8MotionMap,
-								     r32fIntermediate, *grayscaleResult,
-								     r8MotionAdaptiveGrayscales[1],
-								     preset.motionAdaptiveFilteringStrength,
-								     preset.motionAdaptiveFilteringMotionThreshold);
+				mainEffect.applyMotionAdaptiveFilter(
+					r8MotionAdaptiveGrayscales[0], r8MotionMap, r32fIntermediate,
+					*grayscaleResult, r8MotionAdaptiveGrayscales[1],
+					static_cast<float>(preset.motionAdaptiveFilteringStrength),
+					static_cast<float>(preset.motionAdaptiveFilteringMotionThreshold));
 				grayscaleResult = &r8MotionAdaptiveGrayscales[0];
 			}
 		}
