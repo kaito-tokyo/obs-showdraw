@@ -20,7 +20,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <util/base.h>
 
-#include <obs-bridge-utils/ILogger.hpp>
+#include "ObsUnique.hpp"
+#include "ILogger.hpp"
 
 namespace kaito_tokyo {
 namespace obs_bridge_utils {

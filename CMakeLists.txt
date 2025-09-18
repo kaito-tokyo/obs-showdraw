@@ -11,29 +11,29 @@ include(compilerconfig)
 include(defaults)
 include(helpers)
 
-add_library(${CMAKE_PROJECT_NAME}_impl STATIC)
+add_library(${CMAKE_PROJECT_NAME} MODULE)
 
 find_package(libobs REQUIRED)
 
 if(ENABLE_FRONTEND_API)
   find_package(obs-frontend-api REQUIRED)
-  target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE OBS::obs-frontend-api)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::obs-frontend-api)
 endif()
 
 if(ENABLE_QT)
   find_package(Qt6 COMPONENTS Network Widgets Core)
-  target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE Qt6::Core Qt6::Widgets)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)
   target_compile_options(
-    ${CMAKE_PROJECT_NAME}_impl
+    ${CMAKE_PROJECT_NAME}
     PRIVATE $<$<C_COMPILER_ID:Clang,AppleClang>:-Wno-quoted-include-in-framework-header -Wno-comma>
   )
   set_target_properties(
-    ${CMAKE_PROJECT_NAME}_impl
+    ${CMAKE_PROJECT_NAME}
     PROPERTIES AUTOMOC ON AUTOUIC ON AUTORCC ON
   )
 endif()
 
-target_link_libraries(${CMAKE_PROJECT_NAME}_impl PRIVATE plugin-support)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE plugin-support)
 
 if(NOT $ENV{VCPKG_ROOT} STREQUAL "")
   set(VCPKG_ROOT $ENV{VCPKG_ROOT})
@@ -73,27 +73,19 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(OpenCV CONFIG REQUIRED core imgproc imgcodecs)
 find_package(semver CONFIG REQUIRED)
 
-add_subdirectory(vendor/obs-bridge-utils)
-target_link_libraries(${CMAKE_PROJECT_NAME}_impl PUBLIC obs_bridge_utils)
+target_link_libraries(${CMAKE_PROJECT_NAME} PUBLIC obs_bridge_utils)
 
-target_compile_definitions(${CMAKE_PROJECT_NAME}_impl PRIVATE NOMINMAX)
+target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE NOMINMAX)
 
 target_link_libraries(
-  ${CMAKE_PROJECT_NAME}_impl
+  ${CMAKE_PROJECT_NAME}
   PRIVATE OBS::libobs semver::semver cpr::cpr nlohmann_json::nlohmann_json opencv_core opencv_imgproc opencv_imgcodecs
 )
 
 target_sources(
-  ${CMAKE_PROJECT_NAME}_impl
-  PRIVATE src/Preset.cpp src/UpdateChecker.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp
+  ${CMAKE_PROJECT_NAME}
+  PRIVATE src/Preset.cpp src/UpdateChecker.cpp src/PresetWindow.cpp src/DrawingEffect.cpp src/ShowDrawFilterContext.cpp src/plugin-main.c
 )
-
-add_library(${CMAKE_PROJECT_NAME} MODULE)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${CMAKE_PROJECT_NAME}_impl)
-
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.c)
-
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 

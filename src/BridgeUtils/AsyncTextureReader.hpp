@@ -1,5 +1,5 @@
 /*
-obs-showdraw
+Bridge Utils
 Copyright (C) 2025 Kaito Udagawa umireon@kaito.tokyo
 
 This program is free software; you can redistribute it and/or modify
@@ -27,10 +27,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <utility>
 #include <vector>
 
-#include <obs-bridge-utils/obs-bridge-utils.hpp>
-
-namespace kaito_tokyo {
-namespace obs_showdraw {
+namespace KaitoTokyo {
+namespace BridgeUtils {
 
 namespace async_texture_reader_detail {
 
@@ -42,14 +40,15 @@ inline std::uint32_t getBytesPerPixel(const gs_color_format format)
 		return 1;
 	case GS_R8G8:
 	case GS_RG16:
+	case GS_R16:
+	case GS_R16F:
 		return 2;
 	case GS_RGBA:
 	case GS_BGRX:
 	case GS_BGRA:
-	case GS_R16:
-	case GS_R16F:
-		return 4;
 	case GS_R10G10B10A2:
+	case GS_R32F:
+		return 4;
 	case GS_RGBA16:
 	case GS_RGBA16F:
 		return 8;
@@ -115,9 +114,9 @@ public:
      */
 	AsyncTextureReader(const std::uint32_t width, const std::uint32_t height,
 			   const gs_color_format format = GS_BGRA)
-		: width{width},
-		  height{height},
-		  bufferLinesize{(width * async_texture_reader_detail::getBytesPerPixel(format) + 3) & ~3u},
+		: width(width),
+		  height(height),
+		  bufferLinesize((width * async_texture_reader_detail::getBytesPerPixel(format) + 3) & ~3u),
 		  cpuBuffers{std::vector<std::uint8_t>(height * bufferLinesize),
 			     std::vector<std::uint8_t>(height * bufferLinesize)},
 		  stagesurfs{obs_bridge_utils::make_unique_gs_stagesurf(width, height, format),
@@ -180,10 +179,10 @@ public:
      * This operation is lock-free and provides immediate access to the most recently synced frame.
      * @return A reference to the active pixel data buffer.
      */
-	std::vector<uint8_t> &getBuffer() noexcept
+	std::vector<std::uint8_t> &getBuffer() noexcept
 	{
 		// non-const version calls const version and removes constness.
-		return const_cast<std::vector<uint8_t> &>(std::as_const(*this).getBuffer());
+		return const_cast<std::vector<std::uint8_t> &>(std::as_const(*this).getBuffer());
 	}
 
 	/**
@@ -191,7 +190,7 @@ public:
      * This operation is lock-free and provides immediate access to the most recently synced frame.
      * @return A constant reference to the active pixel data buffer.
      */
-	const std::vector<uint8_t> &getBuffer() const noexcept
+	const std::vector<std::uint8_t> &getBuffer() const noexcept
 	{
 		return cpuBuffers[activeCpuBufferIndex.load(std::memory_order_acquire)];
 	}
@@ -214,12 +213,13 @@ public:
      */
 	std::uint32_t getBufferLinesize() const noexcept { return bufferLinesize; }
 
-private:
+public:
 	const std::uint32_t width;
 	const std::uint32_t height;
 	const std::uint32_t bufferLinesize;
 
-	std::array<std::vector<uint8_t>, 2> cpuBuffers;
+private:
+	std::array<std::vector<std::uint8_t>, 2> cpuBuffers;
 	std::atomic<std::size_t> activeCpuBufferIndex = {0};
 
 	std::array<kaito_tokyo::obs_bridge_utils::unique_gs_stagesurf_t, 2> stagesurfs;
@@ -227,5 +227,5 @@ private:
 	std::mutex gpuMutex;
 };
 
-} // namespace obs_showdraw
+} // namespace obs_backgroundremoval_lite
 } // namespace kaito_tokyo
