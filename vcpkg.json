@@ -1,10 +1,10 @@
 {
   "dependencies": [
+    "backward-cpp",
     {
       "name": "cpr",
       "default-features": false
     },
-
     {
       "name": "curl",
       "default-features": false,
@@ -23,7 +23,6 @@
     },
     "fmt",
     "gtest",
-    "neargye-semver",
-    "backward-cpp"
+    "neargye-semver"
   ]
 }
