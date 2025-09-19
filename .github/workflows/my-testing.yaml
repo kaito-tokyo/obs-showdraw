@@ -152,17 +152,9 @@ jobs:
             pkg-config \
             mono-devel
 
-      - name: "Setup NuGet Credentials"
-        run: |
-          NUGET_PATH="$($VCPKG_ROOT/vcpkg fetch nuget | tail -n1)"
-          mono "$NUGET_PATH" sources add \
-            -Source "https://nuget.pkg.github.com/kaito-tokyo/index.json" \
-            -StorePasswordInClearText \
-            -Name "GitHub" \
-            -UserName "kaito-tokyo" \
-            -Password "${{ secrets.GITHUB_TOKEN }}"
-
       - name: "Install dependencies from vcpkg"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: "$VCPKG_ROOT/vcpkg install --triplet x64-linux"
 
       - name: "Configure"
