@@ -17,7 +17,7 @@ defaults:
     shell: "bash"
 
 env:
-  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/kaito-tokyo/index.json,read"
+  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,read"
   VCPKG_ROOT: "${{ github.workspace }}/vcpkg"
 
 permissions:
@@ -27,11 +27,10 @@ permissions:
 jobs:
   TestOnMacOS:
     runs-on: "macos-15"
-
     timeout-minutes: 30
 
     steps:
-      - name: "Checkout"
+      - name: "Checkout project repository"
         uses: "actions/checkout@v5"
 
       - name: "Checkout vcpkg repository"
@@ -44,17 +43,17 @@ jobs:
         working-directory: "${{ env.VCPKG_ROOT }}"
         run: "./bootstrap-vcpkg.sh"
 
-      - name: "Install mono"
+      - name: "Install mono for NuGet"
         run: "brew install mono"
 
       - name: "Setup NuGet Credentials"
         run: |
           NUGET_PATH="$($VCPKG_ROOT/vcpkg fetch nuget | tail -n1)"
           mono "$NUGET_PATH" sources add \
-            -Source "https://nuget.pkg.github.com/kaito-tokyo/index.json" \
+            -Source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             -StorePasswordInClearText \
             -Name "GitHub" \
-            -UserName "kaito-tokyo" \
+            -UserName "${{ github.repository_owner }}" \
             -Password "${{ secrets.GITHUB_TOKEN }}"
 
       - name: "Install dependencies from vcpkg"
@@ -71,11 +70,10 @@ jobs:
 
   TestOnWindows:
     runs-on: "windows-2022"
-
     timeout-minutes: 30
 
     steps:
-      - name: "Checkout"
+      - name: "Checkout project repository"
         uses: "actions/checkout@v5"
 
       - name: "Checkout vcpkg repository"
@@ -95,10 +93,10 @@ jobs:
           $NUGET_EXE_PATH = & "${{ env.VCPKG_ROOT }}/vcpkg" fetch nuget | Select-Object -Last 1
           
           & $NUGET_EXE_PATH sources add `
-            -Source "https://nuget.pkg.github.com/kaito-tokyo/index.json" `
+            -Source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" `
             -StorePasswordInClearText `
             -Name "GitHub" `
-            -UserName "kaito-tokyo" `
+            -UserName "${{ github.repository_owner }}" `
             -Password "${{ secrets.GITHUB_TOKEN }}"
 
       - name: "Install dependencies from vcpkg"
@@ -115,11 +113,10 @@ jobs:
 
   TestOnUbuntu:
     runs-on: "ubuntu-24.04"
-
     timeout-minutes: 30
 
     steps:
-      - name: "Checkout"
+      - name: "Checkout project repository"
         uses: "actions/checkout@v5"
 
       - name: "Checkout vcpkg repository"
@@ -132,7 +129,7 @@ jobs:
         working-directory: "${{ env.VCPKG_ROOT }}"
         run: "./bootstrap-vcpkg.sh"
 
-      - name: "Install dependencies on Ubuntu"
+      - name: "Install system dependencies on Ubuntu"
         run: |
           echo "man-db man-db/auto-update boolean false" | sudo debconf-set-selections
           sudo apt-get remove --purge -y man-db
@@ -151,21 +148,19 @@ jobs:
             ninja-build \
             pkg-config \
             mono-devel
-
-      - name: "Install dependencies from vcpkg"
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        run: "$VCPKG_ROOT/vcpkg install --triplet x64-linux"
-
+            
       - name: "Setup NuGet Credentials"
         run: |
           NUGET_PATH="$($VCPKG_ROOT/vcpkg fetch nuget | tail -n1)"
           mono "$NUGET_PATH" sources add \
-            -Source "https://nuget.pkg.github.com/kaito-tokyo/index.json" \
+            -Source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             -StorePasswordInClearText \
             -Name "GitHub" \
-            -UserName "kaito-tokyo" \
+            -UserName "${{ github.repository_owner }}" \
             -Password "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: "Install dependencies from vcpkg"
+        run: "$VCPKG_ROOT/vcpkg install --triplet x64-linux"
 
       - name: "Configure"
         run: "cmake --preset ubuntu-testing-ci-x86_64"
