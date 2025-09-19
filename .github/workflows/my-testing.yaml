@@ -149,8 +149,7 @@ jobs:
             git \
             jq \
             ninja-build \
-            pkg-config \
-            mono-devel
+            pkg-config
 
       - name: "Install dependencies from vcpkg"
         env:
