@@ -16,19 +16,19 @@ defaults:
   run:
     shell: "bash"
 
+env:
+  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/kaito-tokyo/index.json,read"
+  VCPKG_ROOT: "${{ github.workspace }}/vcpkg"
+
 permissions:
   contents: "read"
-  packages: "write"
+  packages: "read"
 
 jobs:
   TestOnMacOS:
-    name: "Run Tests on macOS"
     runs-on: "macos-15"
-    timeout-minutes: 60
 
-    env:
-      VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/kaito-tokyo/index.json,readwrite"
-      VCPKG_ROOT: "${{ github.workspace }}/vcpkg"
+    timeout-minutes: 30
 
     steps:
       - name: "Checkout"
@@ -56,8 +56,9 @@ jobs:
             -Name "GitHub" \
             -UserName "kaito-tokyo" \
             -Password "${{ secrets.GITHUB_TOKEN }}"
-          mono "$NUGET_PATH" setapikey "${{ secrets.GITHUB_TOKEN }}" \
-            -Source "https://nuget.pkg.github.com/kaito-tokyo/index.json"
+
+      - name: "Install dependencies from vcpkg"
+        run: ".github/scripts/install-vcpkg-macos.bash"
 
       - name: "Configure"
         run: "cmake --preset macos-testing-ci"
@@ -69,13 +70,9 @@ jobs:
         run: "ctest --preset macos-testing-ci --verbose"
 
   TestOnWindows:
-    name: "Run Tests on Windows"
     runs-on: "windows-2022"
-    timeout-minutes: 60
 
-    env:
-      VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/kaito-tokyo/index.json,readwrite"
-      VCPKG_ROOT: "${{ github.workspace }}/vcpkg"
+    timeout-minutes: 30
 
     steps:
       - name: "Checkout"
@@ -103,8 +100,9 @@ jobs:
             -Name "GitHub" `
             -UserName "kaito-tokyo" `
             -Password "${{ secrets.GITHUB_TOKEN }}"
-          & $NUGET_EXE_PATH setapikey "${{ secrets.GITHUB_TOKEN }}" `
-            -Source "https://nuget.pkg.github.com/kaito-tokyo/index.json"
+
+      - name: "Install dependencies from vcpkg"
+        run: "$VCPKG_ROOT/vcpkg install --triplet x64-windows-static-md"
 
       - name: "Configure"
         run: "cmake --preset windows-testing-ci-x64"
@@ -116,13 +114,9 @@ jobs:
         run: "ctest --preset windows-testing-ci-x64 --verbose"
 
   TestOnUbuntu:
-    name: "Run Tests on Ubuntu"
     runs-on: "ubuntu-24.04"
-    timeout-minutes: 60
 
-    env:
-      VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/kaito-tokyo/index.json,readwrite"
-      VCPKG_ROOT: "${{ github.workspace }}/vcpkg"
+    timeout-minutes: 30
 
     steps:
       - name: "Checkout"
@@ -167,8 +161,9 @@ jobs:
             -Name "GitHub" \
             -UserName "kaito-tokyo" \
             -Password "${{ secrets.GITHUB_TOKEN }}"
-          mono "$NUGET_PATH" setapikey "${{ secrets.GITHUB_TOKEN }}" \
-            -Source "https://nuget.pkg.github.com/kaito-tokyo/index.json"
+
+      - name: "Install dependencies from vcpkg"
+        run: "$VCPKG_ROOT/vcpkg install --triplet x64-linux"
 
       - name: "Configure"
         run: "cmake --preset ubuntu-testing-ci-x86_64"
