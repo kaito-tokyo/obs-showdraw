@@ -518,7 +518,7 @@ jobs:
             -Source "https://nuget.pkg.github.com/kaito-tokyo/index.json"
 
       - name: "Install dependencies from vcpkg"
-        run: "$VCPKG_ROOT/vcpkg install --triplet x64-windows-static-md"
+        run: "$VCPKG_ROOT\\vcpkg install --triplet x64-windows-static-md"
 
       - name: Build Plugin 🧱
         uses: ./.github/actions/build-plugin
