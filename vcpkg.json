@@ -4,30 +4,26 @@
       "name": "cpr",
       "default-features": false
     },
+
+    {
+      "name": "curl",
+      "default-features": false,
+      "features": [
+        "sspi"
+      ],
+      "platform": "(windows & !uwp) | mingw"
+    },
     {
       "name": "curl",
       "default-features": false,
       "features": [
         "wolfssl"
-      ]
-    },
-    {
-      "name": "directxtk",
-      "platform": "windows"
+      ],
+      "platform": "(uwp | !windows) & !mingw"
     },
     "fmt",
     "gtest",
     "neargye-semver",
-    "nlohmann-json",
-    {
-      "name": "opencv4",
-      "default-features": false,
-      "features": [
-        "jpeg",
-        "png",
-        "webp"
-      ]
-    },
     "backward-cpp"
   ]
 }

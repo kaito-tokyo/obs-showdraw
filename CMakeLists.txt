@@ -68,8 +68,6 @@ list(PREPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
 find_package(cpr CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
-find_package(OpenCV CONFIG REQUIRED core imgproc imgcodecs)
 find_package(semver CONFIG REQUIRED)
 find_package(Backward CONFIG REQUIRED)
 
@@ -77,16 +75,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE NOMINMAX)
 
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}
-  PRIVATE
-    OBS::libobs
-    semver::semver
-    cpr::cpr
-    nlohmann_json::nlohmann_json
-    opencv_core
-    opencv_imgproc
-    opencv_imgcodecs
-    fmt::fmt
-    Backward::Interface
+  PRIVATE OBS::libobs semver::semver cpr::cpr fmt::fmt Backward::Interface
 )
 
 target_sources(
