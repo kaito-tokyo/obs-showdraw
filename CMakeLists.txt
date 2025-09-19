@@ -48,6 +48,17 @@ target_link_libraries(
   PRIVATE OBS::libobs semver::semver cpr::cpr fmt::fmt Backward::Interface
 )
 
+if(OS_MACOS)
+  add_library(ShowDrawCanvasDetector STATIC)
+  target_sources(
+    ShowDrawCanvasDetector
+    PRIVATE
+    src/CanvasDetector/ShowDrawCanvasDetector_mac.mm
+    src/CanvasDetector/ShowDrawCanvasDetector.mlpackage
+  )
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ShowDrawCanvasDetector)
+endif()
+
 target_sources(
   ${CMAKE_PROJECT_NAME}
   PRIVATE
@@ -55,6 +66,7 @@ target_sources(
     src/Core/MainPluginContext.cpp
     src/Core/RenderingContext.cpp
     src/plugin-main.c
+    ${CANVAS_DETECTOR_SOURCES}
 )
 
 if(BUILD_TESTING)
