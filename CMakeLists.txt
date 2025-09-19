@@ -75,12 +75,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE NOMINMAX)
 
 target_link_libraries(
   ${CMAKE_PROJECT_NAME}
-  PRIVATE
-    OBS::libobs
-    semver::semver
-    cpr::cpr
-    fmt::fmt
-    Backward::Interface
+  PRIVATE OBS::libobs semver::semver cpr::cpr fmt::fmt Backward::Interface
 )
 
 target_sources(
