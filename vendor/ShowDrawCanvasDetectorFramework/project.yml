@@ -1,0 +1,55 @@
+name: ShowDrawCanvasDetectorFramework
+options:
+  bundleIdPrefix: tokyo.kaito.showdraw.canvas-detector-framework
+  deploymentTarget:
+    macOS: "15.0"
+
+targets:
+  ShowDrawCanvasDetectorFramework:
+    type: framework
+    platform: macOS
+    sources:
+      - path: Sources/
+      - path: Models/ShowDrawCanvasDetectorModel.mlpackage
+    dependencies:
+      - sdk: CoreML.framework
+      - sdk: Vision.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: tokyo.kaito.showdraw.canvas-detector-framework
+        MACOSX_DEPLOYMENT_TARGET: "12.0"
+        DEFINES_MODULE: YES
+        GENERATE_INFOPLIST_FILE: YES
+      configs:
+        Debug:
+          CODE_SIGN_STYLE: Automatic
+        Release:
+          CODE_SIGN_STYLE: Automatic
+
+  ShowDrawCanvasDetectorFrameworkTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/
+    dependencies:
+      - target: ShowDrawCanvasDetectorFramework
+      - sdk: Vision.framework
+      - sdk: AppKit.framework
+      - sdk: CoreImage.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: tokyo.kaito.showdraw.canvas-detector-framework
+        MACOSX_DEPLOYMENT_TARGET: "12.0"
+        DEFINES_MODULE: YES
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  ShowDrawCanvasDetectorFramework:
+    build:
+      targets:
+        ShowDrawCanvasDetectorFramework: all
+        ShowDrawCanvasDetectorFrameworkTests: testing
+    test:
+      config: Debug
+      targets:
+        - ShowDrawCanvasDetectorFrameworkTests
