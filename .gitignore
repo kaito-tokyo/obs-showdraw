@@ -36,4 +36,4 @@
 # Exclude CMake build number cache
 /cmake/.CMakeBuildNumber
 
-vendor/ShowDrawCanvasDetectorFramework/ShowDrawCanvasDetectorFramework.xcodeproj
+vendor/**/*.xcodeproj

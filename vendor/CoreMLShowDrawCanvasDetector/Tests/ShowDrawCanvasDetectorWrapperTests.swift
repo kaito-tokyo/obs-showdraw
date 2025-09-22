@@ -21,53 +21,63 @@ import AppKit
 
 @testable import CoreMLShowDrawCanvasDetector
 
-final class ModelTests: XCTestCase {
+final class ShowDrawCanvasDetectorTests: XCTestCase {
 
     var wrapper: ShowDrawCanvasDetectorWrapper!
 
     override func setUpWithError() throws {
-        // `throws`キーワードにより、セットアップ中に発生したエラーをテストフレームワークが検知します
         try super.setUpWithError()
-        
-        // Objective-Cのクラスを通常通り初期化します
-        let wrapperInstance = ShowDrawCanvasDetectorWrapper()
-        XCTAssertNotNil(wrapperInstance, "Wrapper initialization failed.")
-        self.wrapper = wrapperInstance
+        wrapper = ShowDrawCanvasDetectorWrapper()
+        XCTAssertNotNil(wrapper, "Wrapper initialization failed.")
     }
-    
-    func testDetectionAndDraw() throws {
-        // 1. ヘルパーメソッドを使ってテスト画像をロード
+
+    /// Tests the detection results against known, constant values to ensure accuracy.
+    func testDetectionResults_againstKnownValues() throws {
+        // MARK: 1. Define Ground Truth Data
+        // TODO: Replace these values with the actual results from an initial test run.
+        let expectedDetectionsCount = 1
+        let expectedTopResult = (
+            rect: CGRect(x: 704.0625, y: 52.5, width: 744.375, height: 973.5),
+            confidence: 0.9399414
+        )
+        // Define the acceptable margin of error for floating-point comparisons.
+        let accuracy: CGFloat = 0.1
+
+        // MARK: 2. Prepare Test Image and Perform Inference
         let image = try loadImage(named: "test001", ofType: "jpg")
         
-        // 2. Visionで扱うために画像を準備
         var imageRect = CGRect(origin: .zero, size: image.size)
         guard let cgImage = image.cgImage(forProposedRect: &imageRect, context: nil, hints: nil) else {
             XCTFail("Failed to convert NSImage to CGImage.")
             return
         }
-
-        // 3. 検出を実行
         let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        
-        // Objective-Cの `error:` パラメータ付きメソッドは、Swiftでは `throws` メソッドとして扱われます。
-        // そのため `try` を使って呼び出します。
         let results = try wrapper.detections(for: handler, with: image.size)
-        
-        // 4. 結果をアサート（検証）
-        XCTAssertFalse(results.isEmpty, "No objects were detected.")
 
-        // 5. 検出結果のバウンディングボックスを描画して画像を保存
-        let outputImage = try drawBoxes(on: image, from: results)
-        try save(image: outputImage, to: "detected_image.png")
+        // MARK: 3. Assert the Results
+        
+        // Check if the number of detected objects matches the expected count.
+        XCTAssertEqual(results.count, expectedDetectionsCount, "Expected \(expectedDetectionsCount) detections, but found \(results.count).")
+        
+        // Get the result with the highest confidence to ensure the test is stable even if the model's output order changes.
+        guard let topResult = results.max(by: { $0.confidence < $1.confidence }) else {
+            XCTFail("Could not get the top result from detections.")
+            return
+        }
+        
+        // Compare each value against the expected ground truth within the defined accuracy.
+        XCTAssertEqual(topResult.boundingBox.origin.x, expectedTopResult.rect.origin.x, accuracy: accuracy)
+        XCTAssertEqual(topResult.boundingBox.origin.y, expectedTopResult.rect.origin.y, accuracy: accuracy)
+        XCTAssertEqual(topResult.boundingBox.size.width, expectedTopResult.rect.size.width, accuracy: accuracy)
+        XCTAssertEqual(topResult.boundingBox.size.height, expectedTopResult.rect.size.height, accuracy: accuracy)
+        XCTAssertEqual(Float(topResult.confidence), Float(expectedTopResult.confidence), accuracy: Float(accuracy))
     }
 
     // MARK: - Helper Methods
     
     private func loadImage(named name: String, ofType fileExtension: String) throws -> NSImage {
-        // This now correctly calls Swift's global type(of:) function
         let bundle = Bundle(for: type(of: self))
         
-        // Use the new parameter name here as well
         guard let path = bundle.path(forResource: name, ofType: fileExtension) else {
             throw TestError.fileNotFound("\(name).\(fileExtension)")
         }
@@ -78,39 +88,8 @@ final class ModelTests: XCTestCase {
         
         return image
     }
-    
-    private func drawBoxes(on image: NSImage, from results: [ShowDrawCanvasDetectorResult]) throws -> NSImage {
-        guard let newImage = image.copy() as? NSImage else {
-            throw TestError.imageProcessingFailed("Failed to copy image.")
-        }
-        
-        newImage.lockFocus()
-        for result in results {
-            let path = NSBezierPath(rect: result.boundingBox)
-            NSColor.red.withAlphaComponent(0.8).setStroke()
-            path.lineWidth = 2.0
-            path.stroke()
-        }
-        newImage.unlockFocus()
-        
-        return newImage
-    }
-    
-    private func save(image: NSImage, to fileName: String) throws {
-        let desktopURL = try FileManager.default.url(for: .desktopDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        let outputURL = desktopURL.appendingPathComponent(fileName)
-        
-        guard let tiffData = image.tiffRepresentation,
-              let bitmap = NSBitmapImageRep(data: tiffData),
-              let pngData = bitmap.representation(using: .png, properties: [:]) else {
-            throw TestError.imageProcessingFailed("Failed to convert image to PNG data.")
-        }
-        
-        try pngData.write(to: outputURL)
-        print("Successfully saved detected image to: \(outputURL.path)")
-    }
-    
-    // テスト用のカスタムエラー
+
+    /// Custom errors for testing purposes.
     enum TestError: Error, LocalizedError {
         case fileNotFound(String)
         case imageLoadingFailed(String)

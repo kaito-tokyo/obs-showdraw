@@ -19,7 +19,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #import <Foundation/Foundation.h>
 #import <CoreML/CoreML.h>
 #import <Vision/Vision.h>
-#import "ShowDrawCanvasDetectorResult.h"
+#import <CoreMLShowDrawCanvasDetector/ShowDrawCanvasDetectorResult.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
