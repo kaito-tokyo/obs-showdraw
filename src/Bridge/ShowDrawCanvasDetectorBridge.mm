@@ -1,4 +1,4 @@
-#include "Bridge/ShowDrawCanvasDetectorBridge.hpp"
+#include "ShowDrawCanvasDetectorBridge.hpp"
 
 #import <CoreML/CoreML.h>
 #import <Vision/Vision.h>
