@@ -14,6 +14,7 @@
 !/tests
 !/vcpkg-overlay-ports
 !/vcpkg-triplets
+!/vendor
 !.clang-format
 !.gersemirc
 !.gitignore
@@ -34,3 +35,5 @@
 
 # Exclude CMake build number cache
 /cmake/.CMakeBuildNumber
+
+vendor/**/*.xcodeproj

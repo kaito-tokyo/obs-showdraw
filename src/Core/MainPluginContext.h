@@ -21,7 +21,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <obs.h>
 
 #ifndef PLUGIN_NAME
-#define PLUGIN_NAME "obs-showdraw"
+#define PLUGIN_NAME "showdraw"
 #endif
 #ifndef PLUGIN_VERSION
 #define PLUGIN_VERSION "0.0.0" // Set your actual version
@@ -52,9 +52,10 @@ public:
 
 class MainPluginContext : public std::enable_shared_from_this<MainPluginContext> {
 public:
-	const KaitoTokyo::BridgeUtils::ILogger &logger;
+	const BridgeUtils::ILogger &logger;
 	obs_source_t *const source;
 	const MainEffect mainEffect;
+	BridgeUtils::ThrottledTaskQueue taskQueue;
 
 	std::shared_ptr<const Preset> preset;
 	std::shared_ptr<RenderingContext> renderingContext = nullptr;

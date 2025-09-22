@@ -18,6 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #pragma once
 
+#include <cstddef>
 #include <mutex>
 #include <sstream>
 #include <string_view>
@@ -59,12 +60,12 @@ protected:
 			return;
 		}
 
-		constexpr size_t MAX_LOG_CHUNK_SIZE = 4000;
+		constexpr std::size_t MAX_LOG_CHUNK_SIZE = 4000;
 
 		if (message.length() <= MAX_LOG_CHUNK_SIZE) {
 			blog(blogLevel, "%.*s", static_cast<int>(message.length()), message.data());
 		} else {
-			for (size_t i = 0; i < message.length(); i += MAX_LOG_CHUNK_SIZE) {
+			for (std::size_t i = 0; i < message.length(); i += MAX_LOG_CHUNK_SIZE) {
 				const auto chunk = message.substr(i, MAX_LOG_CHUNK_SIZE);
 				blog(blogLevel, "%.*s", static_cast<int>(chunk.length()), chunk.data());
 			}

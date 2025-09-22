@@ -1,5 +1,5 @@
 /*
-obs-showdraw
+ShowDraw
 Copyright (C) 2025 Kaito Udagawa umireon@kaito.tokyo
 
 This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,13 @@ enum class ExtractionMode {
 	SobelMagnitude = 400,
 };
 
+enum class DetectionMode {
+	Default = 0,
+	Disabled = 100,
+	DrawBoundingBoxes = 200,
+	CenterFraming = 300,
+};
+
 struct DecibelField {
 	double db;
 	double linear;
@@ -52,6 +59,8 @@ public:
 
 	bool sobelUseLog = true;
 	DecibelField sobelScalingFactor = DecibelField::fromDbPow(10.0);
+
+	DetectionMode detectionMode = DetectionMode::Default;
 };
 
 } // namespace ShowDraw

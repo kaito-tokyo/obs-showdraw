@@ -59,6 +59,18 @@ jobs:
       - name: "Install dependencies from vcpkg"
         run: ".github/scripts/install-vcpkg-macos.bash"
 
+      - name: "Build CoreMLShowDrawCanvasDetector"
+        working-directory: "vendor/CoreMLShowDrawCanvasDetector"
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild \
+            -project CoreMLShowDrawCanvasDetector.xcodeproj \
+            -scheme CoreMLShowDrawCanvasDetector \
+            -configuration Release \
+            -sdk macosx \
+            SYMROOT=${{ github.workspace }}/build_vendor
+
       - name: "Configure"
         run: "cmake --preset macos-testing-ci"
         

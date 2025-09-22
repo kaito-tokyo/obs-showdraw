@@ -57,6 +57,42 @@ target_sources(
     src/plugin-main.c
 )
 
+if(APPLE)
+  find_library(
+    COREML_SHOWDRAW_CANVAS_DETECTOR_LOCATION
+    NAMES CoreMLShowDrawCanvasDetector
+    HINTS ${CMAKE_SOURCE_DIR}/build_vendor/CoreMLShowDrawCanvasDetector/Build/Products/Release
+    REQUIRED
+  )
+
+  target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/CoreMLShowDrawCanvasDetector/ShowDrawCanvasDetectorBridge.mm)
+
+  target_link_libraries(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+      ${COREML_SHOWDRAW_CANVAS_DETECTOR_LOCATION}
+      "-framework CoreML"
+      "-framework Vision"
+      "-framework CoreGraphics"
+      "-framework CoreVideo"
+  )
+
+  add_custom_command(
+    TARGET ${CMAKE_PROJECT_NAME}
+    POST_BUILD
+    COMMAND mkdir -p $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/../Frameworks
+    COMMAND rm -rf $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/../Frameworks/CoreMLShowDrawCanvasDetector.framework
+    COMMAND
+      cp -a ${COREML_SHOWDRAW_CANVAS_DETECTOR_LOCATION}
+      $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/../Frameworks/CoreMLShowDrawCanvasDetector.framework
+  )
+
+  set_target_properties(
+    ${CMAKE_PROJECT_NAME}
+    PROPERTIES INSTALL_RPATH "@loader_path/../Frameworks" BUILD_WITH_INSTALL_RPATH ON
+  )
+endif()
+
 if(BUILD_TESTING)
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE BUILD_TESTING)
 endif()

@@ -32,7 +32,7 @@ namespace ShowDraw {
 
 namespace MainEffectDetail {
 
-inline gs_eparam_t *getEffectParam(const KaitoTokyo::BridgeUtils::unique_gs_effect_t &effect, const char *name)
+inline gs_eparam_t *getEffectParam(const BridgeUtils::unique_gs_effect_t &effect, const char *name)
 {
 	gs_eparam_t *param = gs_effect_get_param_by_name(effect.get(), name);
 	if (!param) {
@@ -41,7 +41,7 @@ inline gs_eparam_t *getEffectParam(const KaitoTokyo::BridgeUtils::unique_gs_effe
 	return param;
 }
 
-inline gs_technique_t *getEffectTech(const KaitoTokyo::BridgeUtils::unique_gs_effect_t &effect, const char *name)
+inline gs_technique_t *getEffectTech(const BridgeUtils::unique_gs_effect_t &effect, const char *name)
 {
 	gs_technique_t *tech = gs_effect_get_technique(effect.get(), name);
 	if (!tech) {
@@ -49,6 +49,7 @@ inline gs_technique_t *getEffectTech(const KaitoTokyo::BridgeUtils::unique_gs_ef
 	}
 	return tech;
 }
+} // namespace MainEffectDetail
 
 struct TransformStateGuard {
 	TransformStateGuard()
@@ -83,11 +84,9 @@ struct RenderTargetGuard {
 	}
 };
 
-} // namespace MainEffectDetail
-
 class MainEffect {
 public:
-	const KaitoTokyo::BridgeUtils::unique_gs_effect_t effect;
+	const BridgeUtils::unique_gs_effect_t effect;
 
 	gs_eparam_t *const textureImage;
 	gs_eparam_t *const textureImage1;
@@ -115,8 +114,8 @@ public:
 	gs_technique_t *const techHorizontalDilation3;
 	gs_technique_t *const techVerticalDilation3;
 
-	explicit MainEffect(const KaitoTokyo::BridgeUtils::unique_bfree_char_t &effectPath)
-		: effect(KaitoTokyo::BridgeUtils::make_unique_gs_effect_from_file(effectPath)),
+	explicit MainEffect(const BridgeUtils::unique_bfree_char_t &effectPath)
+		: effect(BridgeUtils::make_unique_gs_effect_from_file(effectPath)),
 		  textureImage(MainEffectDetail::getEffectParam(effect, "image")),
 		  textureImage1(MainEffectDetail::getEffectParam(effect, "image1")),
 		  floatTexelWidth(MainEffectDetail::getEffectParam(effect, "texelWidth")),
@@ -150,10 +149,10 @@ public:
 	MainEffect &operator=(const MainEffect &) = delete;
 	MainEffect &operator=(MainEffect &&) = delete;
 
-	bool drawSource(const KaitoTokyo::BridgeUtils::unique_gs_texture_t &target, obs_source_t *source) const
+	bool drawSource(const BridgeUtils::unique_gs_texture_t &target, obs_source_t *source) const
 	{
-		const MainEffectDetail::RenderTargetGuard renderTargetGuard;
-		const MainEffectDetail::TransformStateGuard transformStateGuard;
+		const RenderTargetGuard renderTargetGuard;
+		const TransformStateGuard transformStateGuard;
 
 		const std::uint32_t width = gs_texture_get_width(target.get());
 		const std::uint32_t height = gs_texture_get_height(target.get());
@@ -172,11 +171,9 @@ public:
 		return true;
 	}
 
-	void drawTexture(const KaitoTokyo::BridgeUtils::unique_gs_texture_t &source) const noexcept
+	void drawTexture(const BridgeUtils::unique_gs_texture_t &source, std::uint32_t width,
+			 std::uint32_t height) const noexcept
 	{
-		const std::uint32_t width = gs_texture_get_width(source.get());
-		const std::uint32_t height = gs_texture_get_height(source.get());
-
 		const std::size_t passes = gs_technique_begin(techDraw);
 		for (std::size_t i = 0; i < passes; i++) {
 			if (gs_technique_begin_pass(techDraw, i)) {
@@ -189,7 +186,14 @@ public:
 		gs_technique_end(techDraw);
 	}
 
-	void drawGrayscaleTexture(const KaitoTokyo::BridgeUtils::unique_gs_texture_t &source) const noexcept
+	void drawTexture(const BridgeUtils::unique_gs_texture_t &source) const noexcept
+	{
+		const std::uint32_t width = gs_texture_get_width(source.get());
+		const std::uint32_t height = gs_texture_get_height(source.get());
+		drawTexture(source, width, height);
+	}
+
+	void drawGrayscaleTexture(const BridgeUtils::unique_gs_texture_t &source) const noexcept
 	{
 		const std::uint32_t width = gs_texture_get_width(source.get());
 		const std::uint32_t height = gs_texture_get_height(source.get());
@@ -206,11 +210,11 @@ public:
 		gs_technique_end(techDrawGrayscale);
 	}
 
-	void applyConvertToGrayscale(const KaitoTokyo::BridgeUtils::unique_gs_texture_t &target,
-				     const KaitoTokyo::BridgeUtils::unique_gs_texture_t &source) const noexcept
+	void applyConvertToGrayscale(const BridgeUtils::unique_gs_texture_t &target,
+				     const BridgeUtils::unique_gs_texture_t &source) const noexcept
 	{
-		const MainEffectDetail::RenderTargetGuard renderTargetGuard;
-		const MainEffectDetail::TransformStateGuard transformStateGuard;
+		const RenderTargetGuard renderTargetGuard;
+		const TransformStateGuard transformStateGuard;
 
 		std::uint32_t width = gs_texture_get_width(target.get());
 		std::uint32_t height = gs_texture_get_height(target.get());
@@ -232,12 +236,12 @@ public:
 		gs_technique_end(techConvertGrayscale);
 	}
 
-	void applyMedianFilter(const KaitoTokyo::BridgeUtils::unique_gs_texture_t &target,
-			       const KaitoTokyo::BridgeUtils::unique_gs_texture_t &intermediate,
-			       const KaitoTokyo::BridgeUtils::unique_gs_texture_t &source) const noexcept
+	void applyMedianFilter(const BridgeUtils::unique_gs_texture_t &target,
+			       const BridgeUtils::unique_gs_texture_t &intermediate,
+			       const BridgeUtils::unique_gs_texture_t &source) const noexcept
 	{
-		const MainEffectDetail::RenderTargetGuard renderTargetGuard;
-		const MainEffectDetail::TransformStateGuard transformStateGuard;
+		const RenderTargetGuard renderTargetGuard;
+		const TransformStateGuard transformStateGuard;
 
 		const std::uint32_t width = gs_texture_get_width(target.get());
 		const std::uint32_t height = gs_texture_get_height(target.get());
@@ -286,8 +290,8 @@ public:
 				       const KaitoTokyo::BridgeUtils::unique_gs_texture_t &previousGrayscale,
 				       float strength, float motionThreshold) const noexcept
 	{
-		const MainEffectDetail::RenderTargetGuard renderTargetGuard;
-		const MainEffectDetail::TransformStateGuard transformStateGuard;
+		const RenderTargetGuard renderTargetGuard;
+		const TransformStateGuard transformStateGuard;
 
 		const std::uint32_t width = gs_texture_get_width(target.get());
 		const std::uint32_t height = gs_texture_get_height(target.get());
@@ -353,8 +357,8 @@ public:
 	void applySobel(const KaitoTokyo::BridgeUtils::unique_gs_texture_t &target,
 			const KaitoTokyo::BridgeUtils::unique_gs_texture_t &source) const noexcept
 	{
-		const MainEffectDetail::RenderTargetGuard renderTargetGuard;
-		const MainEffectDetail::TransformStateGuard transformStateGuard;
+		const RenderTargetGuard renderTargetGuard;
+		const TransformStateGuard transformStateGuard;
 
 		const std::uint32_t width = gs_texture_get_width(target.get());
 		const std::uint32_t height = gs_texture_get_height(target.get());
@@ -385,8 +389,8 @@ public:
 					 const KaitoTokyo::BridgeUtils::unique_gs_texture_t &source, bool useLog,
 					 float scalingFactor) const noexcept
 	{
-		const MainEffectDetail::RenderTargetGuard renderTargetGuard;
-		const MainEffectDetail::TransformStateGuard transformStateGuard;
+		const RenderTargetGuard renderTargetGuard;
+		const TransformStateGuard transformStateGuard;
 
 		const std::uint32_t width = gs_texture_get_width(target.get());
 		const std::uint32_t height = gs_texture_get_height(target.get());
@@ -416,8 +420,8 @@ public:
 			     const KaitoTokyo::BridgeUtils::unique_gs_texture_t &source,
 			     gs_technique_t *horizontalTechnique, gs_technique_t *verticalTechnique) const noexcept
 	{
-		const MainEffectDetail::RenderTargetGuard renderTargetGuard;
-		const MainEffectDetail::TransformStateGuard transformStateGuard;
+		const RenderTargetGuard renderTargetGuard;
+		const TransformStateGuard transformStateGuard;
 
 		const std::uint32_t width = gs_texture_get_width(target.get());
 		const std::uint32_t height = gs_texture_get_height(target.get());
@@ -455,6 +459,32 @@ public:
 			}
 		}
 		gs_technique_end(verticalTechnique);
+	}
+
+	void drawRectangle(float x, float y, float w, float h, float thickness, std::uint32_t color) const
+	{
+		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_SOLID);
+		gs_eparam_t *param = gs_effect_get_param_by_name(effect, "color");
+
+		struct vec4 color_vec;
+		vec4_from_rgba(&color_vec, color);
+		gs_effect_set_vec4(param, &color_vec);
+
+		while (gs_effect_loop(effect, "Solid")) {
+			drawFilledRect(x, y, w, thickness);
+			drawFilledRect(x, y + h - thickness, w, thickness);
+			drawFilledRect(x, y + thickness, thickness, h - thickness * 2.0f);
+			drawFilledRect(x + w - thickness, y + thickness, thickness, h - thickness * 2.0f);
+		}
+	}
+
+private:
+	void drawFilledRect(float x, float y, float w, float h) const
+	{
+		gs_matrix_push();
+		gs_matrix_translate3f(x, y, 0.0f);
+		gs_draw_quadf(NULL, 0, w, h);
+		gs_matrix_pop();
 	}
 };
 
