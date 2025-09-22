@@ -102,10 +102,9 @@ obs_properties_t *MainPluginContext::getProperties()
 	obs_properties_add_bool(props, "sobelUseLog", obs_module_text("sobelUseLog"));
 	obs_properties_add_float_slider(props, "sobelScalingFactorDb", obs_module_text("sobelScalingFactorDb"), -20.0,
 					20.0, 0.01);
-					
-	obs_property_t *propDetectionMode =
-		obs_properties_add_list(props, "detectionMode", obs_module_text("detectionMode"), OBS_COMBO_TYPE_LIST,
-				       OBS_COMBO_FORMAT_INT);
+
+	obs_property_t *propDetectionMode = obs_properties_add_list(
+		props, "detectionMode", obs_module_text("detectionMode"), OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(propDetectionMode, obs_module_text("detectionModeDefault"),
 				  static_cast<long long>(DetectionMode::Default));
 	obs_property_list_add_int(propDetectionMode, obs_module_text("detectionModeDrawBoundingBoxes"),
@@ -151,7 +150,8 @@ void MainPluginContext::hide()
 	logger.info("Filter hidden");
 }
 
-void MainPluginContext::videoTick(float seconds) {
+void MainPluginContext::videoTick(float seconds)
+{
 	if (renderingContext) {
 		renderingContext->videoTick(seconds);
 	}
@@ -178,8 +178,8 @@ try {
 
 	if (!renderingContext || frame->width != renderingContext->width || frame->height != renderingContext->height) {
 		GraphicsContextGuard guard;
-		renderingContext =
-			std::make_shared<RenderingContext>(source, logger, mainEffect, taskQueue, frame->width, frame->height);
+		renderingContext = std::make_shared<RenderingContext>(source, logger, mainEffect, taskQueue,
+								      frame->width, frame->height);
 		GsUnique::drain();
 	}
 

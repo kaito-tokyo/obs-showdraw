@@ -26,31 +26,31 @@ namespace KaitoTokyo {
 namespace ShowDraw {
 
 struct CanvasDetectorResult {
-    float confidence;
-    float x;
-    float y;
-    float width;
-    float height;
+	float confidence;
+	float x;
+	float y;
+	float width;
+	float height;
 };
 
 class ShowDrawCanvasDetectorBridge {
 public:
-    static const std::uint32_t WIDTH = 640;
-    static const std::uint32_t HEIGHT = 640;
+	static const std::uint32_t WIDTH = 640;
+	static const std::uint32_t HEIGHT = 640;
 
-    ShowDrawCanvasDetectorBridge();
-    ~ShowDrawCanvasDetectorBridge();
+	ShowDrawCanvasDetectorBridge();
+	~ShowDrawCanvasDetectorBridge();
 
-    ShowDrawCanvasDetectorBridge(const ShowDrawCanvasDetectorBridge&) = delete;
-    ShowDrawCanvasDetectorBridge& operator=(const ShowDrawCanvasDetectorBridge&) = delete;
-    ShowDrawCanvasDetectorBridge(ShowDrawCanvasDetectorBridge&&) noexcept;
-    ShowDrawCanvasDetectorBridge& operator=(ShowDrawCanvasDetectorBridge&&) noexcept;
+	ShowDrawCanvasDetectorBridge(const ShowDrawCanvasDetectorBridge &) = delete;
+	ShowDrawCanvasDetectorBridge &operator=(const ShowDrawCanvasDetectorBridge &) = delete;
+	ShowDrawCanvasDetectorBridge(ShowDrawCanvasDetectorBridge &&) noexcept;
+	ShowDrawCanvasDetectorBridge &operator=(ShowDrawCanvasDetectorBridge &&) noexcept;
 
-    std::vector<CanvasDetectorResult> detect(const uint8_t* bgra_data, int width, int height);
+	std::vector<CanvasDetectorResult> detect(const uint8_t *bgra_data, int width, int height);
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl;
+	class Impl;
+	std::unique_ptr<Impl> pimpl;
 };
 
 } // namespace ShowDraw

@@ -79,8 +79,8 @@ private:
 	float currentTransformScale = 1.0f;
 
 public:
-	RenderingContext(obs_source_t *source, const BridgeUtils::ILogger &logger,
-			 const MainEffect &mainEffect, BridgeUtils::ThrottledTaskQueue &taskQueue, std::uint32_t width, std::uint32_t height);
+	RenderingContext(obs_source_t *source, const BridgeUtils::ILogger &logger, const MainEffect &mainEffect,
+			 BridgeUtils::ThrottledTaskQueue &taskQueue, std::uint32_t width, std::uint32_t height);
 	~RenderingContext() noexcept;
 
 	void videoTick(float seconds);
@@ -90,12 +90,14 @@ public:
 private:
 	static ExtractionMode getExtractionMode(const Preset &preset) noexcept
 	{
-		return preset.extractionMode == ExtractionMode::Default ? ExtractionMode::SobelMagnitude : preset.extractionMode;
+		return preset.extractionMode == ExtractionMode::Default ? ExtractionMode::SobelMagnitude
+									: preset.extractionMode;
 	}
 
 	static DetectionMode getDetectionMode(const Preset &preset) noexcept
 	{
-		return preset.detectionMode == DetectionMode::Default ? DetectionMode::DrawBoundingBoxes : preset.detectionMode;
+		return preset.detectionMode == DetectionMode::Default ? DetectionMode::DrawBoundingBoxes
+								      : preset.detectionMode;
 	}
 
 	void kickDetection();

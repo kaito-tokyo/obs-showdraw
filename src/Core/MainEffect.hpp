@@ -171,7 +171,8 @@ public:
 		return true;
 	}
 
-	void drawTexture(const BridgeUtils::unique_gs_texture_t &source, std::uint32_t width, std::uint32_t height) const noexcept
+	void drawTexture(const BridgeUtils::unique_gs_texture_t &source, std::uint32_t width,
+			 std::uint32_t height) const noexcept
 	{
 		const std::size_t passes = gs_technique_begin(techDraw);
 		for (std::size_t i = 0; i < passes; i++) {
@@ -464,7 +465,7 @@ public:
 	{
 		gs_effect_t *effect = obs_get_base_effect(OBS_EFFECT_SOLID);
 		gs_eparam_t *param = gs_effect_get_param_by_name(effect, "color");
-	
+
 		struct vec4 color_vec;
 		vec4_from_rgba(&color_vec, color);
 		gs_effect_set_vec4(param, &color_vec);

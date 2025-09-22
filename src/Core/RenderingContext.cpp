@@ -214,11 +214,8 @@ void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 				max_y_plus_h = std::max(max_y_plus_h, r.y + r.height);
 			}
 
-			const CanvasDetectorResult result = {min_x,
-								     min_y,
-								     max_x_plus_w - min_x,
-								     max_y_plus_h - min_y,
-								     canvasDetectorResults[0].confidence};
+			const CanvasDetectorResult result = {min_x, min_y, max_x_plus_w - min_x, max_y_plus_h - min_y,
+							     canvasDetectorResults[0].confidence};
 
 			float x = (result.x - yoloxOffsetX) / yoloxScale;
 			float y = (result.y - yoloxOffsetY) / yoloxScale;
