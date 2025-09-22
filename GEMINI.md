@@ -11,17 +11,19 @@
 
 ## How to build and run tests on macOS
 
-1. Run `( cd vendor/CoreMLShowDrawCanvasDetector && xcodegen generate )` when project.yml changes were made.
-2. Run `xcodebuild -project vendor/CoreMLShowDrawCanvasDetector/CoreMLShowDrawCanvasDetector.xcodeproj -scheme CoreMLShowDrawCanvasDetector -configuration Release -sdk macosx SYMROOT=../../build_vendor` when files under vendor/CoreMLShowDrawCanvasDetector were changed.
-3. Run `cmake --preset macos-testing` when CMake-related changes were made.
-4. Run `ctest --preset macos-testing --rerun-failed --output-on-failure`.
+1. Run `./.github/scripts/install-vcpkg-macos.bash` when vcpkg-related files were changed.
+2. Run `( cd vendor/CoreMLShowDrawCanvasDetector && xcodegen generate )` when project.yml changes were made.
+3. Run `xcodebuild -project vendor/CoreMLShowDrawCanvasDetector/CoreMLShowDrawCanvasDetector.xcodeproj -scheme CoreMLShowDrawCanvasDetector -configuration Release -sdk macosx -derivedDataPath build_vendor/CoreMLShowDrawCanvasDetector` when files under vendor/CoreMLShowDrawCanvasDetector were changed.
+4. Run `cmake --preset macos-testing` when CMake-related changes were made.
+5. Run `ctest --preset macos-testing --rerun-failed --output-on-failure`.
 
 ## How to test plugin with OBS
 
-1. Run `( cd vendor/CoreMLShowDrawCanvasDetector && xcodegen generate )` when project.yml changes were made.
-2. Run `xcodebuild -project vendor/CoreMLShowDrawCanvasDetector/CoreMLShowDrawCanvasDetector.xcodeproj -scheme CoreMLShowDrawCanvasDetector -configuration Release -sdk macosx SYMROOT=../../build_vendor` when files under vendor/CoreMLShowDrawCanvasDetector were changed.
-3. Run `cmake --preset macos-testing` when CMake-related changes were made.
-4. Run `cmake --build --preset macos-testing && rm -rf ~/"Library/Application Support/obs-studio/plugins/showdraw.plugin" && cp -r ./build_macos/RelWithDebInfo/showdraw.plugin ~/"Library/Application Support/obs-studio/plugins"`.
+1. Run `./.github/scripts/install-vcpkg-macos.bash` when vcpkg-related files were changed.
+2. Run `( cd vendor/CoreMLShowDrawCanvasDetector && xcodegen generate )` when project.yml changes were made.
+3. Run `xcodebuild -project vendor/CoreMLShowDrawCanvasDetector/CoreMLShowDrawCanvasDetector.xcodeproj -scheme CoreMLShowDrawCanvasDetector -configuration Release -sdk macosx -derivedDataPath build_vendor/CoreMLShowDrawCanvasDetector` when files under vendor/CoreMLShowDrawCanvasDetector were changed.
+4. Run `cmake --preset macos-testing` when CMake-related changes were made.
+5. Run `cmake --build --preset macos-testing && rm -rf ~/"Library/Application Support/obs-studio/plugins/showdraw.plugin" && cp -r ./build_macos/RelWithDebInfo/showdraw.plugin ~/"Library/Application Support/obs-studio/plugins"`.
 
 ## Release Automation with Gemini
 

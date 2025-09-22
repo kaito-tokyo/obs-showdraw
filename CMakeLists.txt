@@ -61,7 +61,7 @@ if(APPLE)
   find_library(
       COREML_SHOWDRAW_CANVAS_DETECTOR_LOCATION
       NAMES CoreMLShowDrawCanvasDetector
-      HINTS ${CMAKE_SOURCE_DIR}/build_vendor/Release
+      HINTS ${CMAKE_SOURCE_DIR}/build_vendor/CoreMLShowDrawCanvasDetector/Build/Products/Release
       REQUIRED
   )
 
@@ -83,7 +83,8 @@ if(APPLE)
 
   add_custom_command(
     TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    COMMAND mkdir -p $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/../Frameworks
+    COMMAND cp -a
             ${COREML_SHOWDRAW_CANVAS_DETECTOR_LOCATION}
             $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/../Frameworks/CoreMLShowDrawCanvasDetector.framework
   )
