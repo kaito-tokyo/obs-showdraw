@@ -64,6 +64,21 @@ if(APPLE)
       HINTS ${CMAKE_SOURCE_DIR}/build_vendor/Release
       REQUIRED
   )
+
+  target_sources(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+      src/Bridge/ShowDrawCanvasDetectorBridge.mm
+  )
+
+  target_link_libraries(
+    ${CMAKE_PROJECT_NAME}
+    PRIVATE
+      ${COREML_SHOWDRAW_CANVAS_DETECTOR_LOCATION}
+      "-framework CoreML"
+      "-framework Vision"
+      "-framework CoreGraphics"
+  )
 endif()
 
 if(BUILD_TESTING)
