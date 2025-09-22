@@ -79,8 +79,8 @@ typedef NS_ENUM(NSInteger, ShowDrawCanvasDetectorErrorCode) {
 }
 
 - (nullable NSArray<ShowDrawCanvasDetectorResult *> *)detectionsForHandler:(VNImageRequestHandler *)handler
-                                                                 withSize:(CGSize)imageSize
-                                                                    error:(NSError **)error;
+                                                                  withSize:(CGSize)imageSize
+                                                                     error:(NSError **)error;
 {
     VNCoreMLRequest *request = [[VNCoreMLRequest alloc] initWithModel:self.visionModel];
     request.imageCropAndScaleOption = VNImageCropAndScaleOptionScaleFit;

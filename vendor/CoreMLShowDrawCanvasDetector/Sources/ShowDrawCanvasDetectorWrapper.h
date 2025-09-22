@@ -45,8 +45,8 @@ NS_ASSUME_NONNULL_BEGIN
  * @return An array of `ShowDrawCanvasDetectorResult` objects on success, or `nil` on failure.
  */
 - (nullable NSArray<ShowDrawCanvasDetectorResult *> *)detectionsForHandler:(VNImageRequestHandler *)handler
-                                                                 withSize:(CGSize)imageSize
-                                                                    error:(NSError **)error;
+                                                                  withSize:(CGSize)imageSize
+                                                                     error:(NSError **)error;
 @end
 
 NS_ASSUME_NONNULL_END
