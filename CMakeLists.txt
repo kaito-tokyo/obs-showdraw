@@ -79,6 +79,18 @@ if(APPLE)
       "-framework Vision"
       "-framework CoreGraphics"
   )
+
+  add_custom_command(
+    TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${COREML_SHOWDRAW_CANVAS_DETECTOR_LOCATION}
+            $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/../Frameworks/CoreMLShowDrawCanvasDetector.framework
+  )
+
+  set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+    INSTALL_RPATH "@loader_path/../Frameworks"
+    BUILD_WITH_INSTALL_RPATH ON
+  )
 endif()
 
 if(BUILD_TESTING)

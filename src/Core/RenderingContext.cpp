@@ -20,6 +20,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs.h>
 
+#include <vector>
+
 #include "../BridgeUtils/GsUnique.hpp"
 #include "../BridgeUtils/ILogger.hpp"
 
@@ -51,7 +53,16 @@ RenderingContext::RenderingContext(obs_source_t *_source, const KaitoTokyo::Brid
 
 RenderingContext::~RenderingContext() noexcept {}
 
-void RenderingContext::videoTick(float) {}
+void RenderingContext::videoTick(float)
+{
+	canvasDetectorResults = canvasDetector.detect(bgrxYoloxInputReader.getBuffer().data(),
+						      bgrxYoloxInputReader.getWidth(),
+						      bgrxYoloxInputReader.getHeight());
+	for (auto &result : canvasDetectorResults) {
+		logger.info("Detected canvas: confidence={}, x={}, y={}, width={}, height={}", result.confidence,
+			    result.x, result.y, result.width, result.height);
+	}
+}
 
 obs_source_frame *RenderingContext::filterVideo(obs_source_frame *frame)
 {
@@ -77,7 +88,7 @@ void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 		} catch (std::exception &e) {
 			logger.logException(e, "An error occurred while processing a new frame");
 		}
-	
+
 		if (extractionMode >= ExtractionMode::Passthrough) {
 			mainEffect.drawSource(bgrxSource, source);
 		}

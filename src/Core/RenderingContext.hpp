@@ -57,6 +57,9 @@ public:
 	const KaitoTokyo::BridgeUtils::unique_gs_texture_t bgrxYoloxInput;
 	KaitoTokyo::BridgeUtils::AsyncTextureReader bgrxYoloxInputReader;
 
+	::ShowDraw::ShowDrawCanvasDetectorBridge canvasDetector;
+	std::vector<::ShowDraw::CanvasDetectorResult> canvasDetectorResults;
+
 private:
 	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r32fIntermediate;
 
