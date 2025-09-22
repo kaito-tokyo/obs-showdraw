@@ -78,6 +78,7 @@ if(APPLE)
       "-framework CoreML"
       "-framework Vision"
       "-framework CoreGraphics"
+      "-framework CoreVideo"
   )
 
   add_custom_command(

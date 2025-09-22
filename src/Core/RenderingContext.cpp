@@ -18,6 +18,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "RenderingContext.hpp"
 
+#include <graphics/vec4.h>
 #include <obs.h>
 
 #include <vector>
@@ -58,6 +59,7 @@ void RenderingContext::videoTick(float)
 	canvasDetectorResults = canvasDetector.detect(bgrxYoloxInputReader.getBuffer().data(),
 						      bgrxYoloxInputReader.getWidth(),
 						      bgrxYoloxInputReader.getHeight());
+	logger.info("tick");
 	for (auto &result : canvasDetectorResults) {
 		logger.info("Detected canvas: confidence={}, x={}, y={}, width={}, height={}", result.confidence,
 			    result.x, result.y, result.width, result.height);
@@ -121,8 +123,13 @@ void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 							       static_cast<float>(preset->sobelScalingFactor.linear));
 		}
 
-		gs_set_render_target_with_color_space(bgrxYoloxInput.get(), nullptr, GS_CS_SRGB);
-		mainEffect.drawTexture(bgrxSource);
+		{
+			MainEffectDetail::RenderTargetGuard renderTargetGuard;
+			MainEffectDetail::TransformStateGuard transformStateGuard;
+
+			gs_set_render_target_with_color_space(bgrxYoloxInput.get(), nullptr, GS_CS_SRGB);
+			mainEffect.drawTexture(bgrxSource);
+		}
 
 		bgrxYoloxInputReader.stage(bgrxYoloxInput.get());
 	}
