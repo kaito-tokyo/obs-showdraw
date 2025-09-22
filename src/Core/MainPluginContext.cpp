@@ -31,7 +31,8 @@ namespace ShowDraw {
 MainPluginContext::MainPluginContext(const BridgeUtils::ILogger &_logger, obs_data_t *settings, obs_source_t *_source)
 	: logger(_logger),
 	  source{_source},
-	  mainEffect(unique_obs_module_file("effects/main.effect"))
+	  mainEffect(unique_obs_module_file("effects/main.effect")),
+	  taskQueue(logger, 1)
 {
 	std::atomic_store(&preset, std::make_shared<const Preset>());
 	update(settings);
@@ -45,6 +46,7 @@ MainPluginContext::~MainPluginContext() noexcept
 void MainPluginContext::shutdown() noexcept
 {
 	renderingContext.reset();
+	taskQueue.shutdown();
 	logger.info("Context shut down");
 }
 
@@ -163,7 +165,7 @@ try {
 	if (!renderingContext || frame->width != renderingContext->width || frame->height != renderingContext->height) {
 		GraphicsContextGuard guard;
 		renderingContext =
-			std::make_shared<RenderingContext>(source, logger, mainEffect, frame->width, frame->height);
+			std::make_shared<RenderingContext>(source, logger, mainEffect, taskQueue, frame->width, frame->height);
 		GsUnique::drain();
 	}
 

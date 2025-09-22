@@ -52,9 +52,10 @@ public:
 
 class MainPluginContext : public std::enable_shared_from_this<MainPluginContext> {
 public:
-	const KaitoTokyo::BridgeUtils::ILogger &logger;
+	const BridgeUtils::ILogger &logger;
 	obs_source_t *const source;
 	const MainEffect mainEffect;
+	BridgeUtils::ThrottledTaskQueue taskQueue;
 
 	std::shared_ptr<const Preset> preset;
 	std::shared_ptr<RenderingContext> renderingContext = nullptr;

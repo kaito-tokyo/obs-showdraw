@@ -68,7 +68,7 @@ if(APPLE)
   target_sources(
     ${CMAKE_PROJECT_NAME}
     PRIVATE
-      src/Bridge/ShowDrawCanvasDetectorBridge.mm
+      src/CoreMLShowDrawCanvasDetector/ShowDrawCanvasDetectorBridge.mm
   )
 
   target_link_libraries(
@@ -84,6 +84,7 @@ if(APPLE)
   add_custom_command(
     TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
     COMMAND mkdir -p $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/../Frameworks
+    COMMAND rm -rf $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/../Frameworks/CoreMLShowDrawCanvasDetector.framework
     COMMAND cp -a
             ${COREML_SHOWDRAW_CANVAS_DETECTOR_LOCATION}
             $<TARGET_FILE_DIR:${CMAKE_PROJECT_NAME}>/../Frameworks/CoreMLShowDrawCanvasDetector.framework

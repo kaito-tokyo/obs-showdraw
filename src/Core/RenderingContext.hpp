@@ -27,49 +27,56 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "../BridgeUtils/AsyncTextureReader.hpp"
 #include "../BridgeUtils/GsUnique.hpp"
+#include "../BridgeUtils/ThrottledTaskQueue.hpp"
 
 #include "MainEffect.hpp"
 #include "Preset.hpp"
 
-#include "../Bridge/ShowDrawCanvasDetectorBridge.hpp"
+#include "../CoreMLShowDrawCanvasDetector/ShowDrawCanvasDetectorBridge.hpp"
 
 namespace KaitoTokyo {
 namespace ShowDraw {
 
-class RenderingContext {
+class RenderingContext : public std::enable_shared_from_this<RenderingContext> {
 public:
 	obs_source_t *const source;
-	const KaitoTokyo::BridgeUtils::ILogger &logger;
+	const BridgeUtils::ILogger &logger;
 	const MainEffect &mainEffect;
+	BridgeUtils::ThrottledTaskQueue &taskQueue;
 
 	const std::uint32_t width;
 	const std::uint32_t height;
 
-	const KaitoTokyo::BridgeUtils::unique_gs_texture_t bgrxSource;
-	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r8SourceGrayscale;
-	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r8MedianFilteredGrayscale;
-	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r8MotionMap;
-	std::array<KaitoTokyo::BridgeUtils::unique_gs_texture_t, 2> r8MotionAdaptiveGrayscales;
+	const BridgeUtils::unique_gs_texture_t bgrxSource;
+	const BridgeUtils::unique_gs_texture_t r8SourceGrayscale;
+	const BridgeUtils::unique_gs_texture_t r8MedianFilteredGrayscale;
+	const BridgeUtils::unique_gs_texture_t r8MotionMap;
+	std::array<BridgeUtils::unique_gs_texture_t, 2> r8MotionAdaptiveGrayscales;
 
-	const KaitoTokyo::BridgeUtils::unique_gs_texture_t bgrxComplexSobel;
-	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r8FinalSobelMagnitude;
+	const BridgeUtils::unique_gs_texture_t bgrxComplexSobel;
+	const BridgeUtils::unique_gs_texture_t r8FinalSobelMagnitude;
 
-	const KaitoTokyo::BridgeUtils::unique_gs_texture_t bgrxYoloxInput;
-	KaitoTokyo::BridgeUtils::AsyncTextureReader bgrxYoloxInputReader;
+	const double yoloxScale;
+	const std::uint32_t yoloxOffsetX;
+	const std::uint32_t yoloxOffsetY;
+	const std::uint32_t yoloxScaledWidth;
+	const std::uint32_t yoloxScaledHeight;
+	const BridgeUtils::unique_gs_texture_t bgrxYoloxInput;
+	BridgeUtils::AsyncTextureReader bgrxYoloxInputReader;
 
-	::ShowDraw::ShowDrawCanvasDetectorBridge canvasDetector;
-	std::vector<::ShowDraw::CanvasDetectorResult> canvasDetectorResults;
+	ShowDrawCanvasDetectorBridge canvasDetector;
+	std::vector<CanvasDetectorResult> canvasDetectorResults;
 
 private:
-	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r32fIntermediate;
+	const BridgeUtils::unique_gs_texture_t r32fIntermediate;
 
 private:
 	std::uint64_t lastFrameTimestamp = 0;
 	std::atomic<bool> doesNextVideoRenderReceiveNewFrame = false;
 
 public:
-	RenderingContext(obs_source_t *source, const KaitoTokyo::BridgeUtils::ILogger &logger,
-			 const MainEffect &mainEffect, std::uint32_t width, std::uint32_t height);
+	RenderingContext(obs_source_t *source, const BridgeUtils::ILogger &logger,
+			 const MainEffect &mainEffect, BridgeUtils::ThrottledTaskQueue &taskQueue, std::uint32_t width, std::uint32_t height);
 	~RenderingContext() noexcept;
 
 	void videoTick(float seconds);
@@ -77,10 +84,17 @@ public:
 	void videoRender(const std::shared_ptr<const Preset> &preset);
 
 private:
-	static ExtractionMode getExtractionMode(const Preset &p) noexcept
+	static ExtractionMode getExtractionMode(const Preset &preset) noexcept
 	{
-		return p.extractionMode == ExtractionMode::Default ? ExtractionMode::SobelMagnitude : p.extractionMode;
+		return preset.extractionMode == ExtractionMode::Default ? ExtractionMode::SobelMagnitude : preset.extractionMode;
 	}
+
+	static DetectionMode getDetectionMode(const Preset &preset) noexcept
+	{
+		return preset.detectionMode == DetectionMode::Default ? DetectionMode::DrawBoundingBoxes : preset.detectionMode;
+	}
+
+	void kickDetection();
 };
 
 } // namespace ShowDraw

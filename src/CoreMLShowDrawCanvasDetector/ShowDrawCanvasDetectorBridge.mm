@@ -1,3 +1,21 @@
+/*
+ShowDraw
+Copyright (C) 2025 Kaito Udagawa umireon@kaito.tokyo
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/>
+*/
+
 #include "ShowDrawCanvasDetectorBridge.hpp"
 
 #import <CoreML/CoreML.h>
@@ -8,7 +26,10 @@
 #import <CoreMLShowDrawCanvasDetector/ShowDrawCanvasDetectorWrapper.h>
 #import <CoreMLShowDrawCanvasDetector/ShowDrawCanvasDetectorResult.h>
 
-class ShowDraw::ShowDrawCanvasDetectorBridge::Impl {
+namespace KaitoTokyo {
+namespace ShowDraw {
+
+class ShowDrawCanvasDetectorBridge::Impl {
 public:
     ShowDrawCanvasDetectorWrapper* detector;
 
@@ -53,7 +74,7 @@ public:
             return {};
         }
 
-        std::vector<ShowDraw::CanvasDetectorResult> cpp_results;
+        std::vector<CanvasDetectorResult> cpp_results;
         for (ShowDrawCanvasDetectorResult* result in results) {
             ShowDraw::CanvasDetectorResult cpp_result;
             cpp_result.confidence = result.confidence;
@@ -69,11 +90,14 @@ public:
     }
 };
 
-ShowDraw::ShowDrawCanvasDetectorBridge::ShowDrawCanvasDetectorBridge() : pimpl(std::make_unique<Impl>()) {}
-ShowDraw::ShowDrawCanvasDetectorBridge::~ShowDrawCanvasDetectorBridge() = default;
-ShowDraw::ShowDrawCanvasDetectorBridge::ShowDrawCanvasDetectorBridge(ShowDrawCanvasDetectorBridge&&) noexcept = default;
-ShowDraw::ShowDrawCanvasDetectorBridge& ShowDraw::ShowDrawCanvasDetectorBridge::operator=(ShowDrawCanvasDetectorBridge&&) noexcept = default;
+ShowDrawCanvasDetectorBridge::ShowDrawCanvasDetectorBridge() : pimpl(std::make_unique<Impl>()) {}
+ShowDrawCanvasDetectorBridge::~ShowDrawCanvasDetectorBridge() = default;
+ShowDrawCanvasDetectorBridge::ShowDrawCanvasDetectorBridge(ShowDrawCanvasDetectorBridge&&) noexcept = default;
+ShowDrawCanvasDetectorBridge& ShowDrawCanvasDetectorBridge::operator=(ShowDrawCanvasDetectorBridge&&) noexcept = default;
 
-std::vector<ShowDraw::CanvasDetectorResult> ShowDraw::ShowDrawCanvasDetectorBridge::detect(const uint8_t* bgra_data, int width, int height) {
+std::vector<CanvasDetectorResult> ShowDrawCanvasDetectorBridge::detect(const uint8_t* bgra_data, int width, int height) {
     return pimpl->detect(bgra_data, width, height);
 }
+
+} // namespace ShowDraw
+} // namespace KaitoTokyo

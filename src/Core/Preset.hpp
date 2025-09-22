@@ -29,6 +29,11 @@ enum class ExtractionMode {
 	SobelMagnitude = 400,
 };
 
+enum class DetectionMode {
+	Default = 0,
+	DrawBoundingBoxes = 100,
+};
+
 struct DecibelField {
 	double db;
 	double linear;
@@ -52,6 +57,8 @@ public:
 
 	bool sobelUseLog = true;
 	DecibelField sobelScalingFactor = DecibelField::fromDbPow(10.0);
+
+	DetectionMode detectionMode = DetectionMode::Default;
 };
 
 } // namespace ShowDraw
