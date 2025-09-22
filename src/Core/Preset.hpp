@@ -31,7 +31,9 @@ enum class ExtractionMode {
 
 enum class DetectionMode {
 	Default = 0,
-	DrawBoundingBoxes = 100,
+	Disabled = 100,
+	DrawBoundingBoxes = 200,
+	CenterFraming = 300,
 };
 
 struct DecibelField {

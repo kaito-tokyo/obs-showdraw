@@ -192,6 +192,26 @@ void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 		bgrxYoloxInputReader.stage(bgrxYoloxInput.get());
 	}
 
+	if (detectionMode == DetectionMode::CenterFraming) {
+		gs_matrix_push();
+
+		if (!canvasDetectorResults.empty()) {
+			auto &result = canvasDetectorResults[0];
+			const float x = (result.x - yoloxOffsetX) / yoloxScale;
+			const float y = (result.y - yoloxOffsetY) / yoloxScale;
+			const float w = result.width / yoloxScale;
+			const float h = result.height / yoloxScale;
+			logger.info("{} {} {} {}", x, y, w, h);
+
+			const float wscale = width / w;
+			const float hscale = height / h;
+			const float scale = std::min(wscale, hscale);
+
+			gs_matrix_translate3f(-x, -y, 0.0f);
+			gs_matrix_scale3f(scale, scale, 1.0f);
+		}
+	}
+
 	if (extractionMode == ExtractionMode::Passthrough) {
 		mainEffect.drawTexture(bgrxSource);
 	} else if (extractionMode == ExtractionMode::ConvertToGrayscale) {
@@ -211,6 +231,10 @@ void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 
 			mainEffect.drawRectangle(x, y, w, h, 10.0f, 0xFF00FF00);
 		}
+	}
+	
+	if (detectionMode == DetectionMode::CenterFraming) {
+		gs_matrix_pop();
 	}
 }
 

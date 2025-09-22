@@ -70,6 +70,8 @@ void MainPluginContext::getDefaults(obs_data_t *data)
 				    p.motionAdaptiveFilteringMotionThreshold);
 	obs_data_set_default_bool(data, "sobelUseLog", p.sobelUseLog);
 	obs_data_set_default_double(data, "sobelScalingFactorDb", p.sobelScalingFactor.db);
+
+	obs_data_set_default_int(data, "detectionMode", static_cast<int>(p.detectionMode));
 }
 
 obs_properties_t *MainPluginContext::getProperties()
@@ -100,6 +102,16 @@ obs_properties_t *MainPluginContext::getProperties()
 	obs_properties_add_bool(props, "sobelUseLog", obs_module_text("sobelUseLog"));
 	obs_properties_add_float_slider(props, "sobelScalingFactorDb", obs_module_text("sobelScalingFactorDb"), -20.0,
 					20.0, 0.01);
+					
+	obs_property_t *propDetectionMode =
+		obs_properties_add_list(props, "detectionMode", obs_module_text("detectionMode"), OBS_COMBO_TYPE_LIST,
+				       OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(propDetectionMode, obs_module_text("detectionModeDefault"),
+				  static_cast<long long>(DetectionMode::Default));
+	obs_property_list_add_int(propDetectionMode, obs_module_text("detectionModeDrawBoundingBoxes"),
+				  static_cast<long long>(DetectionMode::DrawBoundingBoxes));
+	obs_property_list_add_int(propDetectionMode, obs_module_text("detectionModeCenterFraming"),
+				  static_cast<long long>(DetectionMode::CenterFraming));
 
 	return props;
 }
@@ -115,6 +127,8 @@ void MainPluginContext::update(obs_data_t *data)
 		obs_data_get_double(data, "motionAdaptiveFilteringMotionThreshold");
 	newPreset.sobelUseLog = obs_data_get_bool(data, "sobelUseLog");
 	newPreset.sobelScalingFactor = DecibelField::fromDbAmp(obs_data_get_double(data, "sobelScalingFactorDb"));
+
+	newPreset.detectionMode = static_cast<DetectionMode>(obs_data_get_int(data, "detectionMode"));
 
 	std::atomic_store(&preset, std::make_shared<const Preset>(newPreset));
 }
