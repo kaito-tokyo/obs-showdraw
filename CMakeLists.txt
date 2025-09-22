@@ -57,6 +57,15 @@ target_sources(
     src/plugin-main.c
 )
 
+if(APPLE)
+  find_library(
+      COREML_SHOWDRAW_CANVAS_DETECTOR_LOCATION
+      NAMES CoreMLShowDrawCanvasDetector
+      HINTS ${CMAKE_SOURCE_DIR}/build_vendor/Release
+      REQUIRED
+  )
+endif()
+
 if(BUILD_TESTING)
   target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE BUILD_TESTING)
 endif()
