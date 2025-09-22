@@ -43,6 +43,8 @@ RenderingContext::RenderingContext(obs_source_t *_source, const KaitoTokyo::Brid
 				     make_unique_gs_texture(width, height, GS_R8, 1, nullptr, GS_RENDER_TARGET)},
 	  bgrxComplexSobel(make_unique_gs_texture(width, height, GS_BGRX, 1, nullptr, GS_RENDER_TARGET)),
 	  r8FinalSobelMagnitude(make_unique_gs_texture(width, height, GS_R8, 1, nullptr, GS_RENDER_TARGET)),
+	  bgrxYoloxInput(make_unique_gs_texture(640, 640, GS_BGRX, 1, nullptr, GS_RENDER_TARGET)),
+	  bgrxYoloxInputReader(640, 640, GS_BGRX),
 	  r32fIntermediate(make_unique_gs_texture(width, height, GS_R32F, 1, nullptr, GS_RENDER_TARGET))
 {
 }
@@ -70,6 +72,12 @@ void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 	const unique_gs_texture_t *grayscaleResult;
 
 	if (isProcessingNewFrame) {
+		try {
+			bgrxYoloxInputReader.sync();
+		} catch (std::exception &e) {
+			logger.logException(e, "An error occurred while processing a new frame");
+		}
+	
 		if (extractionMode >= ExtractionMode::Passthrough) {
 			mainEffect.drawSource(bgrxSource, source);
 		}
@@ -101,6 +109,11 @@ void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 							       preset->sobelUseLog,
 							       static_cast<float>(preset->sobelScalingFactor.linear));
 		}
+
+		gs_set_render_target_with_color_space(bgrxYoloxInput.get(), nullptr, GS_CS_SRGB);
+		mainEffect.drawTexture(bgrxSource);
+
+		bgrxYoloxInputReader.stage(bgrxYoloxInput.get());
 	}
 
 	if (extractionMode == ExtractionMode::Passthrough) {

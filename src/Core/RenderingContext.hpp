@@ -25,10 +25,13 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <obs.h>
 
+#include "../BridgeUtils/AsyncTextureReader.hpp"
 #include "../BridgeUtils/GsUnique.hpp"
 
 #include "MainEffect.hpp"
 #include "Preset.hpp"
+
+#include "../Bridge/ShowDrawCanvasDetectorBridge.hpp"
 
 namespace KaitoTokyo {
 namespace ShowDraw {
@@ -50,6 +53,9 @@ public:
 
 	const KaitoTokyo::BridgeUtils::unique_gs_texture_t bgrxComplexSobel;
 	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r8FinalSobelMagnitude;
+
+	const KaitoTokyo::BridgeUtils::unique_gs_texture_t bgrxYoloxInput;
+	KaitoTokyo::BridgeUtils::AsyncTextureReader bgrxYoloxInputReader;
 
 private:
 	const KaitoTokyo::BridgeUtils::unique_gs_texture_t r32fIntermediate;
