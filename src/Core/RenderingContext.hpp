@@ -74,6 +74,10 @@ private:
 	std::uint64_t lastFrameTimestamp = 0;
 	std::atomic<bool> doesNextVideoRenderReceiveNewFrame = false;
 
+	float currentTransformX = 0.0f;
+	float currentTransformY = 0.0f;
+	float currentTransformScale = 1.0f;
+
 public:
 	RenderingContext(obs_source_t *source, const BridgeUtils::ILogger &logger,
 			 const MainEffect &mainEffect, BridgeUtils::ThrottledTaskQueue &taskQueue, std::uint32_t width, std::uint32_t height);

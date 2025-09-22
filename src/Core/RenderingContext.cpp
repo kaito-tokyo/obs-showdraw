@@ -50,10 +50,8 @@ inline std::array<std::uint32_t, 4> getYoloxOffsetAndSize(std::uint32_t width, s
 	double offsetX = (640.0 - scaledWidth) / 2.0;
 	double offsetY = (640.0 - scaledHeight) / 2.0;
 
-	return { 
-		static_cast<std::uint32_t>(offsetX), static_cast<std::uint32_t>(offsetY),
-		static_cast<std::uint32_t>(scaledWidth), static_cast<std::uint32_t>(scaledHeight)
-	};
+	return {static_cast<std::uint32_t>(offsetX), static_cast<std::uint32_t>(offsetY),
+		static_cast<std::uint32_t>(scaledWidth), static_cast<std::uint32_t>(scaledHeight)};
 }
 
 } // namespace
@@ -62,7 +60,8 @@ namespace KaitoTokyo {
 namespace ShowDraw {
 
 RenderingContext::RenderingContext(obs_source_t *_source, const BridgeUtils::ILogger &_logger,
-				   const MainEffect &_mainEffect, ThrottledTaskQueue &_taskQueue, std::uint32_t _width, std::uint32_t _height)
+				   const MainEffect &_mainEffect, ThrottledTaskQueue &_taskQueue, std::uint32_t _width,
+				   std::uint32_t _height)
 	: source(_source),
 	  logger(_logger),
 	  mainEffect(_mainEffect),
@@ -98,10 +97,9 @@ void RenderingContext::kickDetection()
 				if (token->load()) {
 					return;
 				}
-				self->canvasDetectorResults = self->canvasDetector.detect(self->bgrxYoloxInputReader.getBuffer().data(),
-											self->bgrxYoloxInputReader.getWidth(),
-											self->bgrxYoloxInputReader.getHeight()
-											);
+				self->canvasDetectorResults = self->canvasDetector.detect(
+					self->bgrxYoloxInputReader.getBuffer().data(),
+					self->bgrxYoloxInputReader.getWidth(), self->bgrxYoloxInputReader.getHeight());
 			}
 		} catch (std::exception &e) {
 			blog(LOG_INFO, "RenderingContext has been destroyed, skipping segmentation");
@@ -176,8 +174,10 @@ void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 			RenderTargetGuard renderTargetGuard;
 			TransformStateGuard transformStateGuard;
 
-			gs_set_viewport(0.0f, 0.0f, ShowDrawCanvasDetectorBridge::WIDTH, ShowDrawCanvasDetectorBridge::HEIGHT);
-			gs_ortho(0.0f, ShowDrawCanvasDetectorBridge::WIDTH, 0.0f, ShowDrawCanvasDetectorBridge::HEIGHT, -100.0f, 100.0f);
+			gs_set_viewport(0.0f, 0.0f, ShowDrawCanvasDetectorBridge::WIDTH,
+					ShowDrawCanvasDetectorBridge::HEIGHT);
+			gs_ortho(0.0f, ShowDrawCanvasDetectorBridge::WIDTH, 0.0f, ShowDrawCanvasDetectorBridge::HEIGHT,
+				 -100.0f, 100.0f);
 			gs_matrix_identity();
 			gs_matrix_translate3f(yoloxOffsetX, yoloxOffsetY, 0.0f);
 
@@ -192,24 +192,68 @@ void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 		bgrxYoloxInputReader.stage(bgrxYoloxInput.get());
 	}
 
+	vec4 black = {0.0f, 0.0f, 0.0f, 1.0f};
+	gs_clear(GS_CLEAR_COLOR, &black, 1.0f, 0);
+
 	if (detectionMode == DetectionMode::CenterFraming) {
-		gs_matrix_push();
+		float targetX = 0.0f;
+		float targetY = 0.0f;
+		float targetScale = 1.0f;
 
 		if (!canvasDetectorResults.empty()) {
-			auto &result = canvasDetectorResults[0];
-			const float x = (result.x - yoloxOffsetX) / yoloxScale;
-			const float y = (result.y - yoloxOffsetY) / yoloxScale;
-			const float w = result.width / yoloxScale;
-			const float h = result.height / yoloxScale;
-			logger.info("{} {} {} {}", x, y, w, h);
+			float min_x = canvasDetectorResults[0].x;
+			float min_y = canvasDetectorResults[0].y;
+			float max_x_plus_w = canvasDetectorResults[0].x + canvasDetectorResults[0].width;
+			float max_y_plus_h = canvasDetectorResults[0].y + canvasDetectorResults[0].height;
 
-			const float wscale = width / w;
-			const float hscale = height / h;
-			const float scale = std::min(wscale, hscale);
+			for (size_t i = 1; i < canvasDetectorResults.size(); ++i) {
+				const auto &r = canvasDetectorResults[i];
+				min_x = std::min(min_x, r.x);
+				min_y = std::min(min_y, r.y);
+				max_x_plus_w = std::max(max_x_plus_w, r.x + r.width);
+				max_y_plus_h = std::max(max_y_plus_h, r.y + r.height);
+			}
 
-			gs_matrix_translate3f(-x, -y, 0.0f);
-			gs_matrix_scale3f(scale, scale, 1.0f);
+			const CanvasDetectorResult result = {min_x,
+								     min_y,
+								     max_x_plus_w - min_x,
+								     max_y_plus_h - min_y,
+								     canvasDetectorResults[0].confidence};
+
+			float x = (result.x - yoloxOffsetX) / yoloxScale;
+			float y = (result.y - yoloxOffsetY) / yoloxScale;
+			float w = result.width / yoloxScale;
+			float h = result.height / yoloxScale;
+
+			// Clamp the bounding box to be within [0, 0, width, height]
+			const float x2 = x + w;
+			const float y2 = y + h;
+
+			x = std::max(0.0f, x);
+			y = std::max(0.0f, y);
+
+			w = std::min((float)width, x2) - x;
+			h = std::min((float)height, y2) - y;
+
+			if (w > 0 && h > 0) {
+				logger.info("{} {} {} {}", x, y, w, h);
+
+				targetX = -x;
+				targetY = -y;
+				const float wscale = (float)width / w;
+				const float hscale = (float)height / h;
+				targetScale = std::min(wscale, hscale);
+			}
 		}
+
+		const float lerpFactor = 0.001f;
+		currentTransformX += (targetX - currentTransformX) * lerpFactor;
+		currentTransformY += (targetY - currentTransformY) * lerpFactor;
+		currentTransformScale += (targetScale - currentTransformScale) * lerpFactor;
+
+		gs_matrix_push();
+		gs_matrix_translate3f(currentTransformX, currentTransformY, 0.0f);
+		gs_matrix_scale3f(currentTransformScale, currentTransformScale, 1.0f);
 	}
 
 	if (extractionMode == ExtractionMode::Passthrough) {
@@ -232,7 +276,7 @@ void RenderingContext::videoRender(const std::shared_ptr<const Preset> &preset)
 			mainEffect.drawRectangle(x, y, w, h, 10.0f, 0xFF00FF00);
 		}
 	}
-	
+
 	if (detectionMode == DetectionMode::CenterFraming) {
 		gs_matrix_pop();
 	}
